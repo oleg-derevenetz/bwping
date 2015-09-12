@@ -83,4 +83,27 @@ struct icmp
 #define icmp_data       icmp_dun.id_data
 };
 
+struct icmp6_hdr {
+  u_int8_t  icmp6_type;     /* type field */
+  u_int8_t  icmp6_code;     /* code field */
+  u_int16_t icmp6_cksum;    /* checksum field */
+  union {
+    u_int32_t icmp6_un_data32[1]; /* type-specific field */
+    u_int16_t icmp6_un_data16[2]; /* type-specific field */
+    u_int8_t  icmp6_un_data8[4];  /* type-specific field */
+  } icmp6_dataun;
+} __packed;
+
+#define icmp6_data32    icmp6_dataun.icmp6_un_data32
+#define icmp6_data16    icmp6_dataun.icmp6_un_data16
+#define icmp6_data8     icmp6_dataun.icmp6_un_data8
+#define icmp6_pptr      icmp6_data32[0] /* parameter prob */
+#define icmp6_mtu       icmp6_data32[0] /* packet too big */
+#define icmp6_id        icmp6_data16[0] /* echo request/reply */
+#define icmp6_seq       icmp6_data16[1] /* echo request/reply */
+#define icmp6_maxdelay  icmp6_data16[0] /* mcast group membership */
+
+#define ICMP6_ECHO_REQUEST 128 /* echo service */
+#define ICMP6_ECHO_REPLY   129 /* echo reply */
+
 #endif /* CYGWIN_H */

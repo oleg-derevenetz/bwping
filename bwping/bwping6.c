@@ -10,8 +10,11 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#include <netinet/ip.h>
 #include <netinet/ip6.h>
+#ifdef HAVE_NETINET_ICMP6_H
 #include <netinet/icmp6.h>
+#endif
 
 #include <netdb.h>
 
@@ -26,6 +29,10 @@
 #include <errno.h>
 #include <string.h>
 #include <strings.h>
+
+#ifdef __CYGWIN__
+#include "cygwin.h"
+#endif
 
 #define CALIBRATE_RETRIES 50
 #define IP6_MAXPACKET     65536
@@ -125,7 +132,7 @@ static int recv_ping (int sock, int ident, unsigned int *received_number, unsign
     int                    res;
     unsigned long long int rtt;
     unsigned char          packet[IP6_MAXPACKET] __attribute__((aligned(4)));
-    struct sockaddr_in     from;
+    struct sockaddr_in6    from;
     struct iovec           iov;
     struct msghdr          msg;
     struct icmp6_hdr       *icmp6;

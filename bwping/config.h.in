@@ -12,6 +12,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* Define to 1 if you have the <netinet/icmp6.h> header file. */
+#undef HAVE_NETINET_ICMP6_H
+
 /* Do we have sockaddr_in.sin_len? */
 #undef HAVE_SOCKADDR_IN_SIN_LEN
 
