@@ -31,8 +31,9 @@
 #include "cygwin.h"
 #endif
 
-#define CALIBRATE_RETRIES 50
-#define DEF_MIN_RTT       0xFFFFFFFF
+#define CALIBRATE_RETRIES  50
+#define DEF_MIN_RTT        0xFFFFFFFF
+#define PKTBURST_PRECISION 1000
 
 struct tv32 {
     unsigned int tv32_sec;
@@ -43,7 +44,7 @@ unsigned long long int min_rtt, max_rtt, average_rtt;
 
 static long long int tvsub (struct timeval *t1, struct timeval *t2)
 {
-    if (t1->tv_usec>t2->tv_usec) {
+    if (t1->tv_usec > t2->tv_usec) {
         return (t1->tv_sec - t2->tv_sec)     * 1000000 + (t1->tv_usec           - t2->tv_usec);
     } else {
         return (t1->tv_sec - t2->tv_sec - 1) * 1000000 + (t1->tv_usec + 1000000 - t2->tv_usec);
@@ -63,12 +64,12 @@ static unsigned short int cksum (unsigned short *addr, int len)
     sum   = 0;
     w     = addr;
 
-    while (nleft>1) {
+    while (nleft > 1) {
         sum   += *w++;
         nleft -= 2;
     }
 
-    if (nleft==1) {
+    if (nleft == 1) {
         last.uc[0] = *(u_char *)w;
         last.uc[1] = 0;
         sum       += last.us;
@@ -89,13 +90,13 @@ static unsigned long long int calibrate_timer (void)
 
     sum = 0;
 
-    for (i=0; i<CALIBRATE_RETRIES; i++) {
+    for (i = 0; i < CALIBRATE_RETRIES; i++) {
         n = -1;
 
         seltimeout.tv_sec  = 0;
         seltimeout.tv_usec = 10;
 
-        while (n<0) {
+        while (n < 0) {
             gettimeofday(&begin, NULL);
 
             n = select(0, NULL, NULL, NULL, &seltimeout);
@@ -144,8 +145,8 @@ static void send_ping (int sock, struct sockaddr_in *to, unsigned long int pktsi
 
     res = sendto(sock, (char *)packet, size, 0, (struct sockaddr *)to, sizeof(*to));
 
-    if (res==-1 || res!=size) {
-        if (res==-1) {
+    if (res == -1 || res != size) {
+        if (res == -1) {
             perror("bwping: sendto() failed");
         } else {
             fprintf(stderr, "bwping: partial write: packet size: %d, sent: %d\n", size, res);
@@ -184,35 +185,35 @@ static int recv_ping (int sock, int ident, unsigned int *received_number, unsign
 
     res = recvmsg(sock, &msg, MSG_DONTWAIT);
 
-    if (res>0) {
+    if (res > 0) {
         ip = (struct ip *)packet;
 
         hlen = ip->ip_hl << 2;
 
-        if (res>=hlen + ICMP_MINLEN) {
+        if (res >= hlen + ICMP_MINLEN) {
             icmp = (struct icmp *)(packet + hlen);
 
-            if (icmp->icmp_type==ICMP_ECHOREPLY) {
-                if (icmp->icmp_id==ident) {
+            if (icmp->icmp_type == ICMP_ECHOREPLY) {
+                if (icmp->icmp_id == ident) {
                     (*received_number)++;
                     (*received_volume) += res;
 
-                    if (res - hlen - ICMP_MINLEN>=sizeof(tv32)) {
+                    if (res - hlen - ICMP_MINLEN >= sizeof(tv32)) {
                         memcpy(&tv32, icmp->icmp_data, sizeof(tv32));
 
                         pkttime.tv_sec  = ntohl(tv32.tv32_sec);
                         pkttime.tv_usec = ntohl(tv32.tv32_usec);
 
-                        if (pkttime.tv_sec!=0 || pkttime.tv_usec!=0) {
+                        if (pkttime.tv_sec != 0 || pkttime.tv_usec != 0) {
                             rtt = tvsub(&now, &pkttime) / 1000;
 
-                            if (min_rtt>rtt) {
+                            if (min_rtt > rtt) {
                                 min_rtt = rtt;
                             }
-                            if (max_rtt<rtt) {
+                            if (max_rtt < rtt) {
                                 max_rtt = rtt;
                             }
-                            average_rtt = *received_number?((average_rtt * (*received_number - 1)) + rtt) / *received_number:average_rtt;
+                            average_rtt = *received_number ? ((average_rtt * (*received_number - 1)) + rtt) / *received_number : average_rtt;
                         }
                     }
                 }
@@ -227,10 +228,10 @@ static int recv_ping (int sock, int ident, unsigned int *received_number, unsign
 
 int main (int argc, char **argv)
 {
-    int                    sock, exitval, ch, ident, finish, pktburst, i, n;
+    int                    sock, exitval, ch, ident, finish, n;
     unsigned int           bufsize, tos, transmitted_number, received_number;
-    unsigned long int      kbps, pktsize, volume, rperiod, received_volume;
-    unsigned long long int min_interval, interval, current_interval, integral_error;
+    unsigned long int      kbps, pktsize, volume, rperiod, received_volume, pktburst, pktburst_error, i;
+    unsigned long long int min_interval, interval, current_interval, interval_error;
     char                   *ep, *bind_addr, *target;
     fd_set                 fds;
     struct sockaddr_in     bind_to, to;
@@ -239,7 +240,7 @@ int main (int argc, char **argv)
 
     sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 
-    if (sock==-1) {
+    if (sock == -1) {
         perror("bwping: socket(AF_INET, SOCK_RAW, IPPROTO_ICMP) failed");
 
         exit(EX_SOFTWARE);
@@ -256,12 +257,12 @@ int main (int argc, char **argv)
 
         exitval = EX_OK;
 
-        while ((ch = getopt(argc, argv, "b:s:v:u:r:T:B:"))!=-1) {
+        while ((ch = getopt(argc, argv, "b:s:v:u:r:T:B:")) != -1) {
             switch (ch) {
                 case 'b':
                     kbps = strtoul(optarg, &ep, 0);
 
-                    if (*ep || ep==optarg) {
+                    if (*ep || ep == optarg) {
                         exitval = EX_DATAERR;
                     }
 
@@ -269,7 +270,7 @@ int main (int argc, char **argv)
                 case 's':
                     pktsize = strtoul(optarg, &ep, 0);
 
-                    if (*ep || ep==optarg) {
+                    if (*ep || ep == optarg) {
                         exitval = EX_DATAERR;
                     }
 
@@ -277,7 +278,7 @@ int main (int argc, char **argv)
                 case 'v':
                     volume = strtoul(optarg, &ep, 0);
 
-                    if (*ep || ep==optarg) {
+                    if (*ep || ep == optarg) {
                         exitval = EX_DATAERR;
                     }
 
@@ -285,7 +286,7 @@ int main (int argc, char **argv)
                 case 'u':
                     bufsize = strtoul(optarg, &ep, 0);
 
-                    if (*ep || ep==optarg) {
+                    if (*ep || ep == optarg) {
                         exitval = EX_DATAERR;
                     }
 
@@ -293,7 +294,7 @@ int main (int argc, char **argv)
                 case 'r':
                     rperiod = strtoul(optarg, &ep, 0);
 
-                    if (*ep || ep==optarg) {
+                    if (*ep || ep == optarg) {
                         exitval = EX_DATAERR;
                     }
 
@@ -301,7 +302,7 @@ int main (int argc, char **argv)
                 case 'T':
                     tos = strtoul(optarg, &ep, 0);
 
-                    if (*ep || ep==optarg) {
+                    if (*ep || ep == optarg) {
                         exitval = EX_DATAERR;
                     }
 
@@ -315,18 +316,18 @@ int main (int argc, char **argv)
             }
         }
 
-        if (kbps==0 || pktsize==0 || volume==0) {
+        if (kbps == 0 || pktsize == 0 || volume == 0) {
             exitval = EX_DATAERR;
-        } else if (argc - optind!=1) {
+        } else if (argc - optind != 1) {
             exitval = EX_USAGE;
         }
 
-        if (exitval==EX_OK) {
-            if (pktsize<sizeof(struct ip) + ICMP_MINLEN + sizeof(struct tv32) || pktsize>IP_MAXPACKET) {
+        if (exitval == EX_OK) {
+            if (pktsize < sizeof(struct ip) + ICMP_MINLEN + sizeof(struct tv32) || pktsize > IP_MAXPACKET) {
                 fprintf(stderr, "bwping: invalid packet size, should be between %d and %d\n", (int)(sizeof(struct ip) + ICMP_MINLEN + sizeof(struct tv32)), IP_MAXPACKET);
                 exitval = EX_DATAERR;
             } else {
-                if (bind_addr!=NULL) {
+                if (bind_addr != NULL) {
                     bzero(&bind_to, sizeof(bind_to));
 
                     bind_to.sin_family = AF_INET;
@@ -334,13 +335,13 @@ int main (int argc, char **argv)
                     bind_to.sin_len    = sizeof(bind_to);
 #endif
 
-                    if (inet_aton(bind_addr, &bind_to.sin_addr)==0) {
+                    if (inet_aton(bind_addr, &bind_to.sin_addr) == 0) {
                         hp = gethostbyname(bind_addr);
 
                         if (!hp) {
                             fprintf(stderr, "bwping: cannot resolve %s: %s\n", bind_addr, hstrerror(h_errno));
                             exitval = EX_DATAERR;
-                        } else if ((unsigned)hp->h_length!=sizeof(bind_to.sin_addr)) {
+                        } else if ((unsigned)hp->h_length != sizeof(bind_to.sin_addr)) {
                             fprintf(stderr, "bwping: gethostbyname() returned an illegal address\n");
                             exitval = EX_DATAERR;
                         } else {
@@ -348,15 +349,15 @@ int main (int argc, char **argv)
                         }
                     }
 
-                    if (exitval==EX_OK) {
-                        if (bind(sock, (struct sockaddr *)&bind_to, sizeof(bind_to))<0) {
+                    if (exitval == EX_OK) {
+                        if (bind(sock, (struct sockaddr *)&bind_to, sizeof(bind_to)) < 0) {
                             perror("bwping: bind() failed");
                             exitval = EX_DATAERR;
                         }
                     }
                 }
 
-                if (exitval==EX_OK) {
+                if (exitval == EX_OK) {
                     target = argv[optind];
 
                     bzero(&to, sizeof(to));
@@ -366,13 +367,13 @@ int main (int argc, char **argv)
                     to.sin_len    = sizeof(to);
 #endif
 
-                    if (inet_aton(target, &to.sin_addr)==0) {
+                    if (inet_aton(target, &to.sin_addr) == 0) {
                         hp = gethostbyname(target);
 
                         if (!hp) {
                             fprintf(stderr, "bwping: cannot resolve %s: %s\n", target, hstrerror(h_errno));
                             exitval = EX_DATAERR;
-                        } else if ((unsigned)hp->h_length!=sizeof(to.sin_addr)) {
+                        } else if ((unsigned)hp->h_length != sizeof(to.sin_addr)) {
                             fprintf(stderr, "bwping: gethostbyname() returned an illegal address\n");
                             exitval = EX_DATAERR;
                         } else {
@@ -380,7 +381,7 @@ int main (int argc, char **argv)
                         }
                     }
 
-                    if (exitval==EX_OK) {
+                    if (exitval == EX_OK) {
                         ident = getpid() & 0xFFFF;
 
                         printf("Target: %s (%s), transfer speed: %lu kbps, packet size: %lu bytes, traffic volume: %lu bytes\n",
@@ -399,29 +400,29 @@ int main (int argc, char **argv)
 
                         min_interval = calibrate_timer() * 2;
 
-                        if (interval>=min_interval) {
-                            pktburst = 1;
-                        } else if (interval==0) {
-                            pktburst = min_interval * kbps / 8000 / pktsize;
+                        if (interval >= min_interval) {
+                            pktburst = PKTBURST_PRECISION * 1;
+                        } else if (interval == 0) {
+                            pktburst = PKTBURST_PRECISION * min_interval * kbps / 8000 / pktsize;
                             interval = min_interval;
                         } else {
-                            pktburst = min_interval / interval;
-                            interval = min_interval - (min_interval % interval);
+                            pktburst = PKTBURST_PRECISION * min_interval / interval;
+                            interval = min_interval;
                         }
 
-                        if (bufsize==0) {
-                            bufsize = pktsize * pktburst * 2;
+                        if (bufsize == 0) {
+                            bufsize = pktsize * (pktburst / PKTBURST_PRECISION + 1) * 2;
                         }
 
-                        if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize, sizeof(bufsize))==-1) {
+                        if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize, sizeof(bufsize)) == -1) {
                             fprintf(stderr, "bwping: setsockopt(SO_RCVBUF, %u) failed: %s\n", bufsize, strerror(errno));
                         }
-                        if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize))==-1) {
+                        if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize)) == -1) {
                             fprintf(stderr, "bwping: setsockopt(SO_SNDBUF, %u) failed: %s\n", bufsize, strerror(errno));
                         }
 
 #ifdef IP_TOS
-                        if (setsockopt(sock, IPPROTO_IP, IP_TOS, (char *)&tos, sizeof(tos))==-1) {
+                        if (setsockopt(sock, IPPROTO_IP, IP_TOS, (char *)&tos, sizeof(tos)) == -1) {
                             fprintf(stderr, "bwping: setsockopt(IP_TOS, %u) failed: %s\n", tos, strerror(errno));
                         }
 #endif
@@ -431,16 +432,23 @@ int main (int argc, char **argv)
                         gettimeofday(&report, NULL);
 
                         current_interval = interval;
-                        integral_error   = 0;
+                        pktburst_error   = 0;
+                        interval_error   = 0;
 
                         while (!finish) {
                             gettimeofday(&start, NULL);
 
-                            for (i = 0; i<pktburst; i++) {
-                                if (pktsize * transmitted_number<volume) {
+                            for (i = 0; i < pktburst / PKTBURST_PRECISION + pktburst_error / PKTBURST_PRECISION; i++) {
+                                if (pktsize * transmitted_number < volume) {
                                     send_ping(sock, &to, pktsize, ident, !i, &transmitted_number);
                                 }
                             }
+
+                            if (pktburst_error >= PKTBURST_PRECISION) {
+                                pktburst_error = pktburst_error % PKTBURST_PRECISION;
+                            }
+
+                            pktburst_error = pktburst_error + pktburst % PKTBURST_PRECISION;
 
                             while (1) {
                                 FD_ZERO(&fds);
@@ -453,22 +461,22 @@ int main (int argc, char **argv)
 
                                 gettimeofday(&now, NULL);
 
-                                if (n>0) {
+                                if (n > 0) {
                                     while (recv_ping(sock, ident, &received_number, &received_volume)) {
-                                        if (received_number>=transmitted_number) {
+                                        if (received_number >= transmitted_number) {
                                             break;
                                         }
                                     }
                                 }
-                                if (tvsub(&now, &start)>=current_interval) {
-                                    if (pktsize * transmitted_number>=volume) {
+                                if (tvsub(&now, &start) >= current_interval) {
+                                    if (pktsize * transmitted_number >= volume) {
                                         finish = 1;
                                     } else {
-                                        integral_error += tvsub(&now, &start) - current_interval;
+                                        interval_error += tvsub(&now, &start) - current_interval;
 
-                                        if (integral_error>=interval / 2) {
+                                        if (interval_error >= interval / 2) {
                                             current_interval = interval / 2;
-                                            integral_error   = integral_error - interval / 2;
+                                            interval_error   = interval_error - interval / 2;
                                         } else {
                                             current_interval = interval;
                                         }
@@ -479,11 +487,11 @@ int main (int argc, char **argv)
 
                             gettimeofday(&end, NULL);
 
-                            if (rperiod!=0 && end.tv_sec - report.tv_sec>=rperiod) {
+                            if (rperiod != 0 && end.tv_sec - report.tv_sec >= rperiod) {
                                 printf("Periodic: pkts sent/rcvd: %u/%u, volume rcvd: %lu bytes, time: %d sec, speed: %lu kbps, rtt min/max/average: %llu/%llu/%llu ms\n",
                                        transmitted_number, received_number, received_volume, (int)(end.tv_sec - begin.tv_sec),
-                                       end.tv_sec - begin.tv_sec?((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000:(received_volume * 8) / 1000,
-                                       min_rtt==DEF_MIN_RTT?0:min_rtt, max_rtt, average_rtt);
+                                       end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
+                                       min_rtt == DEF_MIN_RTT ? 0 : min_rtt, max_rtt, average_rtt);
 
                                 gettimeofday(&report, NULL);
                             }
@@ -491,8 +499,8 @@ int main (int argc, char **argv)
 
                         printf("Total: pkts sent/rcvd: %u/%u, volume rcvd: %lu bytes, time: %d sec, speed: %lu kbps, rtt min/max/average: %llu/%llu/%llu ms\n",
                                transmitted_number, received_number, received_volume, (int)(end.tv_sec - begin.tv_sec),
-                               end.tv_sec - begin.tv_sec?((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000:(received_volume * 8) / 1000,
-                               min_rtt==DEF_MIN_RTT?0:min_rtt, max_rtt, average_rtt);
+                               end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
+                               min_rtt == DEF_MIN_RTT ? 0 : min_rtt, max_rtt, average_rtt);
                     }
                 }
             }
