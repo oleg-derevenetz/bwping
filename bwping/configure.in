@@ -1,6 +1,6 @@
 AC_INIT(bwping)
 AC_CONFIG_SRCDIR([ChangeLog])
-AM_INIT_AUTOMAKE(bwping,1.8)
+AM_INIT_AUTOMAKE(bwping,1.9)
 AM_CONFIG_HEADER(config.h)
 AC_ARG_ENABLE([ipv6], AS_HELP_STRING([--disable-ipv6], [Disable IPv6]))
 AC_PROG_CC
