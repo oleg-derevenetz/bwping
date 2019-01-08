@@ -231,7 +231,7 @@ int main (int argc, char **argv)
                         kbps = strtoul(optarg, &ep, 0);
 
                         if (*ep || ep == optarg) {
-                            exitval = EX_DATAERR;
+                            exitval = EX_USAGE;
                         }
 
                         break;
@@ -239,7 +239,7 @@ int main (int argc, char **argv)
                         pktsize = strtoul(optarg, &ep, 0);
 
                         if (*ep || ep == optarg) {
-                            exitval = EX_DATAERR;
+                            exitval = EX_USAGE;
                         }
 
                         break;
@@ -247,7 +247,7 @@ int main (int argc, char **argv)
                         volume = strtoul(optarg, &ep, 0);
 
                         if (*ep || ep == optarg) {
-                            exitval = EX_DATAERR;
+                            exitval = EX_USAGE;
                         }
 
                         break;
@@ -255,7 +255,7 @@ int main (int argc, char **argv)
                         bufsize = strtoul(optarg, &ep, 0);
 
                         if (*ep || ep == optarg) {
-                            exitval = EX_DATAERR;
+                            exitval = EX_USAGE;
                         }
 
                         break;
@@ -263,7 +263,7 @@ int main (int argc, char **argv)
                         rperiod = strtoul(optarg, &ep, 0);
 
                         if (*ep || ep == optarg) {
-                            exitval = EX_DATAERR;
+                            exitval = EX_USAGE;
                         }
 
                         break;
@@ -271,7 +271,7 @@ int main (int argc, char **argv)
                         tclass = strtoul(optarg, &ep, 0);
 
                         if (*ep || ep == optarg) {
-                            exitval = EX_DATAERR;
+                            exitval = EX_USAGE;
                         }
 
                         break;
@@ -285,7 +285,7 @@ int main (int argc, char **argv)
             }
 
             if (kbps == 0 || pktsize == 0 || volume == 0) {
-                exitval = EX_DATAERR;
+                exitval = EX_USAGE;
             } else if (argc - optind != 1) {
                 exitval = EX_USAGE;
             }
@@ -293,7 +293,7 @@ int main (int argc, char **argv)
             if (exitval == EX_OK) {
                 if (pktsize < sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32) || pktsize > IP6_MAXPACKET) {
                     fprintf(stderr, "bwping6: invalid packet size, should be between %d and %d\n", (int)(sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32)), IP6_MAXPACKET);
-                    exitval = EX_DATAERR;
+                    exitval = EX_USAGE;
                 } else {
                     if (bind_addr != NULL) {
                         bzero(&hints, sizeof(hints));
@@ -307,12 +307,12 @@ int main (int argc, char **argv)
 
                         if (gai_retval) {
                             fprintf(stderr, "bwping6: cannot resolve %s: %s\n", bind_addr, gai_strerror(gai_retval));
-                            exitval = EX_DATAERR;
+                            exitval = EX_SOFTWARE;
                         } else if (res_info->ai_addr == NULL || res_info->ai_addrlen != sizeof(bind_to6)) {
                             freeaddrinfo(res_info);
 
                             fprintf(stderr, "bwping6: getaddrinfo() returned an illegal address\n");
-                            exitval = EX_DATAERR;
+                            exitval = EX_SOFTWARE;
                         } else {
                             memcpy(&bind_to6, res_info->ai_addr, sizeof(bind_to6));
 
@@ -322,7 +322,7 @@ int main (int argc, char **argv)
                         if (exitval == EX_OK) {
                             if (bind(sock, (struct sockaddr *)&bind_to6, sizeof(bind_to6)) < 0) {
                                 perror("bwping6: bind() failed");
-                                exitval = EX_DATAERR;
+                                exitval = EX_OSERR;
                             }
                         }
                     }
@@ -341,12 +341,12 @@ int main (int argc, char **argv)
 
                         if (gai_retval) {
                             fprintf(stderr, "bwping6: cannot resolve %s: %s\n", target, gai_strerror(gai_retval));
-                            exitval = EX_DATAERR;
+                            exitval = EX_SOFTWARE;
                         } else if (res_info->ai_addr == NULL || res_info->ai_addrlen != sizeof(to6)) {
                             freeaddrinfo(res_info);
 
                             fprintf(stderr, "bwping6: getaddrinfo() returned an illegal address\n");
-                            exitval = EX_DATAERR;
+                            exitval = EX_SOFTWARE;
                         } else {
                             memcpy(&to6, res_info->ai_addr, sizeof(to6));
 

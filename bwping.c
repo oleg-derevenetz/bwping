@@ -266,7 +266,7 @@ int main (int argc, char **argv)
                         kbps = strtoul(optarg, &ep, 0);
 
                         if (*ep || ep == optarg) {
-                            exitval = EX_DATAERR;
+                            exitval = EX_USAGE;
                         }
 
                         break;
@@ -274,7 +274,7 @@ int main (int argc, char **argv)
                         pktsize = strtoul(optarg, &ep, 0);
 
                         if (*ep || ep == optarg) {
-                            exitval = EX_DATAERR;
+                            exitval = EX_USAGE;
                         }
 
                         break;
@@ -282,7 +282,7 @@ int main (int argc, char **argv)
                         volume = strtoul(optarg, &ep, 0);
 
                         if (*ep || ep == optarg) {
-                            exitval = EX_DATAERR;
+                            exitval = EX_USAGE;
                         }
 
                         break;
@@ -290,7 +290,7 @@ int main (int argc, char **argv)
                         bufsize = strtoul(optarg, &ep, 0);
 
                         if (*ep || ep == optarg) {
-                            exitval = EX_DATAERR;
+                            exitval = EX_USAGE;
                         }
 
                         break;
@@ -298,7 +298,7 @@ int main (int argc, char **argv)
                         rperiod = strtoul(optarg, &ep, 0);
 
                         if (*ep || ep == optarg) {
-                            exitval = EX_DATAERR;
+                            exitval = EX_USAGE;
                         }
 
                         break;
@@ -306,7 +306,7 @@ int main (int argc, char **argv)
                         tos = strtoul(optarg, &ep, 0);
 
                         if (*ep || ep == optarg) {
-                            exitval = EX_DATAERR;
+                            exitval = EX_USAGE;
                         }
 
                         break;
@@ -320,7 +320,7 @@ int main (int argc, char **argv)
             }
 
             if (kbps == 0 || pktsize == 0 || volume == 0) {
-                exitval = EX_DATAERR;
+                exitval = EX_USAGE;
             } else if (argc - optind != 1) {
                 exitval = EX_USAGE;
             }
@@ -328,7 +328,7 @@ int main (int argc, char **argv)
             if (exitval == EX_OK) {
                 if (pktsize < sizeof(struct ip) + ICMP_MINLEN + sizeof(struct tv32) || pktsize > IP_MAXPACKET) {
                     fprintf(stderr, "bwping: invalid packet size, should be between %d and %d\n", (int)(sizeof(struct ip) + ICMP_MINLEN + sizeof(struct tv32)), IP_MAXPACKET);
-                    exitval = EX_DATAERR;
+                    exitval = EX_USAGE;
                 } else {
                     if (bind_addr != NULL) {
                         bzero(&bind_to, sizeof(bind_to));
@@ -343,10 +343,10 @@ int main (int argc, char **argv)
 
                             if (!hp) {
                                 fprintf(stderr, "bwping: cannot resolve %s: %s\n", bind_addr, hstrerror(h_errno));
-                                exitval = EX_DATAERR;
+                                exitval = EX_SOFTWARE;
                             } else if ((unsigned)hp->h_length != sizeof(bind_to.sin_addr)) {
                                 fprintf(stderr, "bwping: gethostbyname() returned an illegal address\n");
-                                exitval = EX_DATAERR;
+                                exitval = EX_SOFTWARE;
                             } else {
                                 memcpy(&bind_to.sin_addr, hp->h_addr_list[0], sizeof(bind_to.sin_addr));
                             }
@@ -355,7 +355,7 @@ int main (int argc, char **argv)
                         if (exitval == EX_OK) {
                             if (bind(sock, (struct sockaddr *)&bind_to, sizeof(bind_to)) < 0) {
                                 perror("bwping: bind() failed");
-                                exitval = EX_DATAERR;
+                                exitval = EX_OSERR;
                             }
                         }
                     }
@@ -375,10 +375,10 @@ int main (int argc, char **argv)
 
                             if (!hp) {
                                 fprintf(stderr, "bwping: cannot resolve %s: %s\n", target, hstrerror(h_errno));
-                                exitval = EX_DATAERR;
+                                exitval = EX_SOFTWARE;
                             } else if ((unsigned)hp->h_length != sizeof(to.sin_addr)) {
                                 fprintf(stderr, "bwping: gethostbyname() returned an illegal address\n");
-                                exitval = EX_DATAERR;
+                                exitval = EX_SOFTWARE;
                             } else {
                                 memcpy(&to.sin_addr, hp->h_addr_list[0], sizeof(to.sin_addr));
                             }
