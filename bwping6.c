@@ -208,283 +208,287 @@ int main (int argc, char **argv)
     if (sock == -1) {
         perror("bwping6: socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6) failed");
 
-        exit(EX_SOFTWARE);
+        exit(EX_OSERR);
     } else {
-        setuid(getuid());
+        if (setuid(getuid()) == -1) {
+            perror("bwping: setuid(getuid()) failed");
 
-        bufsize   = 0;
-        tclass    = 0;
-        kbps      = 0;
-        pktsize   = 0;
-        volume    = 0;
-        rperiod   = 0;
-        bind_addr = NULL;
+            exit(EX_OSERR);
+        } else {
+            bufsize   = 0;
+            tclass    = 0;
+            kbps      = 0;
+            pktsize   = 0;
+            volume    = 0;
+            rperiod   = 0;
+            bind_addr = NULL;
 
-        exitval = EX_OK;
+            exitval = EX_OK;
 
-        while ((ch = getopt(argc, argv, "b:s:v:u:r:T:B:")) != -1) {
-            switch (ch) {
-                case 'b':
-                    kbps = strtoul(optarg, &ep, 0);
+            while ((ch = getopt(argc, argv, "b:s:v:u:r:T:B:")) != -1) {
+                switch (ch) {
+                    case 'b':
+                        kbps = strtoul(optarg, &ep, 0);
 
-                    if (*ep || ep == optarg) {
-                        exitval = EX_DATAERR;
-                    }
-
-                    break;
-                case 's':
-                    pktsize = strtoul(optarg, &ep, 0);
-
-                    if (*ep || ep == optarg) {
-                        exitval = EX_DATAERR;
-                    }
-
-                    break;
-                case 'v':
-                    volume = strtoul(optarg, &ep, 0);
-
-                    if (*ep || ep == optarg) {
-                        exitval = EX_DATAERR;
-                    }
-
-                    break;
-                case 'u':
-                    bufsize = strtoul(optarg, &ep, 0);
-
-                    if (*ep || ep == optarg) {
-                        exitval = EX_DATAERR;
-                    }
-
-                    break;
-                case 'r':
-                    rperiod = strtoul(optarg, &ep, 0);
-
-                    if (*ep || ep == optarg) {
-                        exitval = EX_DATAERR;
-                    }
-
-                    break;
-                case 'T':
-                    tclass = strtoul(optarg, &ep, 0);
-
-                    if (*ep || ep == optarg) {
-                        exitval = EX_DATAERR;
-                    }
-
-                    break;
-                case 'B':
-                    bind_addr = optarg;
-
-                    break;
-                default:
-                    exitval = EX_USAGE;
-            }
-        }
-
-        if (kbps == 0 || pktsize == 0 || volume == 0) {
-            exitval = EX_DATAERR;
-        } else if (argc - optind != 1) {
-            exitval = EX_USAGE;
-        }
-
-        if (exitval == EX_OK) {
-            if (pktsize < sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32) || pktsize > IP6_MAXPACKET) {
-                fprintf(stderr, "bwping6: invalid packet size, should be between %d and %d\n", (int)(sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32)), IP6_MAXPACKET);
-                exitval = EX_DATAERR;
-            } else {
-                if (bind_addr != NULL) {
-                    bzero(&hints, sizeof(hints));
-
-                    hints.ai_flags    = AI_CANONNAME;
-                    hints.ai_family   = AF_INET6;
-                    hints.ai_socktype = SOCK_RAW;
-                    hints.ai_protocol = IPPROTO_ICMPV6;
-
-                    gai_retval = getaddrinfo(bind_addr, NULL, &hints, &res_info);
-
-                    if (gai_retval) {
-                        fprintf(stderr, "bwping6: cannot resolve %s: %s\n", bind_addr, gai_strerror(gai_retval));
-                        exitval = EX_DATAERR;
-                    } else if (res_info->ai_addr == NULL || res_info->ai_addrlen != sizeof(bind_to6)) {
-                        freeaddrinfo(res_info);
-
-                        fprintf(stderr, "bwping6: getaddrinfo() returned an illegal address\n");
-                        exitval = EX_DATAERR;
-                    } else {
-                        memcpy(&bind_to6, res_info->ai_addr, sizeof(bind_to6));
-
-                        freeaddrinfo(res_info);
-                    }
-
-                    if (exitval == EX_OK) {
-                        if (bind(sock, (struct sockaddr *)&bind_to6, sizeof(bind_to6)) < 0) {
-                            perror("bwping6: bind() failed");
+                        if (*ep || ep == optarg) {
                             exitval = EX_DATAERR;
                         }
-                    }
+
+                        break;
+                    case 's':
+                        pktsize = strtoul(optarg, &ep, 0);
+
+                        if (*ep || ep == optarg) {
+                            exitval = EX_DATAERR;
+                        }
+
+                        break;
+                    case 'v':
+                        volume = strtoul(optarg, &ep, 0);
+
+                        if (*ep || ep == optarg) {
+                            exitval = EX_DATAERR;
+                        }
+
+                        break;
+                    case 'u':
+                        bufsize = strtoul(optarg, &ep, 0);
+
+                        if (*ep || ep == optarg) {
+                            exitval = EX_DATAERR;
+                        }
+
+                        break;
+                    case 'r':
+                        rperiod = strtoul(optarg, &ep, 0);
+
+                        if (*ep || ep == optarg) {
+                            exitval = EX_DATAERR;
+                        }
+
+                        break;
+                    case 'T':
+                        tclass = strtoul(optarg, &ep, 0);
+
+                        if (*ep || ep == optarg) {
+                            exitval = EX_DATAERR;
+                        }
+
+                        break;
+                    case 'B':
+                        bind_addr = optarg;
+
+                        break;
+                    default:
+                        exitval = EX_USAGE;
                 }
+            }
 
-                if (exitval == EX_OK) {
-                    target = argv[optind];
+            if (kbps == 0 || pktsize == 0 || volume == 0) {
+                exitval = EX_DATAERR;
+            } else if (argc - optind != 1) {
+                exitval = EX_USAGE;
+            }
 
-                    bzero(&hints, sizeof(hints));
+            if (exitval == EX_OK) {
+                if (pktsize < sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32) || pktsize > IP6_MAXPACKET) {
+                    fprintf(stderr, "bwping6: invalid packet size, should be between %d and %d\n", (int)(sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32)), IP6_MAXPACKET);
+                    exitval = EX_DATAERR;
+                } else {
+                    if (bind_addr != NULL) {
+                        bzero(&hints, sizeof(hints));
 
-                    hints.ai_flags    = AI_CANONNAME;
-                    hints.ai_family   = AF_INET6;
-                    hints.ai_socktype = SOCK_RAW;
-                    hints.ai_protocol = IPPROTO_ICMPV6;
+                        hints.ai_flags    = AI_CANONNAME;
+                        hints.ai_family   = AF_INET6;
+                        hints.ai_socktype = SOCK_RAW;
+                        hints.ai_protocol = IPPROTO_ICMPV6;
 
-                    gai_retval = getaddrinfo(target, NULL, &hints, &res_info);
+                        gai_retval = getaddrinfo(bind_addr, NULL, &hints, &res_info);
 
-                    if (gai_retval) {
-                        fprintf(stderr, "bwping6: cannot resolve %s: %s\n", target, gai_strerror(gai_retval));
-                        exitval = EX_DATAERR;
-                    } else if (res_info->ai_addr == NULL || res_info->ai_addrlen != sizeof(to6)) {
-                        freeaddrinfo(res_info);
+                        if (gai_retval) {
+                            fprintf(stderr, "bwping6: cannot resolve %s: %s\n", bind_addr, gai_strerror(gai_retval));
+                            exitval = EX_DATAERR;
+                        } else if (res_info->ai_addr == NULL || res_info->ai_addrlen != sizeof(bind_to6)) {
+                            freeaddrinfo(res_info);
 
-                        fprintf(stderr, "bwping6: getaddrinfo() returned an illegal address\n");
-                        exitval = EX_DATAERR;
-                    } else {
-                        memcpy(&to6, res_info->ai_addr, sizeof(to6));
+                            fprintf(stderr, "bwping6: getaddrinfo() returned an illegal address\n");
+                            exitval = EX_DATAERR;
+                        } else {
+                            memcpy(&bind_to6, res_info->ai_addr, sizeof(bind_to6));
 
-                        freeaddrinfo(res_info);
+                            freeaddrinfo(res_info);
+                        }
+
+                        if (exitval == EX_OK) {
+                            if (bind(sock, (struct sockaddr *)&bind_to6, sizeof(bind_to6)) < 0) {
+                                perror("bwping6: bind() failed");
+                                exitval = EX_DATAERR;
+                            }
+                        }
                     }
 
                     if (exitval == EX_OK) {
-                        ident = getpid() & 0xFFFF;
+                        target = argv[optind];
 
-                        bzero(&p_addr, sizeof(p_addr));
+                        bzero(&hints, sizeof(hints));
 
-                        if (inet_ntop(AF_INET6, &(to6.sin6_addr), p_addr, sizeof(p_addr)) == NULL) {
-                            strncpy(p_addr, "?", sizeof(p_addr) - 1);
-                        }
+                        hints.ai_flags    = AI_CANONNAME;
+                        hints.ai_family   = AF_INET6;
+                        hints.ai_socktype = SOCK_RAW;
+                        hints.ai_protocol = IPPROTO_ICMPV6;
 
-                        printf("Target: %s (%s), transfer speed: %lu kbps, packet size: %lu bytes, traffic volume: %lu bytes\n",
-                               target, p_addr, kbps, pktsize, volume);
+                        gai_retval = getaddrinfo(target, NULL, &hints, &res_info);
 
-                        min_rtt     = DEF_MIN_RTT;
-                        max_rtt     = 0;
-                        average_rtt = 0;
+                        if (gai_retval) {
+                            fprintf(stderr, "bwping6: cannot resolve %s: %s\n", target, gai_strerror(gai_retval));
+                            exitval = EX_DATAERR;
+                        } else if (res_info->ai_addr == NULL || res_info->ai_addrlen != sizeof(to6)) {
+                            freeaddrinfo(res_info);
 
-                        transmitted_number = 0;
-                        received_number    = 0;
-                        received_volume    = 0;
-                        finish             = 0;
-
-                        interval = pktsize * 8000 / kbps;
-
-                        min_interval = calibrate_timer() * 2;
-
-                        if (interval >= min_interval) {
-                            pktburst = PKTBURST_PRECISION * 1;
-                        } else if (interval == 0) {
-                            pktburst = PKTBURST_PRECISION * min_interval * kbps / 8000 / pktsize;
-                            interval = min_interval;
+                            fprintf(stderr, "bwping6: getaddrinfo() returned an illegal address\n");
+                            exitval = EX_DATAERR;
                         } else {
-                            pktburst = PKTBURST_PRECISION * min_interval / interval;
-                            interval = min_interval;
+                            memcpy(&to6, res_info->ai_addr, sizeof(to6));
+
+                            freeaddrinfo(res_info);
                         }
 
-                        if (bufsize == 0) {
-                            bufsize = pktsize * (pktburst / PKTBURST_PRECISION + 1) * 2;
-                        }
+                        if (exitval == EX_OK) {
+                            ident = getpid() & 0xFFFF;
 
-                        if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize, sizeof(bufsize)) == -1) {
-                            fprintf(stderr, "bwping6: setsockopt(SO_RCVBUF, %u) failed: %s\n", bufsize, strerror(errno));
-                        }
-                        if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize)) == -1) {
-                            fprintf(stderr, "bwping6: setsockopt(SO_SNDBUF, %u) failed: %s\n", bufsize, strerror(errno));
-                        }
+                            bzero(&p_addr, sizeof(p_addr));
+
+                            if (inet_ntop(AF_INET6, &(to6.sin6_addr), p_addr, sizeof(p_addr)) == NULL) {
+                                strncpy(p_addr, "?", sizeof(p_addr) - 1);
+                            }
+
+                            printf("Target: %s (%s), transfer speed: %lu kbps, packet size: %lu bytes, traffic volume: %lu bytes\n",
+                                   target, p_addr, kbps, pktsize, volume);
+
+                            min_rtt     = DEF_MIN_RTT;
+                            max_rtt     = 0;
+                            average_rtt = 0;
+
+                            transmitted_number = 0;
+                            received_number    = 0;
+                            received_volume    = 0;
+                            finish             = 0;
+
+                            interval = pktsize * 8000 / kbps;
+
+                            min_interval = calibrate_timer() * 2;
+
+                            if (interval >= min_interval) {
+                                pktburst = PKTBURST_PRECISION * 1;
+                            } else if (interval == 0) {
+                                pktburst = PKTBURST_PRECISION * min_interval * kbps / 8000 / pktsize;
+                                interval = min_interval;
+                            } else {
+                                pktburst = PKTBURST_PRECISION * min_interval / interval;
+                                interval = min_interval;
+                            }
+
+                            if (bufsize == 0) {
+                                bufsize = pktsize * (pktburst / PKTBURST_PRECISION + 1) * 2;
+                            }
+
+                            if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize, sizeof(bufsize)) == -1) {
+                                fprintf(stderr, "bwping6: setsockopt(SO_RCVBUF, %u) failed: %s\n", bufsize, strerror(errno));
+                            }
+                            if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize)) == -1) {
+                                fprintf(stderr, "bwping6: setsockopt(SO_SNDBUF, %u) failed: %s\n", bufsize, strerror(errno));
+                            }
 
 #ifdef IPV6_TCLASS
-                        if (setsockopt(sock, IPPROTO_IPV6, IPV6_TCLASS, (char *)&tclass, sizeof(tclass)) == -1) {
-                            fprintf(stderr, "bwping6: setsockopt(IPV6_TCLASS, %u) failed: %s\n", tclass, strerror(errno));
-                        }
+                            if (setsockopt(sock, IPPROTO_IPV6, IPV6_TCLASS, (char *)&tclass, sizeof(tclass)) == -1) {
+                                fprintf(stderr, "bwping6: setsockopt(IPV6_TCLASS, %u) failed: %s\n", tclass, strerror(errno));
+                            }
 #endif
 
-                        gettimeofday(&begin,  NULL);
-                        gettimeofday(&end,    NULL);
-                        gettimeofday(&report, NULL);
+                            gettimeofday(&begin,  NULL);
+                            gettimeofday(&end,    NULL);
+                            gettimeofday(&report, NULL);
 
-                        current_interval = interval;
-                        pktburst_error   = 0;
-                        interval_error   = 0;
+                            current_interval = interval;
+                            pktburst_error   = 0;
+                            interval_error   = 0;
 
-                        while (!finish) {
-                            gettimeofday(&start, NULL);
+                            while (!finish) {
+                                gettimeofday(&start, NULL);
 
-                            for (i = 0; i < pktburst / PKTBURST_PRECISION + pktburst_error / PKTBURST_PRECISION; i++) {
-                                if (pktsize * transmitted_number < volume) {
-                                    send_ping(sock, &to6, pktsize, ident, !i, &transmitted_number);
-                                }
-                            }
-
-                            if (pktburst_error >= PKTBURST_PRECISION) {
-                                pktburst_error = pktburst_error % PKTBURST_PRECISION;
-                            }
-
-                            pktburst_error = pktburst_error + pktburst % PKTBURST_PRECISION;
-
-                            while (1) {
-                                FD_ZERO(&fds);
-                                FD_SET(sock, &fds);
-
-                                seltimeout.tv_sec  = current_interval / 1000000;
-                                seltimeout.tv_usec = current_interval % 1000000;
-
-                                n = select(sock + 1, &fds, NULL, NULL, &seltimeout);
-
-                                gettimeofday(&now, NULL);
-
-                                if (n > 0) {
-                                    while (recv_ping(sock, ident, &received_number, &received_volume)) {
-                                        if (received_number >= transmitted_number) {
-                                            break;
-                                        }
+                                for (i = 0; i < pktburst / PKTBURST_PRECISION + pktburst_error / PKTBURST_PRECISION; i++) {
+                                    if (pktsize * transmitted_number < volume) {
+                                        send_ping(sock, &to6, pktsize, ident, !i, &transmitted_number);
                                     }
                                 }
-                                if (tvsub(&now, &start) >= current_interval) {
-                                    if (pktsize * transmitted_number >= volume) {
-                                        finish = 1;
-                                    } else {
-                                        interval_error += tvsub(&now, &start) - current_interval;
 
-                                        if (interval_error >= interval / 2) {
-                                            current_interval = interval / 2;
-                                            interval_error   = interval_error - interval / 2;
+                                if (pktburst_error >= PKTBURST_PRECISION) {
+                                    pktburst_error = pktburst_error % PKTBURST_PRECISION;
+                                }
+
+                                pktburst_error = pktburst_error + pktburst % PKTBURST_PRECISION;
+
+                                while (1) {
+                                    FD_ZERO(&fds);
+                                    FD_SET(sock, &fds);
+
+                                    seltimeout.tv_sec  = current_interval / 1000000;
+                                    seltimeout.tv_usec = current_interval % 1000000;
+
+                                    n = select(sock + 1, &fds, NULL, NULL, &seltimeout);
+
+                                    gettimeofday(&now, NULL);
+
+                                    if (n > 0) {
+                                        while (recv_ping(sock, ident, &received_number, &received_volume)) {
+                                            if (received_number >= transmitted_number) {
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (tvsub(&now, &start) >= current_interval) {
+                                        if (pktsize * transmitted_number >= volume) {
+                                            finish = 1;
                                         } else {
-                                            current_interval = interval;
+                                            interval_error += tvsub(&now, &start) - current_interval;
+
+                                            if (interval_error >= interval / 2) {
+                                                current_interval = interval / 2;
+                                                interval_error   = interval_error - interval / 2;
+                                            } else {
+                                                current_interval = interval;
+                                            }
                                         }
+                                        break;
                                     }
-                                    break;
+                                }
+
+                                gettimeofday(&end, NULL);
+
+                                if (rperiod != 0 && end.tv_sec - report.tv_sec >= rperiod) {
+                                    printf("Periodic: pkts sent/rcvd: %u/%u, volume rcvd: %lu bytes, time: %d sec, speed: %lu kbps, rtt min/max/average: %llu/%llu/%llu ms\n",
+                                           transmitted_number, received_number, received_volume, (int)(end.tv_sec - begin.tv_sec),
+                                           end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
+                                           min_rtt == DEF_MIN_RTT ? 0 : min_rtt, max_rtt, average_rtt);
+
+                                    gettimeofday(&report, NULL);
                                 }
                             }
 
-                            gettimeofday(&end, NULL);
-
-                            if (rperiod != 0 && end.tv_sec - report.tv_sec >= rperiod) {
-                                printf("Periodic: pkts sent/rcvd: %u/%u, volume rcvd: %lu bytes, time: %d sec, speed: %lu kbps, rtt min/max/average: %llu/%llu/%llu ms\n",
-                                       transmitted_number, received_number, received_volume, (int)(end.tv_sec - begin.tv_sec),
-                                       end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
-                                       min_rtt == DEF_MIN_RTT ? 0 : min_rtt, max_rtt, average_rtt);
-
-                                gettimeofday(&report, NULL);
-                            }
+                            printf("Total: pkts sent/rcvd: %u/%u, volume rcvd: %lu bytes, time: %d sec, speed: %lu kbps, rtt min/max/average: %llu/%llu/%llu ms\n",
+                                   transmitted_number, received_number, received_volume, (int)(end.tv_sec - begin.tv_sec),
+                                   end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
+                                   min_rtt == DEF_MIN_RTT ? 0 : min_rtt, max_rtt, average_rtt);
                         }
-
-                        printf("Total: pkts sent/rcvd: %u/%u, volume rcvd: %lu bytes, time: %d sec, speed: %lu kbps, rtt min/max/average: %llu/%llu/%llu ms\n",
-                               transmitted_number, received_number, received_volume, (int)(end.tv_sec - begin.tv_sec),
-                               end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
-                               min_rtt == DEF_MIN_RTT ? 0 : min_rtt, max_rtt, average_rtt);
                     }
                 }
+            } else {
+                fprintf(stderr, "Usage: bwping6 [-u bufsize] [-r reporting_period] [-T tclass] [-B bind_addr] -b kbps -s pktsize -v volume target\n");
             }
-        } else {
-            fprintf(stderr, "Usage: bwping6 [-u bufsize] [-r reporting_period] [-T tclass] [-B bind_addr] -b kbps -s pktsize -v volume target\n");
+
+            close(sock);
+
+            exit(exitval);
         }
-
-        close(sock);
-
-        exit(exitval);
     }
 }
