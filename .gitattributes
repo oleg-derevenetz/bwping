@@ -1,0 +1,4 @@
+configure linguist-vendored
+depcomp linguist-vendored
+install-sh linguist-vendored
+missing linguist-vendored
