@@ -245,7 +245,6 @@ int main (int argc, char **argv)
 
         exit(EX_OSERR);
     } else {
-        setuid(getuid());
         if (setuid(getuid()) == -1) {
             perror("bwping: setuid(getuid()) failed");
 
