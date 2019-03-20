@@ -1,4 +1,4 @@
 language: c
 
 script:
-  - ./configure && make
+  - ./configure && make && scan-build make
