@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/oleg-derevenetz/bwping.svg?branch=master)](https://travis-ci.com/oleg-derevenetz/bwping)
+[![Build Status](https://travis-ci.org/oleg-derevenetz/bwping.svg?branch=master)](https://travis-ci.org/oleg-derevenetz/bwping)
 
 ## NAME
 
