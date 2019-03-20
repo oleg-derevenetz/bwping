@@ -1,4 +1,6 @@
 language: c
 
 script:
-  - ./configure && make && scan-build make
+  - |
+    ./configure && make && make distclean &&
+    scan-build ./configure && scan-build --status-bugs make
