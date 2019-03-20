@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.org/oleg-derevenetz/bwping.svg?branch=master)](https://travis-ci.org/oleg-derevenetz/bwping)
-
 ## NAME
 
 bwping  and  bwping6  are tools to measure bandwidth and response times
@@ -80,7 +78,7 @@ Oleg Derevenetz <oleg.derevenetz@gmail.com>
 
 ## BUGS
 
-None known.
+[![Build Status](https://travis-ci.org/oleg-derevenetz/bwping.svg?branch=master)](https://travis-ci.org/oleg-derevenetz/bwping)
 
 ## RESTRICTIONS
 
