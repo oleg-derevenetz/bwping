@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.com/oleg-derevenetz/bwping.svg?branch=master)](https://travis-ci.com/oleg-derevenetz/bwping)
 
-# NAME
+## NAME
 
 bwping  and  bwping6  are tools to measure bandwidth and response times
 between two hosts using Internet Control Message Protocol  (ICMP)  echo
