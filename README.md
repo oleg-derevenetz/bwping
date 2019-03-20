@@ -7,7 +7,7 @@ between two hosts using Internet Control Message Protocol  (ICMP)  echo
 request/echo  reply  mechanism.  bwping deals with IPv4 networks, while
 bwping6 - with IPv6 networks.
 
-# SYNOPSIS
+## SYNOPSIS
 
 ```
 bwping [ -u bufsize ] [ -r reporting_period ] [ -T tos ]
@@ -19,7 +19,7 @@ bwping6 [ -u bufsize ] [ -r reporting_period ] [ -T tclass ]
         [ -B bind_addr] -b kbps -s pktsize -v volume target
 ```
 
-# OPTIONS
+## OPTIONS
 
 ```
 -u bufsize
@@ -74,15 +74,15 @@ Sets the packet size in bytes.
 
 Sets the volume to transfer in bytes.
 
-# AUTHORS
+## AUTHORS
 
 Oleg Derevenetz <oleg.derevenetz@gmail.com>
 
-# BUGS
+## BUGS
 
 None known.
 
-# RESTRICTIONS
+## RESTRICTIONS
 
 This  utility  uses  raw  sockets  to  deal  with  ICMP  messages,  so root
 privileges are required to run it.
