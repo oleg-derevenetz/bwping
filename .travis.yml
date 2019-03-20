@@ -2,6 +2,6 @@ language: c
 
 script:
   - |
-    ./configure && make && make distclean &&
-    scan-build ./configure &&
+    ./configure && make && make distclean && \
+    scan-build ./configure && \
     scan-build --status-bugs make
