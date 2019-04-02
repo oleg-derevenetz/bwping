@@ -148,9 +148,9 @@ static int recv_ping (int sock, int ident, unsigned int *received_number, unsign
     bzero(&msg, sizeof(msg));
 
     msg.msg_name    = (caddr_t)&from;
+    msg.msg_namelen = sizeof(from);
     msg.msg_iov     = &iov;
     msg.msg_iovlen  = 1;
-    msg.msg_namelen = sizeof(from);
 
     gettimeofday(&now, NULL);
 
