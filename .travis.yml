@@ -7,8 +7,17 @@ before_install:
 script:
   - |
     autoreconf --force && \
+    \
+    export CC=gcc && \
     ./configure && \
     make "CFLAGS=-Werror" && \
     make distclean && \
+    \
+    export CC=clang && \
+    ./configure && \
+    make "CFLAGS=-Werror" && \
+    make distclean && \
+    \
+    unset -v CC && \
     scan-build ./configure && \
     scan-build --status-bugs make "CFLAGS=-std=gnu99 -Werror"
