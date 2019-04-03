@@ -1,8 +1,8 @@
 AC_INIT([bwping], [1.11])
 AC_CONFIG_SRCDIR([ChangeLog])
 AM_INIT_AUTOMAKE
-AM_CONFIG_HEADER([config.h])
-AC_ARG_ENABLE([ipv6], AS_HELP_STRING([--disable-ipv6], [Disable IPv6]))
+AC_CONFIG_HEADERS([config.h])
+AC_ARG_ENABLE([ipv6], [AS_HELP_STRING([--disable-ipv6], [Disable IPv6])])
 AC_PROG_CC_C99
 if test "x$ac_cv_prog_cc_c99" = xno; then
     echo "C99-capable compiler is required for build"; exit -1
@@ -48,7 +48,12 @@ if test "x$ac_cv_func_getaddrinfo" = xno; then
 fi
 AC_MSG_CHECKING([for IPv6 support])
 AC_CACHE_VAL([ac_cv_ipv6],
-             AC_TRY_RUN([
+             [AC_RUN_IFELSE([AC_LANG_PROGRAM([
+/* Make sure the definitions for AF_INET6, struct sockaddr_in6 and
+ * struct icmp6_hdr are defined, and that we can actually create an
+ * IPv6 socket.
+ */
+
 #include <stdlib.h>
 
 #include <sys/types.h>
@@ -65,27 +70,20 @@ AC_CACHE_VAL([ac_cv_ipv6],
 #include <netinet/ip.h>
 #include "cygwin.h"
 #endif
-
-/* Make sure the definitions for AF_INET6, struct sockaddr_in6 and
- * struct icmp6_hdr are defined, and that we can actually create an
- * IPv6 socket.
- */
-
-int main()
-{
-    int fd;
-    struct sockaddr_in6 foo;
-    struct icmp6_hdr bar;
-    fd = socket(AF_INET6, SOCK_STREAM, 0);
-    exit(fd >= 0 ? 0 : 1);
-}
-             ],
+             ], [
+int fd;
+struct sockaddr_in6 foo;
+struct icmp6_hdr bar;
+fd = socket(AF_INET6, SOCK_STREAM, 0);
+exit(fd >= 0 ? 0 : 1);
+             ])],
              [ac_cv_ipv6=yes],
              [ac_cv_ipv6=no],
-             [ac_cv_ipv6=no]))
+             [ac_cv_ipv6=no])])
 AC_MSG_RESULT([$ac_cv_ipv6])
 if test "x$ac_cv_ipv6" = xyes ; then
     AC_DEFINE([IPV6], [1], [Define to 1 if your system supports IPV6.])
 fi
 AM_CONDITIONAL([BUILDIPV6], [test "x$enable_ipv6" != "xno" -a $ac_cv_ipv6 = yes])
-AC_OUTPUT([Makefile])
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
