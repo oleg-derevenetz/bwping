@@ -6,6 +6,7 @@ before_install:
 
 script:
   - |
+    autoreconf --force && \
     ./configure && \
     make "CFLAGS=-Werror" && \
     make distclean && \
