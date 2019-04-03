@@ -312,7 +312,7 @@ top_srcdir = @top_srcdir@
 @BUILDIPV6_TRUE@bwping6_SOURCES = bwping6.c
 @BUILDIPV6_FALSE@man_MANS = bwping.8
 @BUILDIPV6_TRUE@man_MANS = bwping.8 bwping6.8
-AM_CFLAGS = -std=gnu99 -Wall -Wextra -Wpedantic
+AM_CFLAGS = -Wall -Wextra -Wpedantic
 EXTRA_DIST = $(man_MANS)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
