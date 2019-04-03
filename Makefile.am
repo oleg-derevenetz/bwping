@@ -8,5 +8,5 @@ sbin_PROGRAMS	= bwping
 bwping_SOURCES	= bwping.c
 man_MANS	= bwping.8
 endif
-AM_CFLAGS	= -Wall
+AM_CFLAGS	= -Wall -Wextra -Wpedantic
 EXTRA_DIST	= $(man_MANS)

@@ -51,7 +51,7 @@ static long long int tvsub (struct timeval *t1, struct timeval *t2)
     }
 }
 
-static unsigned short int cksum (unsigned short *addr, int len)
+static unsigned short int cksum (unsigned short int *addr, int len)
 {
     int                nleft, sum;
     unsigned short int *w, answer;
@@ -79,7 +79,7 @@ static unsigned short int cksum (unsigned short *addr, int len)
     sum   += (sum >> 16);
     answer = ~sum;
 
-    return(answer);
+    return answer;
 }
 
 static unsigned long long int calibrate_timer (void)
@@ -141,7 +141,7 @@ static void send_ping (int sock, struct sockaddr_in *to, unsigned long int pktsi
 
     size = pktsize - sizeof(struct ip);
 
-    icmp->icmp_cksum = cksum((u_short *)icmp, size);
+    icmp->icmp_cksum = cksum((unsigned short int *)icmp, size);
 
     res = sendto(sock, (char *)packet, size, 0, (struct sockaddr *)to, sizeof(*to));
 
@@ -344,7 +344,7 @@ int main (int argc, char **argv)
                             if (!hp) {
                                 fprintf(stderr, "bwping: cannot resolve %s: %s\n", bind_addr, hstrerror(h_errno));
                                 exitval = EX_SOFTWARE;
-                            } else if ((unsigned)hp->h_length != sizeof(bind_to.sin_addr)) {
+                            } else if ((unsigned int)hp->h_length != sizeof(bind_to.sin_addr)) {
                                 fprintf(stderr, "bwping: gethostbyname() returned an illegal address\n");
                                 exitval = EX_SOFTWARE;
                             } else {
@@ -376,7 +376,7 @@ int main (int argc, char **argv)
                             if (!hp) {
                                 fprintf(stderr, "bwping: cannot resolve %s: %s\n", target, hstrerror(h_errno));
                                 exitval = EX_SOFTWARE;
-                            } else if ((unsigned)hp->h_length != sizeof(to.sin_addr)) {
+                            } else if ((unsigned int)hp->h_length != sizeof(to.sin_addr)) {
                                 fprintf(stderr, "bwping: gethostbyname() returned an illegal address\n");
                                 exitval = EX_SOFTWARE;
                             } else {
