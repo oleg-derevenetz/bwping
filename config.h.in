@@ -39,7 +39,7 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* "check if system supports IPV6" */
+/* Check if system supports IPV6 */
 #undef IPV6
 
 /* Name of package */
