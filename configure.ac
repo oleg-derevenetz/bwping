@@ -70,16 +70,16 @@ AC_CACHE_VAL([ac_cv_ipv6],
 #include <netinet/ip.h>
 #include "cygwin.h"
 #endif
-             ], [
-int fd;
-struct sockaddr_in6 foo;
-struct icmp6_hdr bar;
-fd = socket(AF_INET6, SOCK_STREAM, 0);
-exit(fd >= 0 ? 0 : 1);
-             ])],
-             [ac_cv_ipv6=yes],
-             [ac_cv_ipv6=no],
-             [ac_cv_ipv6=no])])
+    ], [
+        int fd;
+        struct sockaddr_in6 foo;
+        struct icmp6_hdr bar;
+        fd = socket(AF_INET6, SOCK_STREAM, 0);
+        exit(fd >= 0 ? 0 : 1);
+    ])],
+    [ac_cv_ipv6=yes],
+    [ac_cv_ipv6=no],
+    [ac_cv_ipv6=no])])
 AC_MSG_RESULT([$ac_cv_ipv6])
 if test "x$ac_cv_ipv6" = xyes ; then
     AC_DEFINE([IPV6], [1], [Define to 1 if your system supports IPV6.])
