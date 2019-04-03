@@ -5,7 +5,7 @@ AM_CONFIG_HEADER([config.h])
 AC_ARG_ENABLE([ipv6], AS_HELP_STRING([--disable-ipv6], [Disable IPv6]))
 AC_PROG_CC
 AC_PROG_INSTALL
-AC_CHECK_HEADERS_ONCE([unistd.h stdlib.h netinet/icmp6.h])
+AC_CHECK_HEADERS_ONCE([netinet/icmp6.h])
 AC_CHECK_MEMBER([struct sockaddr_in.sin_len],
                 [AC_DEFINE(HAVE_SOCKADDR_IN_SIN_LEN, 1, [Do we have sockaddr_in.sin_len?])],
                 [],

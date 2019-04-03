@@ -2040,8 +2040,6 @@ $as_echo "$as_me: creating cache $cache_file" >&6;}
   >$cache_file
 fi
 
-as_fn_append ac_header_list " unistd.h"
-as_fn_append ac_header_list " stdlib.h"
 as_fn_append ac_header_list " netinet/icmp6.h"
 # Check that the precious variables saved in the cache have kept the same
 # value.
@@ -4181,10 +4179,6 @@ _ACEOF
 fi
 
 done
-
-
-
-
 
 
 
