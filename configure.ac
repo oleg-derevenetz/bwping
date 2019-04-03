@@ -49,6 +49,8 @@ fi
 AC_MSG_CHECKING([for IPv6 support])
 AC_CACHE_VAL([ac_cv_ipv6],
              AC_TRY_RUN([
+#include <stdlib.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -69,7 +71,7 @@ AC_CACHE_VAL([ac_cv_ipv6],
  * IPv6 socket.
  */
 
-main()
+int main()
 {
     int fd;
     struct sockaddr_in6 foo;

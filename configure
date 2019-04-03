@@ -4195,6 +4195,8 @@ fi
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
+#include <stdlib.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -4215,7 +4217,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
  * IPv6 socket.
  */
 
-main()
+int main()
 {
     int fd;
     struct sockaddr_in6 foo;
