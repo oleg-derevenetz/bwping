@@ -55,7 +55,14 @@ AC_CACHE_VAL([ac_cv_ipv6],
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip6.h>
+#ifdef HAVE_NETINET_ICMP6_H
 #include <netinet/icmp6.h>
+#endif
+
+#ifdef __CYGWIN__
+#include <netinet/ip.h>
+#include "cygwin.h"
+#endif
 
 /* Make sure the definitions for AF_INET6, struct sockaddr_in6 and
  * struct icmp6_hdr are defined, and that we can actually create an

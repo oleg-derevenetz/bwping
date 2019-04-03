@@ -30,6 +30,7 @@
 #endif
 
 #ifdef __CYGWIN__
+#include <netinet/ip.h>
 #include "cygwin.h"
 #endif
 
