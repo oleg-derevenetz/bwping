@@ -3860,7 +3860,7 @@ if test "x$ac_cv_prog_cc_c99" != xno; then :
 fi
 
 
-if test "x$ac_cv_prog_cc_c99" = xno; then
+if test "x$ac_cv_prog_cc_c99" = "xno"; then
     echo "C99-capable compiler is required for build"; exit -1
 fi
 
@@ -3897,7 +3897,7 @@ if test "x$ac_cv_func_socket" = xyes; then :
 
 fi
 
-if test "x$ac_cv_func_socket" = xno; then
+if test "x$ac_cv_func_socket" = "xno"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for socket in -lsocket" >&5
 $as_echo_n "checking for socket in -lsocket... " >&6; }
 if ${ac_cv_lib_socket_socket+:} false; then :
@@ -3951,7 +3951,7 @@ if test "x$ac_cv_func_inet_aton" = xyes; then :
 
 fi
 
-if test "x$ac_cv_func_inet_aton" = xno; then
+if test "x$ac_cv_func_inet_aton" = "xno"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for inet_aton in -lresolv" >&5
 $as_echo_n "checking for inet_aton in -lresolv... " >&6; }
 if ${ac_cv_lib_resolv_inet_aton+:} false; then :
@@ -4005,7 +4005,7 @@ if test "x$ac_cv_func_inet_ntop" = xyes; then :
 
 fi
 
-if test "x$ac_cv_func_inet_ntop" = xno; then
+if test "x$ac_cv_func_inet_ntop" = "xno"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for inet_ntop in -lresolv" >&5
 $as_echo_n "checking for inet_ntop in -lresolv... " >&6; }
 if ${ac_cv_lib_resolv_inet_ntop+:} false; then :
@@ -4059,7 +4059,7 @@ if test "x$ac_cv_func_gethostbyname" = xyes; then :
 
 fi
 
-if test "x$ac_cv_func_gethostbyname" = xno; then
+if test "x$ac_cv_func_gethostbyname" = "xno"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing gethostbyname" >&5
 $as_echo_n "checking for library containing gethostbyname... " >&6; }
 if ${ac_cv_search_gethostbyname+:} false; then :
@@ -4124,7 +4124,7 @@ if test "x$ac_cv_func_getaddrinfo" = xyes; then :
 
 fi
 
-if test "x$ac_cv_func_getaddrinfo" = xno; then
+if test "x$ac_cv_func_getaddrinfo" = "xno"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing getaddrinfo" >&5
 $as_echo_n "checking for library containing getaddrinfo... " >&6; }
 if ${ac_cv_search_getaddrinfo+:} false; then :
@@ -4244,12 +4244,12 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_ipv6" >&5
 $as_echo "$ac_cv_ipv6" >&6; }
-if test "x$ac_cv_ipv6" = xyes ; then
+if test "x$ac_cv_ipv6" = "xyes"; then
 
 $as_echo "#define IPV6 1" >>confdefs.h
 
 fi
- if test "x$enable_ipv6" != "xno" -a $ac_cv_ipv6 = yes; then
+ if test "x$enable_ipv6" != "xno" -a "x$ac_cv_ipv6" = "xyes"; then
   BUILDIPV6_TRUE=
   BUILDIPV6_FALSE='#'
 else
