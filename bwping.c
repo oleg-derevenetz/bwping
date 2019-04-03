@@ -339,7 +339,7 @@ int main(int argc, char **argv)
 
             if (exitval == EX_OK) {
                 if (pktsize < sizeof(struct ip) + ICMP_MINLEN + sizeof(struct tv32) || pktsize > IP_MAXPACKET) {
-                    fprintf(stderr, "bwping: invalid packet size, should be between %zu and %zu\n", sizeof(struct ip) + ICMP_MINLEN + sizeof(struct tv32), IP_MAXPACKET);
+                    fprintf(stderr, "bwping: invalid packet size, should be between %zu and %zu\n", sizeof(struct ip) + ICMP_MINLEN + sizeof(struct tv32), (size_t)IP_MAXPACKET);
                     exitval = EX_USAGE;
                 } else {
                     if (bind_addr != NULL) {

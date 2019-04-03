@@ -304,7 +304,7 @@ int main(int argc, char **argv)
 
             if (exitval == EX_OK) {
                 if (pktsize < sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32) || pktsize > IP6_MAXPACKET) {
-                    fprintf(stderr, "bwping6: invalid packet size, should be between %zu and %zu\n", sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32), IP6_MAXPACKET);
+                    fprintf(stderr, "bwping6: invalid packet size, should be between %zu and %zu\n", sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32), (size_t)IP6_MAXPACKET);
                     exitval = EX_USAGE;
                 } else {
                     if (bind_addr != NULL) {
