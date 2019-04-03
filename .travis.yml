@@ -1,5 +1,9 @@
 language: c
 
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y m4 autoconf automake
+
 script:
   - |
     ./configure && make && make distclean && \
