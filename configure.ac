@@ -28,23 +28,23 @@ AC_CHECK_MEMBER([struct sockaddr_in.sin_len],
                 ])
 AC_CHECK_FUNC([socket])
 if test "x$ac_cv_func_socket" = xno; then
-    AC_CHECK_LIB(socket, socket, [], [echo "socket() is required for build"; exit -1])
+    AC_CHECK_LIB([socket], [socket], [], [echo "socket() is required for build"; exit -1])
 fi
 AC_CHECK_FUNC([inet_aton])
 if test "x$ac_cv_func_inet_aton" = xno; then
-    AC_CHECK_LIB(resolv, inet_aton, [], [echo "inet_aton() is required for build"; exit -1])
+    AC_CHECK_LIB([resolv], [inet_aton], [], [echo "inet_aton() is required for build"; exit -1])
 fi
 AC_CHECK_FUNC([inet_ntop])
 if test "x$ac_cv_func_inet_ntop" = xno; then
-    AC_CHECK_LIB(resolv, inet_ntop, [], [echo "inet_ntop() is required for build"; exit -1])
+    AC_CHECK_LIB([resolv], [inet_ntop], [], [echo "inet_ntop() is required for build"; exit -1])
 fi
 AC_CHECK_FUNC([gethostbyname])
 if test "x$ac_cv_func_gethostbyname" = xno; then
-    AC_SEARCH_LIBS(gethostbyname, [nsl socket], [], [echo "gethostbyname() is required for build"; exit -1])
+    AC_SEARCH_LIBS([gethostbyname], [nsl socket], [], [echo "gethostbyname() is required for build"; exit -1])
 fi
 AC_CHECK_FUNC([getaddrinfo])
 if test "x$ac_cv_func_getaddrinfo" = xno; then
-    AC_SEARCH_LIBS(getaddrinfo, [nsl socket], [], [echo "getaddrinfo() is required for build"; exit -1])
+    AC_SEARCH_LIBS([getaddrinfo], [nsl socket], [], [echo "getaddrinfo() is required for build"; exit -1])
 fi
 AC_MSG_CHECKING([for IPv6 support])
 AC_CACHE_VAL([ac_cv_ipv6],
