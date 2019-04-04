@@ -28,8 +28,10 @@ script:
     elif [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
         pwd
         ls -l
-        CYGWIN_BUILD_DIR="C:\\tools\\cygwin\\home\\$USER\\build" && \
+        CYGWIN_BUILD_DIR="/c/tools/cygwin/home/$USER/build" && \
         mkdir "$CYGWIN_BUILD_DIR" && cp -PR * "$CYGWIN_BUILD_DIR"
+        ls -l
+        ls -l /c/tools/cygwin
         echo "$CYGWIN_BUILD_DIR" && cd "$CYGWIN_BUILD_DIR" && ls -l
         echo $CC
         echo OK
