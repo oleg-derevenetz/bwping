@@ -7,6 +7,15 @@ compiler:
 os:
   - linux
   - osx
+  - windows
+
+stages:
+  - name: test
+    if: os != windows
+  - name: cygwin
+    if: os = windows
+  - name: analysis
+    if: os = linux
 
 script:
   - autoreconf --force && ./configure && make "CFLAGS=-Werror"
