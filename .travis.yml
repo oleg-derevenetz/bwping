@@ -26,6 +26,9 @@ script:
         autoreconf --force && \
         ./configure && make "CFLAGS=-Werror"
     elif [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
+        cp -PR $TRAVIS_BUILD_DIR C:\\tools\\cygwin\\home\\$USER\\build
+        echo C:\\tools\\cygwin\\home\\$USER\\build
+        ls -l C:\\tools\\cygwin\\home\\$USER\\build
         echo $CC
         echo OK
     fi
