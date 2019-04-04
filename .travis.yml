@@ -8,14 +8,11 @@ os:
   - linux
   - osx
 
-stages:
-  - test
-  - analysis
+script:
+  - autoreconf --force && ./configure && make "CFLAGS=-Werror"
 
 jobs:
   include:
-    - stage: test
-      script: autoreconf --force && ./configure && make "CFLAGS=-Werror"
     - stage: analysis
       if: os = linux
       script: autoreconf --force && scan-build ./configure && scan-build --status-bugs make "CFLAGS=-std=gnu99 -Werror"
