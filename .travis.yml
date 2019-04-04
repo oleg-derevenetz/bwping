@@ -9,26 +9,13 @@ os:
   - osx
   - windows
 
-stages:
-  - name: test
-    if: os != windows
-  - name: cygwin
-    if: os = windows
-  - name: analysis
-    if: os = linux
-
 script:
-  - autoreconf --force && ./configure && make "CFLAGS=-Werror"
-
-jobs:
-  include:
-    - stage: cygwin
-      if: os = windows
-      install:
-        - choko install cygwin --params "/InstallDir:%LOCALAPPDATA% /NoStartMenu"
-      script:
-        - echo OK
-    - stage: analysis
-      if: os = linux
-      script:
-        - autoreconf --force && scan-build ./configure && scan-build --status-bugs make "CFLAGS=-std=gnu99 -Werror"
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        autoreconf --force && ./configure && make "CFLAGS=-Werror" && make distclean \
+        autoreconf --force && scan-build ./configure && scan-build --status-bugs make "CFLAGS=-std=gnu99 -Werror"
+    elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+        autoreconf --force && ./configure && make "CFLAGS=-Werror"
+    elif [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
+        echo OK
+    fi
