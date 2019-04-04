@@ -30,8 +30,8 @@ script:
         GIT_REPO_BRANCH="master"
 
         mkdir -p "$TRAVIS_BUILD_DIR/_CYGWIN_" && \
-        "C:\\tools\\cygwin\\bin\\bash.exe" -l -c "export CC=\"$CC\" && cd \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
-                                                  git clone --depth=50 --branch=\"$GIT_REPO_BRANCH\" \"$GIT_REPO_URL\" . && \
-                                                  autoreconf --force && \
-                                                  ./configure && make \"CFLAGS=-Werror\""
+        C:\\tools\\cygwin\\bin\\bash.exe -l -c "export CC=\"$CC\" && cd \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
+                                                git clone --depth=50 --branch=\"$GIT_REPO_BRANCH\" \"$GIT_REPO_URL\" . && \
+                                                autoreconf --force && \
+                                                ./configure && make \"CFLAGS=-Werror\""
     fi
