@@ -38,6 +38,10 @@ AC_CHECK_FUNC([inet_ntop])
 if test "$ac_cv_func_inet_ntop" = "no"; then
     AC_CHECK_LIB([resolv], [inet_ntop], [], [echo "inet_ntop() is required for build"; exit -1])
 fi
+AC_CHECK_FUNC([hstrerror])
+if test "$ac_cv_func_hstrerror" = "no"; then
+    AC_CHECK_LIB([resolv], [hstrerror], [], [echo "hstrerror() is required for build"; exit -1])
+fi
 AC_CHECK_FUNC([gethostbyname])
 if test "$ac_cv_func_gethostbyname" = "no"; then
     AC_SEARCH_LIBS([gethostbyname], [nsl socket], [], [echo "gethostbyname() is required for build"; exit -1])
