@@ -1,11 +1,5 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Define to 1 if you have the `resolv' library (-lresolv). */
-#undef HAVE_LIBRESOLV
-
-/* Define to 1 if you have the `socket' library (-lsocket). */
-#undef HAVE_LIBSOCKET
-
 /* Define to 1 if you have the <netinet/icmp6.h> header file. */
 #undef HAVE_NETINET_ICMP6_H
 

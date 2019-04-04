@@ -3898,13 +3898,12 @@ if test "x$ac_cv_func_socket" = xyes; then :
 fi
 
 if test "$ac_cv_func_socket" = "no"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for socket in -lsocket" >&5
-$as_echo_n "checking for socket in -lsocket... " >&6; }
-if ${ac_cv_lib_socket_socket+:} false; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing socket" >&5
+$as_echo_n "checking for library containing socket... " >&6; }
+if ${ac_cv_search_socket+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lsocket  $LIBS"
+  ac_func_search_save_LIBS=$LIBS
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -3923,23 +3922,35 @@ return socket ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_socket_socket=yes
-else
-  ac_cv_lib_socket_socket=no
+for ac_lib in '' socket; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_socket=$ac_res
 fi
 rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
+    conftest$ac_exeext
+  if ${ac_cv_search_socket+:} false; then :
+  break
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_socket_socket" >&5
-$as_echo "$ac_cv_lib_socket_socket" >&6; }
-if test "x$ac_cv_lib_socket_socket" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBSOCKET 1
-_ACEOF
+done
+if ${ac_cv_search_socket+:} false; then :
 
-  LIBS="-lsocket $LIBS"
+else
+  ac_cv_search_socket=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_socket" >&5
+$as_echo "$ac_cv_search_socket" >&6; }
+ac_res=$ac_cv_search_socket
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 else
   echo "socket() is required for build"; exit -1
@@ -3952,13 +3963,12 @@ if test "x$ac_cv_func_inet_aton" = xyes; then :
 fi
 
 if test "$ac_cv_func_inet_aton" = "no"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for inet_aton in -lresolv" >&5
-$as_echo_n "checking for inet_aton in -lresolv... " >&6; }
-if ${ac_cv_lib_resolv_inet_aton+:} false; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing inet_aton" >&5
+$as_echo_n "checking for library containing inet_aton... " >&6; }
+if ${ac_cv_search_inet_aton+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lresolv  $LIBS"
+  ac_func_search_save_LIBS=$LIBS
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -3977,23 +3987,35 @@ return inet_aton ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_resolv_inet_aton=yes
-else
-  ac_cv_lib_resolv_inet_aton=no
+for ac_lib in '' resolv nsl socket; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_inet_aton=$ac_res
 fi
 rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
+    conftest$ac_exeext
+  if ${ac_cv_search_inet_aton+:} false; then :
+  break
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_resolv_inet_aton" >&5
-$as_echo "$ac_cv_lib_resolv_inet_aton" >&6; }
-if test "x$ac_cv_lib_resolv_inet_aton" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBRESOLV 1
-_ACEOF
+done
+if ${ac_cv_search_inet_aton+:} false; then :
 
-  LIBS="-lresolv $LIBS"
+else
+  ac_cv_search_inet_aton=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_inet_aton" >&5
+$as_echo "$ac_cv_search_inet_aton" >&6; }
+ac_res=$ac_cv_search_inet_aton
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 else
   echo "inet_aton() is required for build"; exit -1
@@ -4006,13 +4028,12 @@ if test "x$ac_cv_func_inet_ntop" = xyes; then :
 fi
 
 if test "$ac_cv_func_inet_ntop" = "no"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for inet_ntop in -lresolv" >&5
-$as_echo_n "checking for inet_ntop in -lresolv... " >&6; }
-if ${ac_cv_lib_resolv_inet_ntop+:} false; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing inet_ntop" >&5
+$as_echo_n "checking for library containing inet_ntop... " >&6; }
+if ${ac_cv_search_inet_ntop+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lresolv  $LIBS"
+  ac_func_search_save_LIBS=$LIBS
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -4031,23 +4052,35 @@ return inet_ntop ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_resolv_inet_ntop=yes
-else
-  ac_cv_lib_resolv_inet_ntop=no
+for ac_lib in '' resolv nsl socket; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_inet_ntop=$ac_res
 fi
 rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
+    conftest$ac_exeext
+  if ${ac_cv_search_inet_ntop+:} false; then :
+  break
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_resolv_inet_ntop" >&5
-$as_echo "$ac_cv_lib_resolv_inet_ntop" >&6; }
-if test "x$ac_cv_lib_resolv_inet_ntop" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBRESOLV 1
-_ACEOF
+done
+if ${ac_cv_search_inet_ntop+:} false; then :
 
-  LIBS="-lresolv $LIBS"
+else
+  ac_cv_search_inet_ntop=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_inet_ntop" >&5
+$as_echo "$ac_cv_search_inet_ntop" >&6; }
+ac_res=$ac_cv_search_inet_ntop
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 else
   echo "inet_ntop() is required for build"; exit -1
@@ -4060,13 +4093,12 @@ if test "x$ac_cv_func_hstrerror" = xyes; then :
 fi
 
 if test "$ac_cv_func_hstrerror" = "no"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for hstrerror in -lresolv" >&5
-$as_echo_n "checking for hstrerror in -lresolv... " >&6; }
-if ${ac_cv_lib_resolv_hstrerror+:} false; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing hstrerror" >&5
+$as_echo_n "checking for library containing hstrerror... " >&6; }
+if ${ac_cv_search_hstrerror+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lresolv  $LIBS"
+  ac_func_search_save_LIBS=$LIBS
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -4085,23 +4117,35 @@ return hstrerror ();
   return 0;
 }
 _ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_resolv_hstrerror=yes
-else
-  ac_cv_lib_resolv_hstrerror=no
+for ac_lib in '' resolv nsl socket; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_hstrerror=$ac_res
 fi
 rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
+    conftest$ac_exeext
+  if ${ac_cv_search_hstrerror+:} false; then :
+  break
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_resolv_hstrerror" >&5
-$as_echo "$ac_cv_lib_resolv_hstrerror" >&6; }
-if test "x$ac_cv_lib_resolv_hstrerror" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBRESOLV 1
-_ACEOF
+done
+if ${ac_cv_search_hstrerror+:} false; then :
 
-  LIBS="-lresolv $LIBS"
+else
+  ac_cv_search_hstrerror=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_hstrerror" >&5
+$as_echo "$ac_cv_search_hstrerror" >&6; }
+ac_res=$ac_cv_search_hstrerror
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 else
   echo "hstrerror() is required for build"; exit -1
@@ -4138,7 +4182,7 @@ return gethostbyname ();
   return 0;
 }
 _ACEOF
-for ac_lib in '' nsl socket; do
+for ac_lib in '' resolv nsl socket; do
   if test -z "$ac_lib"; then
     ac_res="none required"
   else
@@ -4203,7 +4247,7 @@ return getaddrinfo ();
   return 0;
 }
 _ACEOF
-for ac_lib in '' nsl socket; do
+for ac_lib in '' resolv nsl socket; do
   if test -z "$ac_lib"; then
     ac_res="none required"
   else
