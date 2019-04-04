@@ -13,8 +13,7 @@ install:
   - |
     if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
         choco install cygwin cyg-get && \
-        export PATH=$PATH:C:/ProgramData/chocolatey/bin && hash -r && \
-        cyg-get perl m4 autoconf automake gcc-core clang git
+        C:\\ProgramData\\chocolatey\\bin\\cyg-get.bat perl m4 autoconf automake gcc-core clang git
     fi
 
 script:
@@ -27,5 +26,6 @@ script:
         autoreconf --force && \
         ./configure && make "CFLAGS=-Werror"
     elif [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
+        echo $CC
         echo OK
     fi
