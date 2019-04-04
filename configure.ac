@@ -4,7 +4,7 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 AC_ARG_ENABLE([ipv6], [AS_HELP_STRING([--disable-ipv6], [Disable IPv6])])
 AC_PROG_CC_C99
-if test "x$ac_cv_prog_cc_c99" = "xno"; then
+if test "$ac_cv_prog_cc_c99" = "no"; then
     echo "C99-capable compiler is required for build"; exit -1
 fi
 AC_PROG_INSTALL
@@ -27,23 +27,23 @@ AC_CHECK_MEMBER([struct sockaddr_in.sin_len],
 #include <netinet/in.h>
                 ])
 AC_CHECK_FUNC([socket])
-if test "x$ac_cv_func_socket" = "xno"; then
+if test "$ac_cv_func_socket" = "no"; then
     AC_CHECK_LIB([socket], [socket], [], [echo "socket() is required for build"; exit -1])
 fi
 AC_CHECK_FUNC([inet_aton])
-if test "x$ac_cv_func_inet_aton" = "xno"; then
+if test "$ac_cv_func_inet_aton" = "no"; then
     AC_CHECK_LIB([resolv], [inet_aton], [], [echo "inet_aton() is required for build"; exit -1])
 fi
 AC_CHECK_FUNC([inet_ntop])
-if test "x$ac_cv_func_inet_ntop" = "xno"; then
+if test "$ac_cv_func_inet_ntop" = "no"; then
     AC_CHECK_LIB([resolv], [inet_ntop], [], [echo "inet_ntop() is required for build"; exit -1])
 fi
 AC_CHECK_FUNC([gethostbyname])
-if test "x$ac_cv_func_gethostbyname" = "xno"; then
+if test "$ac_cv_func_gethostbyname" = "no"; then
     AC_SEARCH_LIBS([gethostbyname], [nsl socket], [], [echo "gethostbyname() is required for build"; exit -1])
 fi
 AC_CHECK_FUNC([getaddrinfo])
-if test "x$ac_cv_func_getaddrinfo" = "xno"; then
+if test "$ac_cv_func_getaddrinfo" = "no"; then
     AC_SEARCH_LIBS([getaddrinfo], [nsl socket], [], [echo "getaddrinfo() is required for build"; exit -1])
 fi
 AC_MSG_CHECKING([for IPv6 support])
@@ -81,9 +81,9 @@ AC_CACHE_VAL([ac_cv_ipv6],
     [ac_cv_ipv6=no],
     [ac_cv_ipv6=no])])
 AC_MSG_RESULT([$ac_cv_ipv6])
-if test "x$ac_cv_ipv6" = "xyes"; then
+if test "$ac_cv_ipv6" = "yes"; then
     AC_DEFINE([IPV6], [1], [Define to 1 if your system supports IPV6.])
 fi
-AM_CONDITIONAL([BUILDIPV6], [test "x$enable_ipv6" != "xno" -a "x$ac_cv_ipv6" = "xyes"])
+AM_CONDITIONAL([BUILDIPV6], [test "$enable_ipv6" != "no" -a "$ac_cv_ipv6" = "yes"])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
