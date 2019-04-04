@@ -451,8 +451,6 @@ int main(int argc, char **argv)
 
                                     n = select(sock + 1, &fds, NULL, NULL, &seltimeout);
 
-                                    gettimeofday(&now, NULL);
-
                                     if (n > 0) {
                                         while (recv_ping(sock, ident, &received_number, &received_volume)) {
                                             if (received_number >= transmitted_number) {
@@ -460,6 +458,9 @@ int main(int argc, char **argv)
                                             }
                                         }
                                     }
+
+                                    gettimeofday(&now, NULL);
+
                                     if (tvsub(&now, &start) >= current_interval) {
                                         if ((uint64_t)pktsize * transmitted_number >= volume) {
                                             finish = true;
