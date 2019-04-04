@@ -9,13 +9,13 @@ os:
   - osx
 
 stages:
-  - test
   - name: analysis
     if: os = linux
 
 jobs:
   include:
-    - stage: test
-      script: autoreconf --force && ./configure && make "CFLAGS=-Werror"
     - stage: analysis
       script: autoreconf --force && scan-build ./configure && scan-build --status-bugs make "CFLAGS=-std=gnu99 -Werror"
+
+script:
+  - autoreconf --force && ./configure && make "CFLAGS=-Werror"
