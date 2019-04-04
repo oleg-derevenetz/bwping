@@ -414,7 +414,7 @@ int main(int argc, char **argv)
 
 #ifdef IPV6_TCLASS
                             if (setsockopt(sock, IPPROTO_IPV6, IPV6_TCLASS, &tclass, sizeof(tclass)) == -1) {
-                                fprintf(stderr, "bwping6: setsockopt(IPV6_TCLASS, %" PRIu8 ") failed: %s\n", tclass, strerror(errno));
+                                fprintf(stderr, "bwping6: setsockopt(IPV6_TCLASS, %" PRIu32 ") failed: %s\n", tclass, strerror(errno));
                             }
 #endif
 
@@ -479,7 +479,7 @@ int main(int argc, char **argv)
                                 gettimeofday(&end, NULL);
 
                                 if (rperiod != 0 && end.tv_sec - report.tv_sec >= rperiod) {
-                                    printf("Periodic: pkts sent/rcvd: %" PRIu32 "/%" PRIu32 ", volume rcvd: %" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIi64 "/%" PRIi64 "/%" PRIi64 " ms\n",
+                                    printf("Periodic: pkts sent/rcvd: %" PRIu32 "/%" PRIu32 ", volume rcvd: %" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRId64 "/%" PRId64 "/%" PRId64 " ms\n",
                                            transmitted_number, received_number, received_volume, (long int)(end.tv_sec - begin.tv_sec),
                                            end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
                                            min_rtt == DEF_MIN_RTT ? 0 : min_rtt, max_rtt, average_rtt);
@@ -488,7 +488,7 @@ int main(int argc, char **argv)
                                 }
                             }
 
-                            printf("Total: pkts sent/rcvd: %" PRIu32 "/%" PRIu32 ", volume rcvd: %" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIi64 "/%" PRIi64 "/%" PRIi64 " ms\n",
+                            printf("Total: pkts sent/rcvd: %" PRIu32 "/%" PRIu32 ", volume rcvd: %" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRId64 "/%" PRId64 "/%" PRId64 " ms\n",
                                    transmitted_number, received_number, received_volume, (long int)(end.tv_sec - begin.tv_sec),
                                    end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
                                    min_rtt == DEF_MIN_RTT ? 0 : min_rtt, max_rtt, average_rtt);
