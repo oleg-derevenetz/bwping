@@ -12,7 +12,7 @@ os:
 install:
   - |
     if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
-        choco install cygwin cyg-get && \
+        choco install cygwin cyg-get && hash -r && \
         cyg-get perl m4 autoconf automake gcc-core clang git
     fi
 
