@@ -8,13 +8,9 @@ os:
   - linux
   - osx
 
-stages:
-  - name: analysis
-    if: os = linux
-
 jobs:
   include:
-    - stage: analysis
+    - if: os = linux
       script: autoreconf --force && scan-build ./configure && scan-build --status-bugs make "CFLAGS=-std=gnu99 -Werror"
 
 script:
