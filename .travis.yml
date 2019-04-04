@@ -29,9 +29,12 @@ script:
         pwd
         ls -l
         CYGWIN_BUILD_DIR="/c/tools/cygwin/home/$USER/build" && \
-        mkdir "$CYGWIN_BUILD_DIR" && cp -PR * "$CYGWIN_BUILD_DIR"
+        mkdir -p "$CYGWIN_BUILD_DIR" && cp -PR * "$CYGWIN_BUILD_DIR"
         ls -l
         ls -l /c/tools/cygwin
+        ls -l /c/tools/cygwin/home
+        ls -l /c/tools/cygwin/home/travis
+        ls -l /c/tools/cygwin/home/travis/build
         echo "$CYGWIN_BUILD_DIR" && cd "$CYGWIN_BUILD_DIR" && ls -l
         echo $CC
         echo OK
