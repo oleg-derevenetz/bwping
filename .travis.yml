@@ -26,12 +26,14 @@ script:
         autoreconf --force && \
         ./configure && make "CFLAGS=-Werror"
     elif [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
-        CYGWIN_DIR="C:\\tools\\cygwin"
-        CYGWIN_BUILD_DIR="$CYGWIN_DIR\\home\\$USER\\build"
+        CYGWIN_DIR="/c/tools/cygwin"
+        CYGWIN_BUILD_DIR="$CYGWIN_DIR/home/$USER/build"
+
+        ls -l
 
         mkdir -p "$CYGWIN_BUILD_DIR" && \
         cp -PR * "$CYGWIN_BUILD_DIR" && \
-        "$CYGWIN_DIR\\bin\\bash" -l -c "export CC=$CC && cd ~/build && pwd && ls -l && \
-                                        autoreconf --force && \
-                                        ./configure && make \"CFLAGS=-Werror\""
+        "$CYGWIN_DIR/bin/bash" -l -c "export CC=$CC && cd ~/build && pwd && ls -l && \
+                                      autoreconf --force && \
+                                      ./configure && make \"CFLAGS=-Werror\""
     fi
