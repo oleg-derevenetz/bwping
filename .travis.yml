@@ -13,7 +13,7 @@ install:
   - |
     if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
         choco install cygwin cyg-get && \
-        C:\\ProgramData\\chocolatey\\bin\\cyg-get.bat perl m4 autoconf automake gcc-core clang git
+        C:\\ProgramData\\chocolatey\\bin\\cyg-get.bat perl m4 autoconf automake gcc-core clang
     fi
 
 script:
@@ -26,11 +26,11 @@ script:
         autoreconf --force && \
         ./configure && make "CFLAGS=-Werror"
     elif [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
+        pwd
         ls -l
         CYGWIN_BUILD_DIR="C:\\tools\\cygwin\\home\\$USER\\build" && \
         mkdir "$CYGWIN_BUILD_DIR" && cp -PR * "$CYGWIN_BUILD_DIR"
-        echo "$CYGWIN_BUILD_DIR"
-        ls -l "$CYGWIN_BUILD_DIR"
+        echo "$CYGWIN_BUILD_DIR" && cd "$CYGWIN_BUILD_DIR" && ls -l
         echo $CC
         echo OK
     fi
