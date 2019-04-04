@@ -29,7 +29,7 @@ script:
         GIT_REPO_URL="https://github.com/oleg-derevenetz/bwping.git"
         GIT_REPO_BRANCH="master"
 
-        "C:\\tools\\cygwin\\bin\\bash.exe" -l -c "export CC=\"$CC\" && cd && pwd && ls -la && mkdir build && \
+        "C:\\tools\\cygwin\\bin\\bash.exe" -l -c "export CC=\"$CC\" && cd \"/home/$USER\" && pwd && ls -la && mkdir -p build && \
                                                   git clone --depth=50 --branch=\"$GIT_REPO_BRANCH\" \"$GIT_REPO_URL\" build && cd build && \
                                                   autoreconf --force && \
                                                   ./configure && make \"CFLAGS=-Werror\""
