@@ -12,10 +12,12 @@ os:
 script:
   - |
     if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-        autoreconf --force && ./configure && make "CFLAGS=-Werror" && make distclean \
-        autoreconf --force && scan-build ./configure && scan-build --status-bugs make "CFLAGS=-std=gnu99 -Werror"
+        autoreconf --force && \
+        ./configure && make "CFLAGS=-Werror" && make distclean && \
+        scan-build ./configure && scan-build --status-bugs make "CFLAGS=-std=gnu99 -Werror"
     elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-        autoreconf --force && ./configure && make "CFLAGS=-Werror"
+        autoreconf --force && \
+        ./configure && make "CFLAGS=-Werror"
     elif [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
         echo OK
     fi
