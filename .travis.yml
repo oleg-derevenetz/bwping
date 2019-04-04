@@ -31,7 +31,7 @@ script:
 
         mkdir -p "$CYGWIN_BUILD_DIR" && \
         cp -PR * "$CYGWIN_BUILD_DIR" && \
-        "$CYGWIN_DIR\\bin\\bash" -l -c "export CC=$CC && cd ~/build && \
+        "$CYGWIN_DIR\\bin\\bash" -l -c "export CC=$CC && cd ~/build && pwd && ls -l && \
                                         autoreconf --force && \
                                         ./configure && make \"CFLAGS=-Werror\""
     fi
