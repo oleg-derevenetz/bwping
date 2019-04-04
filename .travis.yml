@@ -1,23 +1,20 @@
 language: c
 
-before_install:
-  - sudo apt-get update
-  - sudo apt-get install -y autotools-dev autoconf automake
+compiler:
+  - gcc
+  - clang
+
+os:
+  - linux
+  - osx
 
 script:
   - |
     autoreconf --force && \
     \
-    export CC=gcc && \
     ./configure && \
     make "CFLAGS=-Werror" && \
     make distclean && \
     \
-    export CC=clang && \
-    ./configure && \
-    make "CFLAGS=-Werror" && \
-    make distclean && \
-    \
-    unset -v CC && \
     scan-build ./configure && \
     scan-build --status-bugs make "CFLAGS=-std=gnu99 -Werror"
