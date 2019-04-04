@@ -200,7 +200,8 @@ int main(int argc, char **argv)
 {
     bool                finish;
     int                 sock, exitval, ch, res, n;
-    size_t              pktsize, bufsize;
+    unsigned int        bufsize;
+    size_t              pktsize;
     uint16_t            ident;
     int32_t             rperiod;
     uint32_t            kbps, tclass, transmitted_number, received_number, pktburst, pktburst_error, i;
@@ -406,10 +407,10 @@ int main(int argc, char **argv)
                             }
 
                             if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &bufsize, sizeof(bufsize)) == -1) {
-                                fprintf(stderr, "bwping6: setsockopt(SO_RCVBUF, %zu) failed: %s\n", bufsize, strerror(errno));
+                                fprintf(stderr, "bwping6: setsockopt(SO_RCVBUF, %u) failed: %s\n", bufsize, strerror(errno));
                             }
                             if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &bufsize, sizeof(bufsize)) == -1) {
-                                fprintf(stderr, "bwping6: setsockopt(SO_SNDBUF, %zu) failed: %s\n", bufsize, strerror(errno));
+                                fprintf(stderr, "bwping6: setsockopt(SO_SNDBUF, %u) failed: %s\n", bufsize, strerror(errno));
                             }
 
 #ifdef IPV6_TCLASS
