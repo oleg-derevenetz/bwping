@@ -13,7 +13,7 @@ install:
   - |
     if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
         choco install cygwin cyg-get && \
-        C:\\ProgramData\\chocolatey\\bin\\cyg-get.bat autoconf automake make gcc-core clang git
+        C:\\ProgramData\\chocolatey\\bin\\cyg-get.bat autoconf automake make gcc-core clang clang-analyzer git
     fi
 
 script:
@@ -33,5 +33,6 @@ script:
         C:\\tools\\cygwin\\bin\\bash.exe -l -c "export CC=\"$CC\" && cd \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
                                                 git clone --depth=50 --branch=\"$GIT_REPO_BRANCH\" \"$GIT_REPO_URL\" . && \
                                                 autoreconf --force && \
-                                                ./configure && make \"CFLAGS=-Werror\""
+                                                ./configure && make \"CFLAGS=-Werror\" && make distclean && \
+                                                scan-build ./configure && scan-build --status-bugs make \"CFLAGS=-std=gnu99 -Werror\""
     fi
