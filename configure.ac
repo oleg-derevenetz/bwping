@@ -50,8 +50,40 @@ AC_CHECK_FUNC([getaddrinfo])
 if test "$ac_cv_func_getaddrinfo" = "no"; then
     AC_SEARCH_LIBS([getaddrinfo], [resolv nsl socket], [], [echo "getaddrinfo() is required for build"; exit -1])
 fi
+my_save_cflags="$CFLAGS"
+AC_MSG_CHECKING([whether the C compiler accepts -Wall...])
+CFLAGS="$CFLAGS -Wall"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
+                  [my_cv_wall=yes],
+                  [my_cv_wall=no])
+AC_MSG_RESULT([$my_cv_wall])
+CFLAGS="$my_save_cflags"
+AC_MSG_CHECKING([whether the C compiler accepts -Wextra...])
+CFLAGS="$CFLAGS -Wextra"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
+                  [my_cv_wextra=yes],
+                  [my_cv_wextra=no])
+AC_MSG_RESULT([$my_cv_wextra])
+CFLAGS="$my_save_cflags"
+AC_MSG_CHECKING([whether the C compiler accepts -Wpedantic...])
+CFLAGS="$CFLAGS -Wpedantic"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
+                  [my_cv_wpedantic=yes],
+                  [my_cv_wpedantic=no])
+AC_MSG_RESULT([$my_cv_wpedantic])
+CFLAGS="$my_save_cflags"
+if test "$my_cv_wall" = "yes"; then
+    AM_CFLAGS="$AM_CFLAGS -Wall"
+fi
+if test "$my_cv_wextra" = "yes"; then
+    AM_CFLAGS="$AM_CFLAGS -Wextra"
+fi
+if test "$my_cv_wpedantic" = "yes"; then
+    AM_CFLAGS="$AM_CFLAGS -Wpedantic"
+fi
+AC_SUBST([AM_CFLAGS])
 AC_MSG_CHECKING([for IPv6 support])
-AC_CACHE_VAL([ac_cv_ipv6],
+AC_CACHE_VAL([my_cv_ipv6],
              [AC_RUN_IFELSE([AC_LANG_PROGRAM([
 /* Make sure the definitions for AF_INET6, struct sockaddr_in6 and
  * struct icmp6_hdr are defined, and that we can actually create an
@@ -81,13 +113,13 @@ AC_CACHE_VAL([ac_cv_ipv6],
         fd = socket(AF_INET6, SOCK_STREAM, 0);
         exit(fd >= 0 ? 0 : 1);
     ])],
-    [ac_cv_ipv6=yes],
-    [ac_cv_ipv6=no],
-    [ac_cv_ipv6=no])])
-AC_MSG_RESULT([$ac_cv_ipv6])
-if test "$ac_cv_ipv6" = "yes"; then
+    [my_cv_ipv6=yes],
+    [my_cv_ipv6=no],
+    [my_cv_ipv6=no])])
+AC_MSG_RESULT([$my_cv_ipv6])
+if test "$my_cv_ipv6" = "yes"; then
     AC_DEFINE([IPV6], [1], [Define to 1 if your system supports IPV6.])
 fi
-AM_CONDITIONAL([BUILDIPV6], [test "$enable_ipv6" != "no" -a "$ac_cv_ipv6" = "yes"])
+AM_CONDITIONAL([BUILDIPV6], [test "$enable_ipv6" != "no" -a "$my_cv_ipv6" = "yes"])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

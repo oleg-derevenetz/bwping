@@ -588,6 +588,7 @@ LTLIBOBJS
 LIBOBJS
 BUILDIPV6_FALSE
 BUILDIPV6_TRUE
+AM_CFLAGS
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
 CCDEPMODE
@@ -4282,13 +4283,93 @@ else
 fi
 
 fi
+my_save_cflags="$CFLAGS"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler accepts -Wall..." >&5
+$as_echo_n "checking whether the C compiler accepts -Wall...... " >&6; }
+CFLAGS="$CFLAGS -Wall"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  my_cv_wall=yes
+else
+  my_cv_wall=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $my_cv_wall" >&5
+$as_echo "$my_cv_wall" >&6; }
+CFLAGS="$my_save_cflags"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler accepts -Wextra..." >&5
+$as_echo_n "checking whether the C compiler accepts -Wextra...... " >&6; }
+CFLAGS="$CFLAGS -Wextra"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  my_cv_wextra=yes
+else
+  my_cv_wextra=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $my_cv_wextra" >&5
+$as_echo "$my_cv_wextra" >&6; }
+CFLAGS="$my_save_cflags"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler accepts -Wpedantic..." >&5
+$as_echo_n "checking whether the C compiler accepts -Wpedantic...... " >&6; }
+CFLAGS="$CFLAGS -Wpedantic"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  my_cv_wpedantic=yes
+else
+  my_cv_wpedantic=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $my_cv_wpedantic" >&5
+$as_echo "$my_cv_wpedantic" >&6; }
+CFLAGS="$my_save_cflags"
+if test "$my_cv_wall" = "yes"; then
+    AM_CFLAGS="$AM_CFLAGS -Wall"
+fi
+if test "$my_cv_wextra" = "yes"; then
+    AM_CFLAGS="$AM_CFLAGS -Wextra"
+fi
+if test "$my_cv_wpedantic" = "yes"; then
+    AM_CFLAGS="$AM_CFLAGS -Wpedantic"
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for IPv6 support" >&5
 $as_echo_n "checking for IPv6 support... " >&6; }
-if ${ac_cv_ipv6+:} false; then :
+if ${my_cv_ipv6+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   if test "$cross_compiling" = yes; then :
-  ac_cv_ipv6=no
+  my_cv_ipv6=no
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -4330,9 +4411,9 @@ main ()
 }
 _ACEOF
 if ac_fn_c_try_run "$LINENO"; then :
-  ac_cv_ipv6=yes
+  my_cv_ipv6=yes
 else
-  ac_cv_ipv6=no
+  my_cv_ipv6=no
 fi
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
@@ -4340,14 +4421,14 @@ fi
 
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_ipv6" >&5
-$as_echo "$ac_cv_ipv6" >&6; }
-if test "$ac_cv_ipv6" = "yes"; then
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $my_cv_ipv6" >&5
+$as_echo "$my_cv_ipv6" >&6; }
+if test "$my_cv_ipv6" = "yes"; then
 
 $as_echo "#define IPV6 1" >>confdefs.h
 
 fi
- if test "$enable_ipv6" != "no" -a "$ac_cv_ipv6" = "yes"; then
+ if test "$enable_ipv6" != "no" -a "$my_cv_ipv6" = "yes"; then
   BUILDIPV6_TRUE=
   BUILDIPV6_FALSE='#'
 else
