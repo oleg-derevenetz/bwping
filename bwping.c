@@ -236,11 +236,11 @@ int main(int argc, char **argv)
 {
     bool               finish;
     int                sock, exitval, ch, n;
-    unsigned int       bufsize;
+    unsigned int       bufsize, tos;
     size_t             pktsize;
     uint16_t           ident;
     int32_t            rperiod;
-    uint32_t           kbps, tos, transmitted_number, received_number, pktburst, pktburst_error, i;
+    uint32_t           kbps, transmitted_number, received_number, pktburst, pktburst_error, i;
     int64_t            min_interval, interval, current_interval, interval_error;
     uint64_t           volume, received_volume;
     char              *ep,
@@ -263,11 +263,11 @@ int main(int argc, char **argv)
 
             exit(EX_OSERR);
         } else {
-            pktsize   = 0;
             bufsize   = 0;
+            tos       = 0;
+            pktsize   = 0;
             rperiod   = 0;
             kbps      = 0;
-            tos       = 0;
             volume    = 0;
             bind_addr = NULL;
 
@@ -439,7 +439,7 @@ int main(int argc, char **argv)
 
 #ifdef IP_TOS
                             if (setsockopt(sock, IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) == -1) {
-                                fprintf(stderr, "bwping: setsockopt(IP_TOS, %" PRIu32 ") failed: %s\n", tos, strerror(errno));
+                                fprintf(stderr, "bwping: setsockopt(IP_TOS, %u) failed: %s\n", tos, strerror(errno));
                             }
 #endif
 

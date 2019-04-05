@@ -200,11 +200,11 @@ int main(int argc, char **argv)
 {
     bool                finish;
     int                 sock, exitval, ch, res, n;
-    unsigned int        bufsize;
+    unsigned int        bufsize, tclass;
     size_t              pktsize;
     uint16_t            ident;
     int32_t             rperiod;
-    uint32_t            kbps, tclass, transmitted_number, received_number, pktburst, pktburst_error, i;
+    uint32_t            kbps, transmitted_number, received_number, pktburst, pktburst_error, i;
     int64_t             min_interval, interval, current_interval, interval_error;
     uint64_t            volume, received_volume;
     char               *ep,
@@ -229,11 +229,11 @@ int main(int argc, char **argv)
 
             exit(EX_OSERR);
         } else {
-            pktsize   = 0;
             bufsize   = 0;
+            tclass    = 0;
+            pktsize   = 0;
             rperiod   = 0;
             kbps      = 0;
-            tclass    = 0;
             volume    = 0;
             bind_addr = NULL;
 
@@ -415,7 +415,7 @@ int main(int argc, char **argv)
 
 #ifdef IPV6_TCLASS
                             if (setsockopt(sock, IPPROTO_IPV6, IPV6_TCLASS, &tclass, sizeof(tclass)) == -1) {
-                                fprintf(stderr, "bwping6: setsockopt(IPV6_TCLASS, %" PRIu32 ") failed: %s\n", tclass, strerror(errno));
+                                fprintf(stderr, "bwping6: setsockopt(IPV6_TCLASS, %u) failed: %s\n", tclass, strerror(errno));
                             }
 #endif
 
