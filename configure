@@ -3862,7 +3862,7 @@ fi
 
 
 if test "$ac_cv_prog_cc_c99" = "no"; then
-    echo "C99-capable compiler is required for build"; exit -1
+    as_fn_error $? "C99-capable compiler is required for build" "$LINENO" 5
 fi
 
 
@@ -3954,7 +3954,7 @@ if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 else
-  echo "socket() is required for build"; exit -1
+  as_fn_error $? "socket() is required for build" "$LINENO" 5
 fi
 
 fi
@@ -4019,7 +4019,7 @@ if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 else
-  echo "inet_aton() is required for build"; exit -1
+  as_fn_error $? "inet_aton() is required for build" "$LINENO" 5
 fi
 
 fi
@@ -4084,7 +4084,7 @@ if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 else
-  echo "inet_ntop() is required for build"; exit -1
+  as_fn_error $? "inet_ntop() is required for build" "$LINENO" 5
 fi
 
 fi
@@ -4149,7 +4149,7 @@ if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 else
-  echo "hstrerror() is required for build"; exit -1
+  as_fn_error $? "hstrerror() is required for build" "$LINENO" 5
 fi
 
 fi
@@ -4214,7 +4214,7 @@ if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 else
-  echo "gethostbyname() is required for build"; exit -1
+  as_fn_error $? "gethostbyname() is required for build" "$LINENO" 5
 fi
 
 fi
@@ -4279,7 +4279,7 @@ if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 else
-  echo "getaddrinfo() is required for build"; exit -1
+  as_fn_error $? "getaddrinfo() is required for build" "$LINENO" 5
 fi
 
 fi

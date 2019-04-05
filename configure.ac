@@ -6,7 +6,7 @@ AC_ARG_ENABLE([ipv6], [AS_HELP_STRING([--disable-ipv6], [Disable IPv6])])
 AC_PROG_CC
 AC_PROG_CC_C99
 if test "$ac_cv_prog_cc_c99" = "no"; then
-    echo "C99-capable compiler is required for build"; exit -1
+    AC_MSG_ERROR([C99-capable compiler is required for build])
 fi
 AC_PROG_INSTALL
 AC_CHECK_HEADER([netinet/icmp6.h],
@@ -29,27 +29,27 @@ AC_CHECK_MEMBER([struct sockaddr_in.sin_len],
                 ])
 AC_CHECK_FUNC([socket])
 if test "$ac_cv_func_socket" = "no"; then
-    AC_SEARCH_LIBS([socket], [socket], [], [echo "socket() is required for build"; exit -1])
+    AC_SEARCH_LIBS([socket], [socket], [], [AC_MSG_ERROR([socket() is required for build])])
 fi
 AC_CHECK_FUNC([inet_aton])
 if test "$ac_cv_func_inet_aton" = "no"; then
-    AC_SEARCH_LIBS([inet_aton], [resolv nsl socket], [], [echo "inet_aton() is required for build"; exit -1])
+    AC_SEARCH_LIBS([inet_aton], [resolv nsl socket], [], [AC_MSG_ERROR([inet_aton() is required for build])])
 fi
 AC_CHECK_FUNC([inet_ntop])
 if test "$ac_cv_func_inet_ntop" = "no"; then
-    AC_SEARCH_LIBS([inet_ntop], [resolv nsl socket], [], [echo "inet_ntop() is required for build"; exit -1])
+    AC_SEARCH_LIBS([inet_ntop], [resolv nsl socket], [], [AC_MSG_ERROR([inet_ntop() is required for build])])
 fi
 AC_CHECK_FUNC([hstrerror])
 if test "$ac_cv_func_hstrerror" = "no"; then
-    AC_SEARCH_LIBS([hstrerror], [resolv nsl socket], [], [echo "hstrerror() is required for build"; exit -1])
+    AC_SEARCH_LIBS([hstrerror], [resolv nsl socket], [], [AC_MSG_ERROR([hstrerror() is required for build])])
 fi
 AC_CHECK_FUNC([gethostbyname])
 if test "$ac_cv_func_gethostbyname" = "no"; then
-    AC_SEARCH_LIBS([gethostbyname], [resolv nsl socket], [], [echo "gethostbyname() is required for build"; exit -1])
+    AC_SEARCH_LIBS([gethostbyname], [resolv nsl socket], [], [AC_MSG_ERROR([gethostbyname() is required for build])])
 fi
 AC_CHECK_FUNC([getaddrinfo])
 if test "$ac_cv_func_getaddrinfo" = "no"; then
-    AC_SEARCH_LIBS([getaddrinfo], [resolv nsl socket], [], [echo "getaddrinfo() is required for build"; exit -1])
+    AC_SEARCH_LIBS([getaddrinfo], [resolv nsl socket], [], [AC_MSG_ERROR([getaddrinfo() is required for build])])
 fi
 my_save_cflags="$CFLAGS"
 AC_MSG_CHECKING([whether the C compiler accepts -Wall...])
