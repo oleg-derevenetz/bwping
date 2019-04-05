@@ -84,8 +84,7 @@ if test "$my_cv_wpedantic" = "yes"; then
 fi
 AC_SUBST([AM_CFLAGS])
 AC_MSG_CHECKING([for IPv6 support])
-AC_CACHE_VAL([my_cv_ipv6],
-             [AC_RUN_IFELSE([AC_LANG_PROGRAM([
+AC_RUN_IFELSE([AC_LANG_PROGRAM([
 /* Make sure the definitions for AF_INET6, struct sockaddr_in6 and
  * struct icmp6_hdr are defined, and that we can actually create an
  * IPv6 socket.
@@ -116,7 +115,7 @@ AC_CACHE_VAL([my_cv_ipv6],
     ])],
     [my_cv_ipv6=yes],
     [my_cv_ipv6=no],
-    [my_cv_ipv6=no])])
+    [my_cv_ipv6=no])
 AC_MSG_RESULT([$my_cv_ipv6])
 if test "$my_cv_ipv6" = "yes"; then
     AC_DEFINE([IPV6], [1], [Define to 1 if your system supports IPV6.])

@@ -4365,10 +4365,7 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for IPv6 support" >&5
 $as_echo_n "checking for IPv6 support... " >&6; }
-if ${my_cv_ipv6+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test "$cross_compiling" = yes; then :
+if test "$cross_compiling" = yes; then :
   my_cv_ipv6=no
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -4417,8 +4414,6 @@ else
 fi
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $my_cv_ipv6" >&5
