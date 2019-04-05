@@ -3,6 +3,7 @@ AC_CONFIG_SRCDIR([ChangeLog])
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 AC_ARG_ENABLE([ipv6], [AS_HELP_STRING([--disable-ipv6], [Disable IPv6])])
+AC_PROG_CC
 AC_PROG_CC_C99
 if test "$ac_cv_prog_cc_c99" = "no"; then
     echo "C99-capable compiler is required for build"; exit -1
