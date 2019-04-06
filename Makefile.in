@@ -86,8 +86,8 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-@BUILDIPV6_FALSE@sbin_PROGRAMS = bwping$(EXEEXT)
-@BUILDIPV6_TRUE@sbin_PROGRAMS = bwping$(EXEEXT) bwping6$(EXEEXT)
+@BUILD_IPV6_FALSE@sbin_PROGRAMS = bwping$(EXEEXT)
+@BUILD_IPV6_TRUE@sbin_PROGRAMS = bwping$(EXEEXT) bwping6$(EXEEXT)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -106,13 +106,13 @@ PROGRAMS = $(sbin_PROGRAMS)
 am__bwping_SOURCES_DIST = include/cygwin.h include/features.h \
 	src/bwping.c
 am__dirstamp = $(am__leading_dot)dirstamp
-@BUILDIPV6_FALSE@am_bwping_OBJECTS = src/bwping.$(OBJEXT)
-@BUILDIPV6_TRUE@am_bwping_OBJECTS = src/bwping.$(OBJEXT)
+@BUILD_IPV6_FALSE@am_bwping_OBJECTS = src/bwping.$(OBJEXT)
+@BUILD_IPV6_TRUE@am_bwping_OBJECTS = src/bwping.$(OBJEXT)
 bwping_OBJECTS = $(am_bwping_OBJECTS)
 bwping_LDADD = $(LDADD)
 am__bwping6_SOURCES_DIST = include/cygwin.h include/features.h \
 	src/bwping6.c
-@BUILDIPV6_TRUE@am_bwping6_OBJECTS = src/bwping6.$(OBJEXT)
+@BUILD_IPV6_TRUE@am_bwping6_OBJECTS = src/bwping6.$(OBJEXT)
 bwping6_OBJECTS = $(am_bwping6_OBJECTS)
 bwping6_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -309,11 +309,11 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = subdir-objects
-@BUILDIPV6_FALSE@bwping_SOURCES = include/cygwin.h include/features.h src/bwping.c
-@BUILDIPV6_TRUE@bwping_SOURCES = include/cygwin.h include/features.h src/bwping.c
-@BUILDIPV6_TRUE@bwping6_SOURCES = include/cygwin.h include/features.h src/bwping6.c
-@BUILDIPV6_FALSE@man_MANS = man/bwping.8
-@BUILDIPV6_TRUE@man_MANS = man/bwping.8 man/bwping6.8
+@BUILD_IPV6_FALSE@bwping_SOURCES = include/cygwin.h include/features.h src/bwping.c
+@BUILD_IPV6_TRUE@bwping_SOURCES = include/cygwin.h include/features.h src/bwping.c
+@BUILD_IPV6_TRUE@bwping6_SOURCES = include/cygwin.h include/features.h src/bwping6.c
+@BUILD_IPV6_FALSE@man_MANS = man/bwping.8
+@BUILD_IPV6_TRUE@man_MANS = man/bwping.8 man/bwping6.8
 EXTRA_DIST = $(man_MANS)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am

@@ -118,8 +118,8 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([
     [my_cv_ipv6=no])
 AC_MSG_RESULT([$my_cv_ipv6])
 if test "$my_cv_ipv6" = "yes"; then
-    AC_DEFINE([IPV6], [1], [Define to 1 if your system supports IPV6.])
+    AC_DEFINE([HAVE_IPV6], [1], [Define to 1 if your system supports IPV6.])
 fi
-AM_CONDITIONAL([BUILDIPV6], [test "$enable_ipv6" != "no" -a "$my_cv_ipv6" = "yes"])
+AM_CONDITIONAL([BUILD_IPV6], [test "$enable_ipv6" != "no" -a "$my_cv_ipv6" = "yes"])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

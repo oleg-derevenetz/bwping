@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = subdir-objects
-if BUILDIPV6
+if BUILD_IPV6
 sbin_PROGRAMS    = bwping bwping6
 bwping_SOURCES   = include/cygwin.h include/features.h src/bwping.c
 bwping6_SOURCES  = include/cygwin.h include/features.h src/bwping6.c

@@ -586,8 +586,8 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
-BUILDIPV6_FALSE
-BUILDIPV6_TRUE
+BUILD_IPV6_FALSE
+BUILD_IPV6_TRUE
 AM_CFLAGS
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
@@ -4420,15 +4420,15 @@ fi
 $as_echo "$my_cv_ipv6" >&6; }
 if test "$my_cv_ipv6" = "yes"; then
 
-$as_echo "#define IPV6 1" >>confdefs.h
+$as_echo "#define HAVE_IPV6 1" >>confdefs.h
 
 fi
  if test "$enable_ipv6" != "no" -a "$my_cv_ipv6" = "yes"; then
-  BUILDIPV6_TRUE=
-  BUILDIPV6_FALSE='#'
+  BUILD_IPV6_TRUE=
+  BUILD_IPV6_FALSE='#'
 else
-  BUILDIPV6_TRUE='#'
-  BUILDIPV6_FALSE=
+  BUILD_IPV6_TRUE='#'
+  BUILD_IPV6_FALSE=
 fi
 
 ac_config_files="$ac_config_files Makefile"
@@ -4566,8 +4566,8 @@ if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${BUILDIPV6_TRUE}" && test -z "${BUILDIPV6_FALSE}"; then
-  as_fn_error $? "conditional \"BUILDIPV6\" was never defined.
+if test -z "${BUILD_IPV6_TRUE}" && test -z "${BUILD_IPV6_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_IPV6\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
