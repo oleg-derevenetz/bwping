@@ -37,11 +37,15 @@ script:
             echo && \
             echo "--------------- MAKE CHECK ----------------" && \
             echo && \
-            sudo make check "TESTS=tests/bwping" && \
+            sudo -E make check "TESTS=tests/bwping" && \
+            echo && \
+            echo "------------- MAKE DISTCHECK --------------" && \
+            echo && \
+            sudo -E make distcheck "CC=$CC" "TESTS=tests/bwping" && \
             echo && \
             echo "------------- MAKE DISTCLEAN --------------" && \
             echo && \
-            sudo make distclean && \
+            sudo -E make distclean && \
             echo && \
             echo "---------- SCAN-BUILD CONFIGURE -----------" && \
             echo && \
@@ -68,7 +72,11 @@ script:
             echo && \
             echo "--------------- MAKE CHECK ----------------" && \
             echo && \
-            sudo make check "TESTS=tests/bwping"
+            sudo -E make check "TESTS=tests/bwping" && \
+            echo && \
+            echo "------------- MAKE DISTCHECK --------------" && \
+            echo && \
+            sudo -E make distcheck "CC=$CC" "TESTS=tests/bwping"
 
             STATUS=$?
         fi
@@ -113,7 +121,11 @@ script:
         echo && \
         echo "--------------- MAKE CHECK ----------------" && \
         echo && \
-        sudo make check
+        sudo -E make check && \
+        echo && \
+        echo "------------- MAKE DISTCHECK --------------" && \
+        echo && \
+        sudo -E make distcheck "CC=$CC"
 
         STATUS=$?
 
