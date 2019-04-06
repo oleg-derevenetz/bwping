@@ -1,7 +1,7 @@
 #ifndef FEATURES_H
 #define FEATURES_H
 
-/* GNU glibc */
+/* GNU libc */
 #define _DEFAULT_SOURCE
 
 /* Solaris */
