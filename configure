@@ -4411,7 +4411,7 @@ else
 
 #ifdef __CYGWIN__
 #include <netinet/ip.h>
-#include "cygwin.h"
+#include "include/cygwin.h"
 #endif
 
 int

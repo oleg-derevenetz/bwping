@@ -117,7 +117,7 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([
 
 #ifdef __CYGWIN__
 #include <netinet/ip.h>
-#include "cygwin.h"
+#include "include/cygwin.h"
 #endif
     ], [
         int fd;
