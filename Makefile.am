@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS   = subdir-objects
 dist_check_SCRIPTS = tests/bwping tests/bwping6
-EXTRA_DIST         = $(man_MANS)
+EXTRA_DIST         = man/bwping.8 man/bwping6.8
 if BUILD_IPV6
 sbin_PROGRAMS      = bwping bwping6
 bwping_SOURCES     = include/cygwin.h include/features.h src/bwping.c
