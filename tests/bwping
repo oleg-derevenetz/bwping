@@ -3,14 +3,14 @@
 OUTPUT="$(./bwping -u 10000 -r 1 -T 255 -B localhost -b 800 -s 500 -v 200000 localhost 2>&1)"
 STATUS=$?
 
+echo "$OUTPUT"
+
 if test "$STATUS" != "0"; then
-    echo "$OUTPUT"
     exit $STATUS
 else
     ISSUES=$(echo "$OUTPUT" | grep -v "^Target: " | grep -v "^Periodic: " | grep -v "^Total: ")
 
     if test "$ISSUES" != ""; then
-        echo "$OUTPUT"
         exit 1
     else
         exit 0
