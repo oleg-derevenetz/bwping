@@ -24,7 +24,7 @@ script:
         if [[ "$CC" == "clang" ]]; then
             autoreconf --force && \
             ./configure && make "CFLAGS=-Werror" && \
-            sudo make check && sudo make distcheck && \
+            sudo make check "TESTS=tests/bwping" && sudo make distcheck "TESTS=tests/bwping"
             sudo make distclean && \
             scan-build ./configure && scan-build --status-bugs make "CFLAGS=-std=gnu99 -Werror"
 
@@ -32,7 +32,7 @@ script:
         else
             autoreconf --force && \
             ./configure && make "CFLAGS=-Werror" && \
-            sudo make check && sudo make distcheck
+            sudo make check "TESTS=tests/bwping" && sudo make distcheck "TESTS=tests/bwping"
 
             STATUS=$?
         fi
