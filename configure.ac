@@ -2,6 +2,7 @@ AC_INIT([bwping], [1.11])
 AC_CONFIG_SRCDIR([ChangeLog])
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
+AC_ARG_ENABLE([warn], [AS_HELP_STRING([--disable-warn], [Disable additional warnings (-Wall -Wextra -Wpedantic)])])
 AC_ARG_ENABLE([ipv6], [AS_HELP_STRING([--disable-ipv6], [Disable IPv6])])
 AC_PROG_CC
 AC_PROG_CC_C99
@@ -73,13 +74,13 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
                   [my_cv_wpedantic=no])
 AC_MSG_RESULT([$my_cv_wpedantic])
 CFLAGS="$my_save_cflags"
-if test "$my_cv_wall" = "yes"; then
+if test "$enable_warn" != "no" -a "$my_cv_wall" = "yes"; then
     AM_CFLAGS="$AM_CFLAGS -Wall"
 fi
-if test "$my_cv_wextra" = "yes"; then
+if test "$enable_warn" != "no" -a "$my_cv_wextra" = "yes"; then
     AM_CFLAGS="$AM_CFLAGS -Wextra"
 fi
-if test "$my_cv_wpedantic" = "yes"; then
+if test "$enable_warn" != "no" -a "$my_cv_wpedantic" = "yes"; then
     AM_CFLAGS="$AM_CFLAGS -Wpedantic"
 fi
 AC_SUBST([AM_CFLAGS])

@@ -675,6 +675,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_silent_rules
+enable_warn
 enable_ipv6
 enable_dependency_tracking
 '
@@ -1302,6 +1303,8 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-silent-rules   less verbose build output (undo: "make V=1")
   --disable-silent-rules  verbose build output (undo: "make V=0")
+  --disable-warn          Disable additional warnings (-Wall -Wextra
+                          -Wpedantic)
   --disable-ipv6          Disable IPv6
   --enable-dependency-tracking
                           do not reject slow dependency extractors
@@ -2639,6 +2642,11 @@ END
 fi
 
 ac_config_headers="$ac_config_headers config.h"
+
+# Check whether --enable-warn was given.
+if test "${enable_warn+set}" = set; then :
+  enableval=$enable_warn;
+fi
 
 # Check whether --enable-ipv6 was given.
 if test "${enable_ipv6+set}" = set; then :
@@ -4353,13 +4361,13 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $my_cv_wpedantic" >&5
 $as_echo "$my_cv_wpedantic" >&6; }
 CFLAGS="$my_save_cflags"
-if test "$my_cv_wall" = "yes"; then
+if test "$enable_warn" != "no" -a "$my_cv_wall" = "yes"; then
     AM_CFLAGS="$AM_CFLAGS -Wall"
 fi
-if test "$my_cv_wextra" = "yes"; then
+if test "$enable_warn" != "no" -a "$my_cv_wextra" = "yes"; then
     AM_CFLAGS="$AM_CFLAGS -Wextra"
 fi
-if test "$my_cv_wpedantic" = "yes"; then
+if test "$enable_warn" != "no" -a "$my_cv_wpedantic" = "yes"; then
     AM_CFLAGS="$AM_CFLAGS -Wpedantic"
 fi
 
