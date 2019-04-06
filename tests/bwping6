@@ -5,7 +5,7 @@ STATUS=$?
 
 if [[ "$STATUS" != "0" ]]; then
     echo "$OUTPUT"
-    exit "$STATUS"
+    exit $STATUS
 elif [[ $(echo "$OUTPUT" | grep -v "^Target: " | grep -v "^Periodic: " | grep -v "^Total: ") != "" ]]; then
     echo "$OUTPUT"
     exit 1
