@@ -25,17 +25,13 @@ script:
             scan-build ./configure && scan-build --status-bugs make "CFLAGS=-std=gnu99 -Werror"
         else
             autoreconf --force && \
-            ./configure && make "CFLAGS=-Werror" && sudo make distcheck
-        fi
-        if [[ -f test-suite.log ]]; then
+            ./configure && make "CFLAGS=-Werror" && sudo make distcheck && \
             cat test-suite.log
         fi
     elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
         autoreconf --force && \
-        ./configure && make "CFLAGS=-Werror" && sudo make distcheck
-        if [[ -f test-suite.log ]]; then
-            cat test-suite.log
-        fi
+        ./configure && make "CFLAGS=-Werror" && sudo make distcheck && \
+        cat test-suite.log
     elif [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
         GIT_REPO_URL="https://github.com/oleg-derevenetz/bwping.git"
         GIT_REPO_BRANCH="master"
