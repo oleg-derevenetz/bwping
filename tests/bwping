@@ -1,0 +1,14 @@
+#!/bin/bash
+
+OUTPUT="$(./bwping -u 10000 -r 1 -T 255 -B localhost -b 800 -s 500 -v 200000 localhost 2>&1)"
+STATUS=$?
+
+if [[ "$STATUS" != "0" ]]; then
+    echo "$OUTPUT"
+    exit "$STATUS"
+elif [[ $(echo "$OUTPUT" | grep -v "^Target: " | grep -v "^Periodic: " | grep -v "^Total: ") != "" ]]; then
+    echo "$OUTPUT"
+    exit 1
+else
+    exit 0
+fi

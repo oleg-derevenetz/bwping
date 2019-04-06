@@ -1,12 +1,14 @@
-AUTOMAKE_OPTIONS = subdir-objects
+AUTOMAKE_OPTIONS   = subdir-objects
 if BUILD_IPV6
-sbin_PROGRAMS    = bwping bwping6
-bwping_SOURCES   = include/cygwin.h include/features.h src/bwping.c
-bwping6_SOURCES  = include/cygwin.h include/features.h src/bwping6.c
-man_MANS         = man/bwping.8 man/bwping6.8
+sbin_PROGRAMS      = bwping bwping6
+bwping_SOURCES     = include/cygwin.h include/features.h src/bwping.c
+bwping6_SOURCES    = include/cygwin.h include/features.h src/bwping6.c
+man_MANS           = man/bwping.8 man/bwping6.8
 else
-sbin_PROGRAMS    = bwping
-bwping_SOURCES   = include/cygwin.h include/features.h src/bwping.c
-man_MANS         = man/bwping.8
+sbin_PROGRAMS      = bwping
+bwping_SOURCES     = include/cygwin.h include/features.h src/bwping.c
+man_MANS           = man/bwping.8
 endif
-EXTRA_DIST       = $(man_MANS)
+dist_check_SCRIPTS = tests/bwping tests/bwping6
+TESTS              = tests/bwping tests/bwping6
+EXTRA_DIST         = $(man_MANS)
