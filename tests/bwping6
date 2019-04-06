@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 OUTPUT="$(./bwping6 -u 10000 -r 1 -T 255 -B localhost -b 800 -s 500 -v 200000 localhost 2>&1)"
 STATUS=$?
