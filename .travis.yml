@@ -19,20 +19,41 @@ install:
 script:
   - |
     if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        STATUS=1
+
         if [[ "$CC" == "clang" ]]; then
             autoreconf --force && \
-            ./configure && make "CFLAGS=-Werror" && sudo make distcheck && sudo make distclean && \
+            ./configure && make "CFLAGS=-Werror" && \
+            sudo make check && sudo make distcheck && \
+            sudo make distclean && \
             scan-build ./configure && scan-build --status-bugs make "CFLAGS=-std=gnu99 -Werror"
+
+            STATUS=$?
         else
             autoreconf --force && \
-            ./configure && make "CFLAGS=-Werror" && sudo make check && sudo make distcheck
+            ./configure && make "CFLAGS=-Werror" && \
+            sudo make check && sudo make distcheck
+
             STATUS=$?
-            cat test-suite.log
-            exit $STATUS
         fi
+
+        if [[ -f test-suite.log ]]; then
+            cat test-suite.log
+        fi
+
+        exit $STATUS
     elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
         autoreconf --force && \
-        ./configure && make "CFLAGS=-Werror" && sudo make distcheck
+        ./configure && make "CFLAGS=-Werror" && \
+        sudo make check && sudo make distcheck
+
+        STATUS=$?
+
+        if [[ -f test-suite.log ]]; then
+            cat test-suite.log
+        fi
+
+        exit $STATUS
     elif [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
         GIT_REPO_URL="https://github.com/oleg-derevenetz/bwping.git"
         GIT_REPO_BRANCH="master"
@@ -42,13 +63,16 @@ script:
             C:\\tools\\cygwin\\bin\\bash.exe -l -c "export CC=\"$CC\" && cd \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
                                                     git clone --depth=50 --branch=\"$GIT_REPO_BRANCH\" \"$GIT_REPO_URL\" . && \
                                                     autoreconf --force && \
-                                                    ./configure && make \"CFLAGS=-Werror\" && make distcheck && make distclean && \
+                                                    ./configure && make \"CFLAGS=-Werror\" && \
+                                                    make check && make distcheck && \
+                                                    make distclean && \
                                                     scan-build ./configure && scan-build --status-bugs make \"CFLAGS=-std=gnu99 -Werror\""
         else
             mkdir -p "$TRAVIS_BUILD_DIR/_CYGWIN_" && \
             C:\\tools\\cygwin\\bin\\bash.exe -l -c "export CC=\"$CC\" && cd \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
                                                     git clone --depth=50 --branch=\"$GIT_REPO_BRANCH\" \"$GIT_REPO_URL\" . && \
                                                     autoreconf --force && \
-                                                    ./configure && make \"CFLAGS=-Werror\" && make distcheck"
+                                                    ./configure && make \"CFLAGS=-Werror\" && \
+                                                    make check && make distcheck"
         fi
     fi
