@@ -37,6 +37,17 @@ script:
             STATUS=$?
         fi
 
+        if [[ -f config.log ]]; then
+            echo
+            echo "----------------------- BEGIN OF CONFIG.LOG -----------------------"
+            echo
+
+            cat config.log
+
+            echo
+            echo "------------------------ END OF CONFIG.LOG ------------------------"
+            echo
+        fi
         if [[ -f test-suite.log ]]; then
             echo
             echo "--------------------- BEGIN OF TEST-SUITE.LOG ---------------------"
@@ -57,6 +68,17 @@ script:
 
         STATUS=$?
 
+        if [[ -f config.log ]]; then
+            echo
+            echo "----------------------- BEGIN OF CONFIG.LOG -----------------------"
+            echo
+
+            cat config.log
+
+            echo
+            echo "------------------------ END OF CONFIG.LOG ------------------------"
+            echo
+        fi
         if [[ -f test-suite.log ]]; then
             echo
             echo "--------------------- BEGIN OF TEST-SUITE.LOG ---------------------"
@@ -74,6 +96,8 @@ script:
         GIT_REPO_URL="https://github.com/oleg-derevenetz/bwping.git"
         GIT_REPO_BRANCH="master"
 
+        STATUS=1
+
         if [[ "$CC" == "clang" ]]; then
             mkdir -p "$TRAVIS_BUILD_DIR/_CYGWIN_" && \
             C:\\tools\\cygwin\\bin\\bash.exe -l -c "export CC=\"$CC\" && cd \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
@@ -83,12 +107,41 @@ script:
                                                     make check && make distcheck && \
                                                     make distclean && \
                                                     scan-build ./configure && scan-build --status-bugs make \"CFLAGS=-std=gnu99 -Werror\""
+
+            STATUS=$?
         else
             mkdir -p "$TRAVIS_BUILD_DIR/_CYGWIN_" && \
             C:\\tools\\cygwin\\bin\\bash.exe -l -c "export CC=\"$CC\" && cd \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
                                                     git clone --depth=50 --branch=\"$GIT_REPO_BRANCH\" \"$GIT_REPO_URL\" . && \
                                                     autoreconf --force && \
                                                     ./configure && make \"CFLAGS=-Werror\" && \
-                                                    make check && make distcheck && cat config.log"
+                                                    make check && make distcheck"
+
+            STATUS=$?
         fi
+
+        if [[ -f "$TRAVIS_BUILD_DIR/_CYGWIN_/config.log" ]]; then
+            echo
+            echo "----------------------- BEGIN OF CONFIG.LOG -----------------------"
+            echo
+
+            cat "$TRAVIS_BUILD_DIR/_CYGWIN_/config.log"
+
+            echo
+            echo "------------------------ END OF CONFIG.LOG ------------------------"
+            echo
+        fi
+        if [[ -f "$TRAVIS_BUILD_DIR/_CYGWIN_/test-suite.log" ]]; then
+            echo
+            echo "--------------------- BEGIN OF TEST-SUITE.LOG ---------------------"
+            echo
+
+            cat "$TRAVIS_BUILD_DIR/_CYGWIN_/test-suite.log"
+
+            echo
+            echo "---------------------- END OF TEST-SUITE.LOG ----------------------"
+            echo
+        fi
+
+        exit $STATUS
     fi
