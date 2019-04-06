@@ -5,7 +5,6 @@
 #define _DEFAULT_SOURCE
 
 /* Solaris */
-#define _POSIX_C_SOURCE 200112L
 #define __EXTENSIONS__
 
 /* stdint.h, inttypes.h */
