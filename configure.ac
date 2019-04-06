@@ -119,6 +119,11 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([
 
 #include <netinet/ip.h>
 
+/* BEGIN OF INCLUDE/CYGWIN.H */
+
+#ifndef CYGWIN_H
+#define CYGWIN_H
+
 #ifndef ICMP_MINLEN
 #define ICMP_MINLEN 8
 #endif
@@ -223,6 +228,10 @@ struct icmp6_hdr {
 
 #define ICMP6_ECHO_REQUEST 128 /* echo service */
 #define ICMP6_ECHO_REPLY   129 /* echo reply */
+
+#endif /* CYGWIN_H */
+
+/* END OF INCLUDE/CYGWIN.H */
 
 #endif
     ], [
