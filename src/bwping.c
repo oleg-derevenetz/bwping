@@ -1,10 +1,8 @@
-#define _DEFAULT_SOURCE
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#define __STDC_FORMAT_MACROS
+#include "../include/features.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -30,7 +28,7 @@
 #include <netinet/ip_icmp.h>
 
 #ifdef __CYGWIN__
-#include "cygwin.h"
+#include "../include/cygwin.h"
 #endif
 
 #include <netdb.h>
