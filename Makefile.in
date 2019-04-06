@@ -485,14 +485,15 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = subdir-objects
+dist_check_SCRIPTS = tests/bwping tests/bwping6
+EXTRA_DIST = $(man_MANS)
 @BUILD_IPV6_FALSE@bwping_SOURCES = include/cygwin.h include/features.h src/bwping.c
 @BUILD_IPV6_TRUE@bwping_SOURCES = include/cygwin.h include/features.h src/bwping.c
 @BUILD_IPV6_TRUE@bwping6_SOURCES = include/cygwin.h include/features.h src/bwping6.c
 @BUILD_IPV6_FALSE@man_MANS = man/bwping.8
 @BUILD_IPV6_TRUE@man_MANS = man/bwping.8 man/bwping6.8
-dist_check_SCRIPTS = tests/bwping tests/bwping6
-TESTS = tests/bwping tests/bwping6
-EXTRA_DIST = $(man_MANS)
+@BUILD_IPV6_FALSE@TESTS = tests/bwping
+@BUILD_IPV6_TRUE@TESTS = tests/bwping tests/bwping6
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
