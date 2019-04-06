@@ -1,11 +1,12 @@
+AUTOMAKE_OPTIONS = subdir-objects
 if BUILDIPV6
-sbin_PROGRAMS   = bwping bwping6
-bwping_SOURCES  = bwping.c cygwin.h
-bwping6_SOURCES = bwping6.c cygwin.h
-man_MANS        = bwping.8 bwping6.8
+sbin_PROGRAMS    = bwping bwping6
+bwping_SOURCES   = include/cygwin.h include/features.h src/bwping.c
+bwping6_SOURCES  = include/cygwin.h include/features.h src/bwping6.c
+man_MANS         = man/bwping.8 man/bwping6.8
 else
-sbin_PROGRAMS   = bwping
-bwping_SOURCES  = bwping.c cygwin.h
-man_MANS        = bwping.8
+sbin_PROGRAMS    = bwping
+bwping_SOURCES   = include/cygwin.h include/features.h src/bwping.c
+man_MANS         = man/bwping.8
 endif
-EXTRA_DIST      = $(man_MANS)
+EXTRA_DIST       = $(man_MANS)

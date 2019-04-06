@@ -103,13 +103,16 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(man8dir)"
 PROGRAMS = $(sbin_PROGRAMS)
-am__bwping_SOURCES_DIST = bwping.c cygwin.h
-@BUILDIPV6_FALSE@am_bwping_OBJECTS = bwping.$(OBJEXT)
-@BUILDIPV6_TRUE@am_bwping_OBJECTS = bwping.$(OBJEXT)
+am__bwping_SOURCES_DIST = include/cygwin.h include/features.h \
+	src/bwping.c
+am__dirstamp = $(am__leading_dot)dirstamp
+@BUILDIPV6_FALSE@am_bwping_OBJECTS = src/bwping.$(OBJEXT)
+@BUILDIPV6_TRUE@am_bwping_OBJECTS = src/bwping.$(OBJEXT)
 bwping_OBJECTS = $(am_bwping_OBJECTS)
 bwping_LDADD = $(LDADD)
-am__bwping6_SOURCES_DIST = bwping6.c cygwin.h
-@BUILDIPV6_TRUE@am_bwping6_OBJECTS = bwping6.$(OBJEXT)
+am__bwping6_SOURCES_DIST = include/cygwin.h include/features.h \
+	src/bwping6.c
+@BUILDIPV6_TRUE@am_bwping6_OBJECTS = src/bwping6.$(OBJEXT)
 bwping6_OBJECTS = $(am_bwping6_OBJECTS)
 bwping6_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -127,7 +130,7 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/bwping.Po ./$(DEPDIR)/bwping6.Po
+am__depfiles_remade = src/$(DEPDIR)/bwping.Po src/$(DEPDIR)/bwping6.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -305,11 +308,12 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-@BUILDIPV6_FALSE@bwping_SOURCES = bwping.c cygwin.h
-@BUILDIPV6_TRUE@bwping_SOURCES = bwping.c cygwin.h
-@BUILDIPV6_TRUE@bwping6_SOURCES = bwping6.c cygwin.h
-@BUILDIPV6_FALSE@man_MANS = bwping.8
-@BUILDIPV6_TRUE@man_MANS = bwping.8 bwping6.8
+AUTOMAKE_OPTIONS = subdir-objects
+@BUILDIPV6_FALSE@bwping_SOURCES = include/cygwin.h include/features.h src/bwping.c
+@BUILDIPV6_TRUE@bwping_SOURCES = include/cygwin.h include/features.h src/bwping.c
+@BUILDIPV6_TRUE@bwping6_SOURCES = include/cygwin.h include/features.h src/bwping6.c
+@BUILDIPV6_FALSE@man_MANS = man/bwping.8
+@BUILDIPV6_TRUE@man_MANS = man/bwping.8 man/bwping6.8
 EXTRA_DIST = $(man_MANS)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -406,10 +410,20 @@ uninstall-sbinPROGRAMS:
 
 clean-sbinPROGRAMS:
 	-test -z "$(sbin_PROGRAMS)" || rm -f $(sbin_PROGRAMS)
+src/$(am__dirstamp):
+	@$(MKDIR_P) src
+	@: > src/$(am__dirstamp)
+src/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/$(DEPDIR)
+	@: > src/$(DEPDIR)/$(am__dirstamp)
+src/bwping.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 
 bwping$(EXEEXT): $(bwping_OBJECTS) $(bwping_DEPENDENCIES) $(EXTRA_bwping_DEPENDENCIES) 
 	@rm -f bwping$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(bwping_OBJECTS) $(bwping_LDADD) $(LIBS)
+src/bwping6.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 
 bwping6$(EXEEXT): $(bwping6_OBJECTS) $(bwping6_DEPENDENCIES) $(EXTRA_bwping6_DEPENDENCIES) 
 	@rm -f bwping6$(EXEEXT)
@@ -417,12 +431,13 @@ bwping6$(EXEEXT): $(bwping6_OBJECTS) $(bwping6_DEPENDENCIES) $(EXTRA_bwping6_DEP
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f src/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bwping.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bwping6.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bwping.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bwping6.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -431,15 +446,17 @@ $(am__depfiles_remade):
 am--depfiles: $(am__depfiles_remade)
 
 .c.o:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
@@ -745,6 +762,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f src/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -755,8 +774,8 @@ clean-am: clean-generic clean-sbinPROGRAMS mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-		-rm -f ./$(DEPDIR)/bwping.Po
-	-rm -f ./$(DEPDIR)/bwping6.Po
+		-rm -f src/$(DEPDIR)/bwping.Po
+	-rm -f src/$(DEPDIR)/bwping6.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-tags
@@ -804,8 +823,8 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-		-rm -f ./$(DEPDIR)/bwping.Po
-	-rm -f ./$(DEPDIR)/bwping6.Po
+		-rm -f src/$(DEPDIR)/bwping.Po
+	-rm -f src/$(DEPDIR)/bwping6.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
