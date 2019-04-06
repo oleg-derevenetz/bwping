@@ -89,6 +89,6 @@ script:
                                                     git clone --depth=50 --branch=\"$GIT_REPO_BRANCH\" \"$GIT_REPO_URL\" . && \
                                                     autoreconf --force && \
                                                     ./configure && make \"CFLAGS=-Werror\" && \
-                                                    make check && make distcheck"
+                                                    make check && make distcheck && cat config.log"
         fi
     fi
