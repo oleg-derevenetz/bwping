@@ -1,15 +1,22 @@
 AC_INIT([bwping], [1.11])
+
 AC_CONFIG_SRCDIR([ChangeLog])
-AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_FILES([Makefile])
+
+AM_INIT_AUTOMAKE
+
 AC_ARG_ENABLE([warn], [AS_HELP_STRING([--disable-warn], [Disable additional warnings (-Wall -Wextra -Wpedantic)])])
 AC_ARG_ENABLE([ipv6], [AS_HELP_STRING([--disable-ipv6], [Disable IPv6])])
+
 AC_PROG_CC
 AC_PROG_CC_C99
 if test "$ac_cv_prog_cc_c99" = "no"; then
     AC_MSG_ERROR([C99-capable compiler is required for build])
 fi
+
 AC_PROG_INSTALL
+
 AC_CHECK_HEADER([netinet/icmp6.h],
                 [AC_DEFINE([HAVE_NETINET_ICMP6_H], [1], [Define to 1 if you have the <netinet/icmp6.h> header file.])],
                 [],
@@ -20,6 +27,7 @@ AC_CHECK_HEADER([netinet/icmp6.h],
 #include <netinet/in_systm.h>
 #include <netinet/ip6.h>
                 ])
+
 AC_CHECK_MEMBER([struct sockaddr_in.sin_len],
                 [AC_DEFINE([HAVE_SOCKADDR_IN_SIN_LEN], [1], [Define to 1 if you have the sin_len member in struct sockaddr_in.])],
                 [],
@@ -28,6 +36,7 @@ AC_CHECK_MEMBER([struct sockaddr_in.sin_len],
 
 #include <netinet/in.h>
                 ])
+
 AC_CHECK_FUNC([socket])
 if test "$ac_cv_func_socket" = "no"; then
     AC_SEARCH_LIBS([socket], [socket], [], [AC_MSG_ERROR([socket() is required for build])])
@@ -52,6 +61,7 @@ AC_CHECK_FUNC([getaddrinfo])
 if test "$ac_cv_func_getaddrinfo" = "no"; then
     AC_SEARCH_LIBS([getaddrinfo], [resolv nsl socket], [], [AC_MSG_ERROR([getaddrinfo() is required for build])])
 fi
+
 my_save_cflags="$CFLAGS"
 AC_MSG_CHECKING([whether the C compiler accepts -Wall...])
 CFLAGS="$CFLAGS -Wall"
@@ -74,6 +84,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
                   [my_cv_wpedantic=no])
 AC_MSG_RESULT([$my_cv_wpedantic])
 CFLAGS="$my_save_cflags"
+
 if test "$enable_warn" != "no" -a "$my_cv_wall" = "yes"; then
     AM_CFLAGS="$AM_CFLAGS -Wall"
 fi
@@ -84,6 +95,7 @@ if test "$enable_warn" != "no" -a "$my_cv_wpedantic" = "yes"; then
     AM_CFLAGS="$AM_CFLAGS -Wpedantic"
 fi
 AC_SUBST([AM_CFLAGS])
+
 AC_MSG_CHECKING([for IPv6 support])
 AC_RUN_IFELSE([AC_LANG_PROGRAM([
 /* Make sure the definitions for AF_INET6, struct sockaddr_in6 and
@@ -118,9 +130,10 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([
     [my_cv_ipv6=no],
     [my_cv_ipv6=no])
 AC_MSG_RESULT([$my_cv_ipv6])
+
 if test "$my_cv_ipv6" = "yes"; then
     AC_DEFINE([HAVE_IPV6], [1], [Define to 1 if your system supports IPV6.])
 fi
 AM_CONDITIONAL([BUILD_IPV6], [test "$enable_ipv6" != "no" -a "$my_cv_ipv6" = "yes"])
-AC_CONFIG_FILES([Makefile])
+
 AC_OUTPUT

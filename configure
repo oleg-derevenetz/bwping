@@ -2033,6 +2033,12 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+
+ac_config_headers="$ac_config_headers config.h"
+
+ac_config_files="$ac_config_files Makefile"
+
+
 am__api_version='1.16'
 
 ac_aux_dir=
@@ -2641,7 +2647,6 @@ END
   fi
 fi
 
-ac_config_headers="$ac_config_headers config.h"
 
 # Check whether --enable-warn was given.
 if test "${enable_warn+set}" = set; then :
@@ -2652,6 +2657,7 @@ fi
 if test "${enable_ipv6+set}" = set; then :
   enableval=$enable_ipv6;
 fi
+
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -3874,6 +3880,8 @@ if test "$ac_cv_prog_cc_c99" = "no"; then
 fi
 
 
+
+
 ac_fn_c_check_header_compile "$LINENO" "netinet/icmp6.h" "ac_cv_header_netinet_icmp6_h" "
 #include <sys/types.h>
 
@@ -3889,6 +3897,7 @@ $as_echo "#define HAVE_NETINET_ICMP6_H 1" >>confdefs.h
 fi
 
 
+
 ac_fn_c_check_member "$LINENO" "struct sockaddr_in" "sin_len" "ac_cv_member_struct_sockaddr_in_sin_len" "
 #include <sys/types.h>
 
@@ -3900,6 +3909,7 @@ if test "x$ac_cv_member_struct_sockaddr_in_sin_len" = xyes; then :
 $as_echo "#define HAVE_SOCKADDR_IN_SIN_LEN 1" >>confdefs.h
 
 fi
+
 
 ac_fn_c_check_func "$LINENO" "socket" "ac_cv_func_socket"
 if test "x$ac_cv_func_socket" = xyes; then :
@@ -4291,6 +4301,7 @@ else
 fi
 
 fi
+
 my_save_cflags="$CFLAGS"
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler accepts -Wall..." >&5
 $as_echo_n "checking whether the C compiler accepts -Wall...... " >&6; }
@@ -4361,6 +4372,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $my_cv_wpedantic" >&5
 $as_echo "$my_cv_wpedantic" >&6; }
 CFLAGS="$my_save_cflags"
+
 if test "$enable_warn" != "no" -a "$my_cv_wall" = "yes"; then
     AM_CFLAGS="$AM_CFLAGS -Wall"
 fi
@@ -4370,6 +4382,7 @@ fi
 if test "$enable_warn" != "no" -a "$my_cv_wpedantic" = "yes"; then
     AM_CFLAGS="$AM_CFLAGS -Wpedantic"
 fi
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for IPv6 support" >&5
 $as_echo_n "checking for IPv6 support... " >&6; }
@@ -4426,6 +4439,7 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $my_cv_ipv6" >&5
 $as_echo "$my_cv_ipv6" >&6; }
+
 if test "$my_cv_ipv6" = "yes"; then
 
 $as_echo "#define HAVE_IPV6 1" >>confdefs.h
@@ -4439,7 +4453,6 @@ else
   BUILD_IPV6_FALSE=
 fi
 
-ac_config_files="$ac_config_files Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -5171,8 +5184,8 @@ for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
     "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
-    "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+    "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

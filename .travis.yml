@@ -38,7 +38,15 @@ script:
         fi
 
         if [[ -f test-suite.log ]]; then
+            echo
+            echo "--------------------- BEGIN OF TEST-SUITE.LOG ---------------------"
+            echo
+
             cat test-suite.log
+
+            echo
+            echo "---------------------- END OF TEST-SUITE.LOG ----------------------"
+            echo
         fi
 
         exit $STATUS
@@ -50,7 +58,15 @@ script:
         STATUS=$?
 
         if [[ -f test-suite.log ]]; then
+            echo
+            echo "--------------------- BEGIN OF TEST-SUITE.LOG ---------------------"
+            echo
+
             cat test-suite.log
+
+            echo
+            echo "---------------------- END OF TEST-SUITE.LOG ----------------------"
+            echo
         fi
 
         exit $STATUS
