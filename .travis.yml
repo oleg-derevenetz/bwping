@@ -12,7 +12,13 @@ os:
 install:
   - |
     if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
+        echo && \
+        echo "---- INSTALLATION OF CYGWIN AND CYG-GET ---" && \
+        echo && \
         choco install cygwin cyg-get && \
+        echo && \
+        echo "----- INSTALLATION OF CYGWIN PACKAGES -----" && \
+        echo && \
         C:\\ProgramData\\chocolatey\\bin\\cyg-get.bat autoconf automake make gcc-core clang clang-analyzer git
     fi
 
@@ -77,9 +83,7 @@ script:
             echo
             echo "----------- BEGIN OF CONFIG.LOG -----------"
             echo
-
             cat config.log
-
             echo
             echo "------------ END OF CONFIG.LOG ------------"
             echo
@@ -88,9 +92,7 @@ script:
             echo
             echo "--------- BEGIN OF TEST-SUITE.LOG ---------"
             echo
-
             cat test-suite.log
-
             echo
             echo "---------- END OF TEST-SUITE.LOG ----------"
             echo
@@ -121,9 +123,7 @@ script:
             echo
             echo "----------- BEGIN OF CONFIG.LOG -----------"
             echo
-
             cat config.log
-
             echo
             echo "------------ END OF CONFIG.LOG ------------"
             echo
@@ -132,9 +132,7 @@ script:
             echo
             echo "--------- BEGIN OF TEST-SUITE.LOG ---------"
             echo
-
             cat test-suite.log
-
             echo
             echo "---------- END OF TEST-SUITE.LOG ----------"
             echo
@@ -233,9 +231,7 @@ script:
             echo
             echo "----------- BEGIN OF CONFIG.LOG -----------"
             echo
-
             cat "$TRAVIS_BUILD_DIR/_CYGWIN_/config.log"
-
             echo
             echo "------------ END OF CONFIG.LOG ------------"
             echo
@@ -244,9 +240,7 @@ script:
             echo
             echo "--------- BEGIN OF TEST-SUITE.LOG ---------"
             echo
-
             cat "$TRAVIS_BUILD_DIR/_CYGWIN_/test-suite.log"
-
             echo
             echo "---------- END OF TEST-SUITE.LOG ----------"
             echo
