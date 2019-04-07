@@ -19,7 +19,10 @@ install:
         echo && \
         echo "----- INSTALLATION OF CYGWIN PACKAGES -----" && \
         echo && \
-        C:\\ProgramData\\chocolatey\\bin\\cyg-get.bat autoconf automake make gcc-core clang clang-analyzer git
+        C:\\ProgramData\\chocolatey\\bin\\cyg-get.bat autoconf automake make gcc-core clang clang-analyzer git && \
+        echo && \
+        echo "----------- END OF INSTALLATION -----------" && \
+        echo
     fi
 
 script:
