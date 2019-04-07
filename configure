@@ -4555,11 +4555,6 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $my_cv_ipv6" >&5
 $as_echo "$my_cv_ipv6" >&6; }
 
-if test "$my_cv_ipv6" = "yes"; then
-
-$as_echo "#define HAVE_IPV6 1" >>confdefs.h
-
-fi
  if test "$enable_ipv6" != "no" -a "$my_cv_ipv6" = "yes"; then
   BUILD_IPV6_TRUE=
   BUILD_IPV6_FALSE='#'

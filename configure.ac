@@ -246,9 +246,6 @@ struct icmp6_hdr {
     [my_cv_ipv6=no])
 AC_MSG_RESULT([$my_cv_ipv6])
 
-if test "$my_cv_ipv6" = "yes"; then
-    AC_DEFINE([HAVE_IPV6], [1], [Define to 1 if your system supports IPV6.])
-fi
 AM_CONDITIONAL([BUILD_IPV6], [test "$enable_ipv6" != "no" -a "$my_cv_ipv6" = "yes"])
 
 AC_OUTPUT
