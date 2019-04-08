@@ -37,7 +37,6 @@
 
 #define CALIBRATE_RETRIES  50
 #define IP6_MAXPACKET      65536
-#define IP6_PADDRBUF       512
 #define DEF_MIN_RTT        0xFFFFFFFF
 #define PKTBURST_PRECISION 1000
 
@@ -209,7 +208,7 @@ int main(int argc, char **argv)
     char               *ep,
                        *bind_addr,
                        *target,
-                        p_addr[IP6_PADDRBUF];
+                        p_addr[INET6_ADDRSTRLEN];
     fd_set              fds;
     struct sockaddr_in6 bind_to6, to6;
     struct addrinfo     hints,
