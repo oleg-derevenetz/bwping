@@ -101,8 +101,8 @@ static void send_ping(int sock, struct sockaddr_in6 *to6, size_t pktsize, uint16
     icmp6->icmp6_type  = ICMP6_ECHO_REQUEST;
     icmp6->icmp6_code  = 0;
     icmp6->icmp6_cksum = 0;
-    icmp6->icmp6_seq   = htons(*transmitted_number);
     icmp6->icmp6_id    = ident;
+    icmp6->icmp6_seq   = htons(*transmitted_number);
 
     gettimeofday(&now, NULL);
 

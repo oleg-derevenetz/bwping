@@ -128,8 +128,8 @@ static void send_ping(int sock, struct sockaddr_in *to, size_t pktsize, uint16_t
     icmp->icmp_type  = ICMP_ECHO;
     icmp->icmp_code  = 0;
     icmp->icmp_cksum = 0;
-    icmp->icmp_seq   = htons(*transmitted_number);
     icmp->icmp_id    = ident;
+    icmp->icmp_seq   = htons(*transmitted_number);
 
     gettimeofday(&now, NULL);
 
