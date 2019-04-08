@@ -95,7 +95,11 @@ script:
             echo && \
             echo "-------------- SONAR SCANNER --------------" && \
             echo && \
-            sonar-scanner
+            sonar-scanner -Dsonar.projectKey=oleg-derevenetz:bwping \
+                          -Dsonar.projectName=BWPing \
+                          -Dsonar.sources=. \
+                          -Dsonar.sourceEncoding=UTF-8 \
+                          -Dsonar.cfamily.build-wrapper-output=bw-output
 
             STATUS=$?
         fi
