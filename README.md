@@ -79,6 +79,7 @@ Oleg Derevenetz <oleg.derevenetz@gmail.com>
 ## BUGS
 
 [![Build Status](https://travis-ci.org/oleg-derevenetz/bwping.svg?branch=master)](https://travis-ci.org/oleg-derevenetz/bwping)
+[![Sonarcloud Status](https://sonarcloud.io/api/project_badges/measure?project=oleg-derevenetz%3Abwping&metric=alert_status)](https://sonarcloud.io/dashboard?id=oleg-derevenetz%3Abwping)
 
 ## RESTRICTIONS
 
