@@ -85,7 +85,11 @@ script:
             echo && \
             sudo make check "TESTS=tests/bwping" && \
             echo && \
-            echo "------------- SONAR SCANNER ---------------" && \
+            echo "-------------- SONAR WRAPPER --------------" && \
+            echo && \
+            build-wrapper-linux-x86-64 --out-dir bw-output make clean all && \
+            echo && \
+            echo "-------------- SONAR SCANNER --------------" && \
             echo && \
             sonar-scanner
 
