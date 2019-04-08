@@ -101,14 +101,13 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#include <netinet/ip.h>
 #include <netinet/ip6.h>
 #ifdef HAVE_NETINET_ICMP6_H
 #include <netinet/icmp6.h>
 #endif
 
 #ifdef __CYGWIN__
-
-#include <netinet/ip.h>
 
 /* BEGIN OF INCLUDE/CYGWIN.H */
 
