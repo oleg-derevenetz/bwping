@@ -9,6 +9,12 @@ os:
   - osx
   - windows
 
+addons:
+  sonarcloud:
+    organization: "oleg-derevenetz-github"
+    token:
+      secure: "vnCa3QBrkNTMtQw4NeU621RGI7lfiGGnzcj4I3wEzr6RpTQkAwgrAhBBrq/QMdAGzdoSH0JsLmth4bum3eJN/NeneYmomfsL66ILrpSKDRk2HFOk84ZXlMv+enaOG9wabo+Jc2GVJJ0yaaVCC/G65PlzGqV+24LtD26EnF3ukIOnL832OBL57uiUqnOgfXXKjKJ4YiqYjLqOGi2RGlNR7wDcKFqcPghu5AFvIgbLQMcw4ZSJ+hu8zQMKcJ+DWEYKbT08iFLE08iZMZpf5gIN9Ki6ZChGkbVex5BfqRQKuXVzZsmY4vhA3czXtNOqRcmPFQjKCjm1xQLdA+mEk2DntlkXx71/qz45pkCz9X8Wvdv6GdS0ktAgbVvO8nyZ+r0oJhTLgTr0ESg1tIjgRvZI2MZUShFo8J3EnlPDyrmfUseA1LmKLXEptHVGkuLeShPWhJVX1uz6Ldh7loukO5qfomIM1Vcc6fiAns2qTIYmOUhdoPgaQ5dVOs+MwRyqQZl0eEhmFzjHAHE8eL4HbiUbVM7cUvn9ziLk76fIwqU1wCblH4ebqcephqp6npLtthg0meKeam6VEwSnONkvqc1/eAc9z+r3nQCUC+krPNJbohC7OTszBiRb6LHjEyHReiIkksz9aMYSZui3CtLIK2qjn0hnE1d/olHuNCZ/tYWtmNA="
+
 install:
   - |
     if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
@@ -77,7 +83,11 @@ script:
             echo && \
             echo "--------------- MAKE CHECK ----------------" && \
             echo && \
-            sudo make check "TESTS=tests/bwping"
+            sudo make check "TESTS=tests/bwping" && \
+            echo && \
+            echo "------------- SONAR SCANNER ---------------" && \
+            echo && \
+            sonar-scanner
 
             STATUS=$?
         fi
