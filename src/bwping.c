@@ -201,7 +201,7 @@ static bool recv_ping(int sock, uint16_t ident, uint32_t *received_number, uint6
                 (*received_number)++;
                 (*received_volume) += res;
 
-                if (res - hlen - sizeof(struct icmp) >= sizeof(tv32)) {
+                if (res >= (ssize_t)(hlen + sizeof(struct icmp) + sizeof(tv32))) {
                     memcpy(&tv32, &packet[hlen + sizeof(struct icmp)], sizeof(tv32));
 
                     pkttime.tv_sec  = ntohl(tv32.tv32_sec);

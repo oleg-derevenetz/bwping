@@ -165,7 +165,7 @@ static bool recv_ping(int sock, uint16_t ident, uint32_t *received_number, uint6
             (*received_number)++;
             (*received_volume) += res + sizeof(struct ip6_hdr);
 
-            if (res - sizeof(struct icmp6_hdr) >= sizeof(tv32)) {
+            if (res >= (ssize_t)(sizeof(struct icmp6_hdr) + sizeof(tv32))) {
                 memcpy(&tv32, &packet[sizeof(struct icmp6_hdr)], sizeof(tv32));
 
                 pkttime.tv_sec  = ntohl(tv32.tv32_sec);
