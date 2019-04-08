@@ -32,21 +32,9 @@ AC_CHECK_FUNC([socket])
 if test "$ac_cv_func_socket" = "no"; then
     AC_SEARCH_LIBS([socket], [socket], [], [AC_MSG_ERROR([socket() is required for build])])
 fi
-AC_CHECK_FUNC([inet_aton])
-if test "$ac_cv_func_inet_aton" = "no"; then
-    AC_SEARCH_LIBS([inet_aton], [resolv nsl socket], [], [AC_MSG_ERROR([inet_aton() is required for build])])
-fi
 AC_CHECK_FUNC([inet_ntop])
 if test "$ac_cv_func_inet_ntop" = "no"; then
     AC_SEARCH_LIBS([inet_ntop], [resolv nsl socket], [], [AC_MSG_ERROR([inet_ntop() is required for build])])
-fi
-AC_CHECK_FUNC([hstrerror])
-if test "$ac_cv_func_hstrerror" = "no"; then
-    AC_SEARCH_LIBS([hstrerror], [resolv nsl socket], [], [AC_MSG_ERROR([hstrerror() is required for build])])
-fi
-AC_CHECK_FUNC([gethostbyname])
-if test "$ac_cv_func_gethostbyname" = "no"; then
-    AC_SEARCH_LIBS([gethostbyname], [resolv nsl socket], [], [AC_MSG_ERROR([gethostbyname() is required for build])])
 fi
 AC_CHECK_FUNC([getaddrinfo])
 if test "$ac_cv_func_getaddrinfo" = "no"; then
