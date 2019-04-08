@@ -140,7 +140,7 @@ static void send_ping(int sock, struct sockaddr_in *to, size_t pktsize, uint16_t
         memset(&tv32, 0, sizeof(tv32));
     }
 
-    memcpy(&packet[ICMP_MINLEN], &tv32, sizeof(tv32));
+    memcpy(&packet[sizeof(struct icmp)], &tv32, sizeof(tv32));
 
     size = pktsize - sizeof(struct ip);
 
@@ -194,7 +194,7 @@ static bool recv_ping(int sock, uint16_t ident, uint32_t *received_number, uint6
 
         hlen = ip->ip_hl << 2;
 
-        if (res >= (ssize_t)(hlen + ICMP_MINLEN)) {
+        if (res >= (ssize_t)(hlen + sizeof(struct icmp))) {
             icmp = (struct icmp *)(packet + hlen);
 
             if (icmp->icmp_type == ICMP_ECHOREPLY) {
@@ -202,8 +202,8 @@ static bool recv_ping(int sock, uint16_t ident, uint32_t *received_number, uint6
                     (*received_number)++;
                     (*received_volume) += res;
 
-                    if (res - hlen - ICMP_MINLEN >= sizeof(tv32)) {
-                        memcpy(&tv32, icmp->icmp_data, sizeof(tv32));
+                    if (res - hlen - sizeof(struct icmp) >= sizeof(tv32)) {
+                        memcpy(&tv32, &packet[hlen + sizeof(struct icmp)], sizeof(tv32));
 
                         pkttime.tv_sec  = ntohl(tv32.tv32_sec);
                         pkttime.tv_usec = ntohl(tv32.tv32_usec);
@@ -340,8 +340,8 @@ int main(int argc, char **argv)
             }
 
             if (exitval == EX_OK) {
-                if (pktsize < sizeof(struct ip) + ICMP_MINLEN + sizeof(struct tv32) || pktsize > IP_MAXPACKET) {
-                    fprintf(stderr, "bwping: invalid packet size, should be between %zu and %zu\n", sizeof(struct ip) + ICMP_MINLEN + sizeof(struct tv32), (size_t)IP_MAXPACKET);
+                if (pktsize < sizeof(struct ip) + sizeof(struct icmp) + sizeof(struct tv32) || pktsize > IP_MAXPACKET) {
+                    fprintf(stderr, "bwping: invalid packet size, should be between %zu and %zu\n", sizeof(struct ip) + sizeof(struct icmp) + sizeof(struct tv32), (size_t)IP_MAXPACKET);
                     exitval = EX_USAGE;
                 } else {
                     if (bind_addr != NULL) {
