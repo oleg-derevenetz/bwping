@@ -196,29 +196,28 @@ static bool recv_ping(int sock, uint16_t ident, uint32_t *received_number, uint6
         if (res >= (ssize_t)(hlen + sizeof(struct icmp))) {
             icmp = (struct icmp *)(packet + hlen);
 
-            if (icmp->icmp_type == ICMP_ECHOREPLY) {
-                if (icmp->icmp_id == ident) {
-                    (*received_number)++;
-                    (*received_volume) += res;
+            if (icmp->icmp_type == ICMP_ECHOREPLY &&
+                icmp->icmp_id   == ident) {
+                (*received_number)++;
+                (*received_volume) += res;
 
-                    if (res - hlen - sizeof(struct icmp) >= sizeof(tv32)) {
-                        memcpy(&tv32, &packet[hlen + sizeof(struct icmp)], sizeof(tv32));
+                if (res - hlen - sizeof(struct icmp) >= sizeof(tv32)) {
+                    memcpy(&tv32, &packet[hlen + sizeof(struct icmp)], sizeof(tv32));
 
-                        pkttime.tv_sec  = ntohl(tv32.tv32_sec);
-                        pkttime.tv_usec = ntohl(tv32.tv32_usec);
+                    pkttime.tv_sec  = ntohl(tv32.tv32_sec);
+                    pkttime.tv_usec = ntohl(tv32.tv32_usec);
 
-                        if (pkttime.tv_sec != 0 || pkttime.tv_usec != 0) {
-                            rtt = tvsub(&now, &pkttime) / 1000;
+                    if (pkttime.tv_sec != 0 || pkttime.tv_usec != 0) {
+                        rtt = tvsub(&now, &pkttime) / 1000;
 
-                            if (min_rtt > rtt) {
-                                min_rtt = rtt;
-                            }
-                            if (max_rtt < rtt) {
-                                max_rtt = rtt;
-                            }
-
-                            average_rtt = *received_number ? ((average_rtt * (*received_number - 1)) + rtt) / *received_number : average_rtt;
+                        if (min_rtt > rtt) {
+                            min_rtt = rtt;
                         }
+                        if (max_rtt < rtt) {
+                            max_rtt = rtt;
+                        }
+
+                        average_rtt = *received_number ? ((average_rtt * (*received_number - 1)) + rtt) / *received_number : average_rtt;
                     }
                 }
             }

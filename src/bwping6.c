@@ -160,29 +160,28 @@ static bool recv_ping(int sock, uint16_t ident, uint32_t *received_number, uint6
     if (res > 0) {
         icmp6 = (struct icmp6_hdr *)packet;
 
-        if (icmp6->icmp6_type == ICMP6_ECHO_REPLY) {
-            if (icmp6->icmp6_id == ident) {
-                (*received_number)++;
-                (*received_volume) += res + sizeof(struct ip6_hdr);
+        if (icmp6->icmp6_type == ICMP6_ECHO_REPLY &&
+            icmp6->icmp6_id   == ident) {
+            (*received_number)++;
+            (*received_volume) += res + sizeof(struct ip6_hdr);
 
-                if (res - sizeof(struct icmp6_hdr) >= sizeof(tv32)) {
-                    memcpy(&tv32, &packet[sizeof(struct icmp6_hdr)], sizeof(tv32));
+            if (res - sizeof(struct icmp6_hdr) >= sizeof(tv32)) {
+                memcpy(&tv32, &packet[sizeof(struct icmp6_hdr)], sizeof(tv32));
 
-                    pkttime.tv_sec  = ntohl(tv32.tv32_sec);
-                    pkttime.tv_usec = ntohl(tv32.tv32_usec);
+                pkttime.tv_sec  = ntohl(tv32.tv32_sec);
+                pkttime.tv_usec = ntohl(tv32.tv32_usec);
 
-                    if (pkttime.tv_sec != 0 || pkttime.tv_usec != 0) {
-                        rtt = tvsub(&now, &pkttime) / 1000;
+                if (pkttime.tv_sec != 0 || pkttime.tv_usec != 0) {
+                    rtt = tvsub(&now, &pkttime) / 1000;
 
-                        if (min_rtt > rtt) {
-                            min_rtt = rtt;
-                        }
-                        if (max_rtt < rtt) {
-                            max_rtt = rtt;
-                        }
-
-                        average_rtt = *received_number ? ((average_rtt * (*received_number - 1)) + rtt) / *received_number : average_rtt;
+                    if (min_rtt > rtt) {
+                        min_rtt = rtt;
                     }
+                    if (max_rtt < rtt) {
+                        max_rtt = rtt;
+                    }
+
+                    average_rtt = *received_number ? ((average_rtt * (*received_number - 1)) + rtt) / *received_number : average_rtt;
                 }
             }
         }
