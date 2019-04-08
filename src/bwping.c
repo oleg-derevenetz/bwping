@@ -176,7 +176,7 @@ static bool recv_ping(int sock, uint16_t ident, uint32_t *received_number, uint6
     memset(&iov, 0, sizeof(iov));
 
     iov.iov_base = packet;
-    iov.iov_len  = IP_MAXPACKET;
+    iov.iov_len  = sizeof(packet);
 
     memset(&msg, 0, sizeof(msg));
 

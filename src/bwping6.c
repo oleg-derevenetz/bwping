@@ -23,20 +23,19 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#include <netinet/ip.h>
 #include <netinet/ip6.h>
 #ifdef HAVE_NETINET_ICMP6_H
 #include <netinet/icmp6.h>
 #endif
 
 #ifdef __CYGWIN__
-#include <netinet/ip.h>
 #include "../include/cygwin.h"
 #endif
 
 #include <netdb.h>
 
 #define CALIBRATE_RETRIES  50
-#define IP6_MAXPACKET      65536
 #define DEF_MIN_RTT        0xFFFFFFFF
 #define PKTBURST_PRECISION 1000
 
@@ -89,7 +88,7 @@ static void send_ping(int sock, struct sockaddr_in6 *to6, size_t pktsize, uint16
 {
     size_t            size;
     ssize_t           res;
-    unsigned char     packet[IP6_MAXPACKET] __attribute__((aligned(4)));
+    unsigned char     packet[IP_MAXPACKET] __attribute__((aligned(4)));
     struct icmp6_hdr *icmp6;
     struct timeval    now;
     struct tv32       tv32;
@@ -134,7 +133,7 @@ static bool recv_ping(int sock, uint16_t ident, uint32_t *received_number, uint6
 {
     ssize_t             res;
     int64_t             rtt;
-    unsigned char       packet[IP6_MAXPACKET] __attribute__((aligned(4)));
+    unsigned char       packet[IP_MAXPACKET] __attribute__((aligned(4)));
     struct sockaddr_in6 from6;
     struct iovec        iov;
     struct msghdr       msg;
@@ -145,7 +144,7 @@ static bool recv_ping(int sock, uint16_t ident, uint32_t *received_number, uint6
     memset(&iov, 0, sizeof(iov));
 
     iov.iov_base = packet;
-    iov.iov_len  = IP6_MAXPACKET;
+    iov.iov_len  = sizeof(packet);
 
     memset(&msg, 0, sizeof(msg));
 
@@ -303,8 +302,8 @@ int main(int argc, char **argv)
             }
 
             if (exitval == EX_OK) {
-                if (pktsize < sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32) || pktsize > IP6_MAXPACKET) {
-                    fprintf(stderr, "bwping6: invalid packet size, should be between %zu and %zu\n", sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32), (size_t)IP6_MAXPACKET);
+                if (pktsize < sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32) || pktsize > IP_MAXPACKET) {
+                    fprintf(stderr, "bwping6: invalid packet size, should be between %zu and %zu\n", sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32), (size_t)IP_MAXPACKET);
                     exitval = EX_USAGE;
                 } else {
                     if (bind_addr != NULL) {
