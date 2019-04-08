@@ -14,7 +14,6 @@
 #include <sysexits.h>
 #include <errno.h>
 #include <string.h>
-#include <strings.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -124,7 +123,7 @@ static void send_ping(int sock, struct sockaddr_in *to, size_t pktsize, uint16_t
 
     icmp = (struct icmp *)packet;
 
-    bzero(icmp, sizeof(struct icmp));
+    memset(icmp, 0, sizeof(struct icmp));
 
     icmp->icmp_type  = ICMP_ECHO;
     icmp->icmp_code  = 0;
@@ -138,10 +137,10 @@ static void send_ping(int sock, struct sockaddr_in *to, size_t pktsize, uint16_t
         tv32.tv32_sec  = htonl(now.tv_sec);
         tv32.tv32_usec = htonl(now.tv_usec);
     } else {
-        bzero(&tv32, sizeof(tv32));
+        memset(&tv32, 0, sizeof(tv32));
     }
 
-    bcopy(&tv32, &packet[ICMP_MINLEN], sizeof(tv32));
+    memcpy(&packet[ICMP_MINLEN], &tv32, sizeof(tv32));
 
     size = pktsize - sizeof(struct ip);
 
@@ -174,12 +173,12 @@ static bool recv_ping(int sock, uint16_t ident, uint32_t *received_number, uint6
     struct timeval     now, pkttime;
     struct tv32        tv32;
 
-    bzero(&iov, sizeof(iov));
+    memset(&iov, 0, sizeof(iov));
 
     iov.iov_base = packet;
     iov.iov_len  = IP_MAXPACKET;
 
-    bzero(&msg, sizeof(msg));
+    memset(&msg, 0, sizeof(msg));
 
     msg.msg_name    = (caddr_t)&from;
     msg.msg_namelen = sizeof(from);
@@ -204,7 +203,7 @@ static bool recv_ping(int sock, uint16_t ident, uint32_t *received_number, uint6
                     (*received_volume) += res;
 
                     if (res - hlen - ICMP_MINLEN >= sizeof(tv32)) {
-                        bcopy(icmp->icmp_data, &tv32, sizeof(tv32));
+                        memcpy(&tv32, icmp->icmp_data, sizeof(tv32));
 
                         pkttime.tv_sec  = ntohl(tv32.tv32_sec);
                         pkttime.tv_usec = ntohl(tv32.tv32_usec);
@@ -344,7 +343,7 @@ int main(int argc, char **argv)
                     exitval = EX_USAGE;
                 } else {
                     if (bind_addr != NULL) {
-                        bzero(&bind_to, sizeof(bind_to));
+                        memset(&bind_to, 0, sizeof(bind_to));
 
                         bind_to.sin_family = AF_INET;
 #ifdef HAVE_SOCKADDR_IN_SIN_LEN
@@ -361,7 +360,7 @@ int main(int argc, char **argv)
                                 fprintf(stderr, "bwping: gethostbyname() returned an illegal address\n");
                                 exitval = EX_SOFTWARE;
                             } else {
-                                bcopy(hp->h_addr_list[0], &bind_to.sin_addr, sizeof(bind_to.sin_addr));
+                                memcpy(&bind_to.sin_addr, hp->h_addr_list[0], sizeof(bind_to.sin_addr));
                             }
                         }
 
@@ -376,7 +375,7 @@ int main(int argc, char **argv)
                     if (exitval == EX_OK) {
                         target = argv[optind];
 
-                        bzero(&to, sizeof(to));
+                        memset(&to, 0, sizeof(to));
 
                         to.sin_family = AF_INET;
 #ifdef HAVE_SOCKADDR_IN_SIN_LEN
@@ -393,7 +392,7 @@ int main(int argc, char **argv)
                                 fprintf(stderr, "bwping: gethostbyname() returned an illegal address\n");
                                 exitval = EX_SOFTWARE;
                             } else {
-                                bcopy(hp->h_addr_list[0], &to.sin_addr, sizeof(to.sin_addr));
+                                memcpy(&to.sin_addr, hp->h_addr_list[0], sizeof(to.sin_addr));
                             }
                         }
 

@@ -14,7 +14,6 @@
 #include <sysexits.h>
 #include <errno.h>
 #include <string.h>
-#include <strings.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -98,7 +97,7 @@ static void send_ping(int sock, struct sockaddr_in6 *to6, size_t pktsize, uint16
 
     icmp6 = (struct icmp6_hdr *)packet;
 
-    bzero(icmp6, sizeof(struct icmp6_hdr));
+    memset(icmp6, 0, sizeof(struct icmp6_hdr));
 
     icmp6->icmp6_type  = ICMP6_ECHO_REQUEST;
     icmp6->icmp6_code  = 0;
@@ -112,10 +111,10 @@ static void send_ping(int sock, struct sockaddr_in6 *to6, size_t pktsize, uint16
         tv32.tv32_sec  = htonl(now.tv_sec);
         tv32.tv32_usec = htonl(now.tv_usec);
     } else {
-        bzero(&tv32, sizeof(tv32));
+        memset(&tv32, 0, sizeof(tv32));
     }
 
-    bcopy(&tv32, &packet[sizeof(struct icmp6_hdr)], sizeof(tv32));
+    memcpy(&packet[sizeof(struct icmp6_hdr)], &tv32, sizeof(tv32));
 
     size = pktsize - sizeof(struct ip6_hdr);
 
@@ -144,12 +143,12 @@ static bool recv_ping(int sock, uint16_t ident, uint32_t *received_number, uint6
     struct timeval      now, pkttime;
     struct tv32         tv32;
 
-    bzero(&iov, sizeof(iov));
+    memset(&iov, 0, sizeof(iov));
 
     iov.iov_base = packet;
     iov.iov_len  = IP6_MAXPACKET;
 
-    bzero(&msg, sizeof(msg));
+    memset(&msg, 0, sizeof(msg));
 
     msg.msg_name    = (caddr_t)&from6;
     msg.msg_namelen = sizeof(from6);
@@ -169,7 +168,7 @@ static bool recv_ping(int sock, uint16_t ident, uint32_t *received_number, uint6
                 (*received_volume) += res + sizeof(struct ip6_hdr);
 
                 if (res - sizeof(struct icmp6_hdr) >= sizeof(tv32)) {
-                    bcopy(&packet[sizeof(struct icmp6_hdr)], &tv32, sizeof(tv32));
+                    memcpy(&tv32, &packet[sizeof(struct icmp6_hdr)], sizeof(tv32));
 
                     pkttime.tv_sec  = ntohl(tv32.tv32_sec);
                     pkttime.tv_usec = ntohl(tv32.tv32_usec);
@@ -310,7 +309,7 @@ int main(int argc, char **argv)
                     exitval = EX_USAGE;
                 } else {
                     if (bind_addr != NULL) {
-                        bzero(&hints, sizeof(hints));
+                        memset(&hints, 0, sizeof(hints));
 
                         hints.ai_flags    = AI_CANONNAME;
                         hints.ai_family   = AF_INET6;
@@ -328,7 +327,7 @@ int main(int argc, char **argv)
                             fprintf(stderr, "bwping6: getaddrinfo() returned an illegal address\n");
                             exitval = EX_SOFTWARE;
                         } else {
-                            bcopy(res_info->ai_addr, &bind_to6, sizeof(bind_to6));
+                            memcpy(&bind_to6, res_info->ai_addr, sizeof(bind_to6));
 
                             freeaddrinfo(res_info);
                         }
@@ -344,7 +343,7 @@ int main(int argc, char **argv)
                     if (exitval == EX_OK) {
                         target = argv[optind];
 
-                        bzero(&hints, sizeof(hints));
+                        memset(&hints, 0, sizeof(hints));
 
                         hints.ai_flags    = AI_CANONNAME;
                         hints.ai_family   = AF_INET6;
@@ -362,7 +361,7 @@ int main(int argc, char **argv)
                             fprintf(stderr, "bwping6: getaddrinfo() returned an illegal address\n");
                             exitval = EX_SOFTWARE;
                         } else {
-                            bcopy(res_info->ai_addr, &to6, sizeof(to6));
+                            memcpy(&to6, res_info->ai_addr, sizeof(to6));
 
                             freeaddrinfo(res_info);
                         }
@@ -370,7 +369,7 @@ int main(int argc, char **argv)
                         if (exitval == EX_OK) {
                             ident = getpid() & 0xFFFF;
 
-                            bzero(&p_addr, sizeof(p_addr));
+                            memset(&p_addr, 0, sizeof(p_addr));
 
                             if (inet_ntop(AF_INET6, &(to6.sin6_addr), p_addr, sizeof(p_addr)) == NULL) {
                                 strncpy(p_addr, "?", sizeof(p_addr) - 1);
