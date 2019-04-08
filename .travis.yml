@@ -56,7 +56,7 @@ script:
             echo && \
             echo "------------- MAKE DISTCLEAN --------------" && \
             echo && \
-            sudo make distclean && \
+            make distclean && \
             echo && \
             echo "---------- SCAN-BUILD CONFIGURE -----------" && \
             echo && \
