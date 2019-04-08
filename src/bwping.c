@@ -244,7 +244,8 @@ int main(int argc, char **argv)
     uint64_t           volume, received_volume;
     char              *ep,
                       *bind_addr,
-                      *target;
+                      *target,
+                       p_addr[INET_ADDRSTRLEN];
     fd_set             fds;
     struct sockaddr_in bind_to, to;
     struct addrinfo    hints,
@@ -404,8 +405,14 @@ int main(int argc, char **argv)
                         if (exitval == EX_OK) {
                             ident = getpid() & 0xFFFF;
 
+                            memset(&p_addr, 0, sizeof(p_addr));
+
+                            if (inet_ntop(AF_INET, &(to.sin_addr), p_addr, sizeof(p_addr)) == NULL) {
+                                strncpy(p_addr, "?", sizeof(p_addr) - 1);
+                            }
+
                             printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
-                                   target, inet_ntoa(to.sin_addr), kbps, pktsize, volume);
+                                   target, p_addr, kbps, pktsize, volume);
 
                             min_rtt     = DEF_MIN_RTT;
                             max_rtt     = 0;
