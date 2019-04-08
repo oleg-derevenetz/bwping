@@ -3,9 +3,6 @@
 /* Define to 1 if you have the <netinet/icmp6.h> header file. */
 #undef HAVE_NETINET_ICMP6_H
 
-/* Define to 1 if you have the sin_len member in struct sockaddr_in. */
-#undef HAVE_SOCKADDR_IN_SIN_LEN
-
 /* Name of package */
 #undef PACKAGE
 

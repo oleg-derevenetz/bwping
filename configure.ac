@@ -28,15 +28,6 @@ AC_CHECK_HEADER([netinet/icmp6.h],
 #include <netinet/ip6.h>
                 ])
 
-AC_CHECK_MEMBER([struct sockaddr_in.sin_len],
-                [AC_DEFINE([HAVE_SOCKADDR_IN_SIN_LEN], [1], [Define to 1 if you have the sin_len member in struct sockaddr_in.])],
-                [],
-                [
-#include <sys/types.h>
-
-#include <netinet/in.h>
-                ])
-
 AC_CHECK_FUNC([socket])
 if test "$ac_cv_func_socket" = "no"; then
     AC_SEARCH_LIBS([socket], [socket], [], [AC_MSG_ERROR([socket() is required for build])])
