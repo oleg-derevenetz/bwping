@@ -96,7 +96,7 @@ static void send_ping(int sock, struct sockaddr_in6 *to6, size_t pktsize, uint16
 
     icmp6 = (struct icmp6_hdr *)packet;
 
-    memset(icmp6, 0, sizeof(struct icmp6_hdr));
+    memset(icmp6, 0, sizeof(*icmp6));
 
     icmp6->icmp6_type  = ICMP6_ECHO_REQUEST;
     icmp6->icmp6_code  = 0;

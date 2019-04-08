@@ -123,7 +123,7 @@ static void send_ping(int sock, struct sockaddr_in *to, size_t pktsize, uint16_t
 
     icmp = (struct icmp *)packet;
 
-    memset(icmp, 0, sizeof(struct icmp));
+    memset(icmp, 0, sizeof(*icmp));
 
     icmp->icmp_type  = ICMP_ECHO;
     icmp->icmp_code  = 0;
