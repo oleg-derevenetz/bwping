@@ -69,6 +69,10 @@ script:
             STATUS=$?
         else
             echo && \
+            echo "--------- UNSHALLOW GIT FOR SONAR ---------" && \
+            echo && \
+            git fetch --unshallow && \
+            echo && \
             echo "----------- AUTORECONF --FORCE ------------" && \
             echo && \
             autoreconf --force && \
