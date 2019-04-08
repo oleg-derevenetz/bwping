@@ -234,7 +234,7 @@ static bool recv_ping(int sock, uint16_t ident, uint32_t *received_number, uint6
 int main(int argc, char **argv)
 {
     bool               finish;
-    int                sock, exitval, ch, n;
+    int                sock, exitval, ch, res, n;
     unsigned int       bufsize, tos;
     size_t             pktsize;
     uint16_t           ident;
@@ -247,7 +247,8 @@ int main(int argc, char **argv)
                       *target;
     fd_set             fds;
     struct sockaddr_in bind_to, to;
-    struct hostent    *hp;
+    struct addrinfo    hints,
+                      *res_info;
     struct timeval     begin, end, report, start, now, seltimeout;
 
     sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
@@ -343,25 +344,27 @@ int main(int argc, char **argv)
                     exitval = EX_USAGE;
                 } else {
                     if (bind_addr != NULL) {
-                        memset(&bind_to, 0, sizeof(bind_to));
+                        memset(&hints, 0, sizeof(hints));
 
-                        bind_to.sin_family = AF_INET;
-#ifdef HAVE_SOCKADDR_IN_SIN_LEN
-                        bind_to.sin_len    = sizeof(bind_to);
-#endif
+                        hints.ai_flags    = AI_CANONNAME;
+                        hints.ai_family   = AF_INET;
+                        hints.ai_socktype = SOCK_RAW;
+                        hints.ai_protocol = IPPROTO_ICMP;
 
-                        if (inet_aton(bind_addr, &bind_to.sin_addr) == 0) {
-                            hp = gethostbyname(bind_addr);
+                        res = getaddrinfo(bind_addr, NULL, &hints, &res_info);
 
-                            if (!hp) {
-                                fprintf(stderr, "bwping: cannot resolve %s: %s\n", bind_addr, hstrerror(h_errno));
-                                exitval = EX_SOFTWARE;
-                            } else if ((size_t)hp->h_length != sizeof(bind_to.sin_addr)) {
-                                fprintf(stderr, "bwping: gethostbyname() returned an illegal address\n");
-                                exitval = EX_SOFTWARE;
-                            } else {
-                                memcpy(&bind_to.sin_addr, hp->h_addr_list[0], sizeof(bind_to.sin_addr));
-                            }
+                        if (res != 0) {
+                            fprintf(stderr, "bwping: cannot resolve %s: %s\n", bind_addr, gai_strerror(res));
+                            exitval = EX_SOFTWARE;
+                        } else if (res_info->ai_addr == NULL || res_info->ai_addrlen != sizeof(bind_to)) {
+                            freeaddrinfo(res_info);
+
+                            fprintf(stderr, "bwping: getaddrinfo() returned an illegal address\n");
+                            exitval = EX_SOFTWARE;
+                        } else {
+                            memcpy(&bind_to, res_info->ai_addr, sizeof(bind_to));
+
+                            freeaddrinfo(res_info);
                         }
 
                         if (exitval == EX_OK) {
@@ -375,25 +378,27 @@ int main(int argc, char **argv)
                     if (exitval == EX_OK) {
                         target = argv[optind];
 
-                        memset(&to, 0, sizeof(to));
+                        memset(&hints, 0, sizeof(hints));
 
-                        to.sin_family = AF_INET;
-#ifdef HAVE_SOCKADDR_IN_SIN_LEN
-                        to.sin_len    = sizeof(to);
-#endif
+                        hints.ai_flags    = AI_CANONNAME;
+                        hints.ai_family   = AF_INET;
+                        hints.ai_socktype = SOCK_RAW;
+                        hints.ai_protocol = IPPROTO_ICMP;
 
-                        if (inet_aton(target, &to.sin_addr) == 0) {
-                            hp = gethostbyname(target);
+                        res = getaddrinfo(target, NULL, &hints, &res_info);
 
-                            if (!hp) {
-                                fprintf(stderr, "bwping: cannot resolve %s: %s\n", target, hstrerror(h_errno));
-                                exitval = EX_SOFTWARE;
-                            } else if ((size_t)hp->h_length != sizeof(to.sin_addr)) {
-                                fprintf(stderr, "bwping: gethostbyname() returned an illegal address\n");
-                                exitval = EX_SOFTWARE;
-                            } else {
-                                memcpy(&to.sin_addr, hp->h_addr_list[0], sizeof(to.sin_addr));
-                            }
+                        if (res != 0) {
+                            fprintf(stderr, "bwping: cannot resolve %s: %s\n", target, gai_strerror(res));
+                            exitval = EX_SOFTWARE;
+                        } else if (res_info->ai_addr == NULL || res_info->ai_addrlen != sizeof(to)) {
+                            freeaddrinfo(res_info);
+
+                            fprintf(stderr, "bwping: getaddrinfo() returned an illegal address\n");
+                            exitval = EX_SOFTWARE;
+                        } else {
+                            memcpy(&to, res_info->ai_addr, sizeof(to));
+
+                            freeaddrinfo(res_info);
                         }
 
                         if (exitval == EX_OK) {
