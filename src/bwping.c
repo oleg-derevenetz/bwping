@@ -55,12 +55,9 @@ static int64_t tvsub(struct timeval *t1, struct timeval *t2)
 static uint16_t cksum(uint16_t *addr, size_t len)
 {
     ssize_t   nleft;
+    uint16_t  last;
     uint32_t  sum;
     uint16_t *w;
-    union {
-        uint16_t      us;
-        unsigned char uc[2];
-    } last;
 
     nleft = len;
     sum   = 0;
@@ -72,9 +69,11 @@ static uint16_t cksum(uint16_t *addr, size_t len)
     }
 
     if (nleft == 1) {
-        last.uc[0] = *(unsigned char *)w;
-        last.uc[1] = 0;
-        sum       += last.us;
+        last = 0;
+
+        memcpy(&last, w, nleft);
+
+        sum += last;
     }
 
     sum  = (sum >> 16) + (sum & 0xFFFF);
