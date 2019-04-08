@@ -82,6 +82,8 @@ Oleg Derevenetz <oleg.derevenetz@gmail.com>
 | --- | --- |
 | [![Travis Build Status](https://travis-ci.org/oleg-derevenetz/bwping.svg?branch=master)](https://travis-ci.org/oleg-derevenetz/bwping) | [![SonarCloud Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=oleg-derevenetz%3Abwping&metric=alert_status)](https://sonarcloud.io/dashboard?id=oleg-derevenetz%3Abwping) |
 
+| Reliability | Security | Portability |
+| --- | --- | --- |
 | [![SonarCloud Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=oleg-derevenetz%3Abwping&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=oleg-derevenetz%3Abwping) | [![SonarCloud Security Rating](https://sonarcloud.io/api/project_badges/measure?project=oleg-derevenetz%3Abwping&metric=security_rating)](https://sonarcloud.io/dashboard?id=oleg-derevenetz%3Abwping) | [![SonarCloud Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=oleg-derevenetz%3Abwping&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=oleg-derevenetz%3Abwping) |
 | [![SonarCloud Bugs](https://sonarcloud.io/api/project_badges/measure?project=oleg-derevenetz%3Abwping&metric=bugs)](https://sonarcloud.io/dashboard?id=oleg-derevenetz%3Abwping) | [![SonarCloud Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=oleg-derevenetz%3Abwping&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=oleg-derevenetz%3Abwping) | [![SonarCloud Code Smells](https://sonarcloud.io/api/project_badges/measure?project=oleg-derevenetz%3Abwping&metric=code_smells)](https://sonarcloud.io/dashboard?id=oleg-derevenetz%3Abwping) |
 
