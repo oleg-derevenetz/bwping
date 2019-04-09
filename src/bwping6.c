@@ -468,6 +468,7 @@ int main(int argc, char **argv)
                                                 current_interval = interval;
                                             }
                                         }
+
                                         break;
                                     }
                                 }
