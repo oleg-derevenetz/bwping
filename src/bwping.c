@@ -147,12 +147,10 @@ static void send_ping(int sock, struct sockaddr_in *to, size_t pktsize, uint16_t
 
     res = sendto(sock, packet, size, 0, (struct sockaddr *)to, sizeof(*to));
 
-    if (res == -1 || res != (ssize_t)size) {
-        if (res == -1) {
-            perror("bwping: sendto() failed");
-        } else {
-            fprintf(stderr, "bwping: partial write: packet size: %zu, sent: %zd\n", size, res);
-        }
+    if (res < 0) {
+        perror("bwping: sendto() failed");
+    } else if (res != (ssize_t)size) {
+        fprintf(stderr, "bwping: partial write: packet size: %zu, sent: %zd\n", size, res);
     }
 
     (*transmitted_number)++;
@@ -252,12 +250,12 @@ int main(int argc, char **argv)
 
     sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 
-    if (sock == -1) {
+    if (sock < 0) {
         perror("bwping: socket(AF_INET, SOCK_RAW, IPPROTO_ICMP) failed");
 
         exit(EX_OSERR);
     } else {
-        if (setuid(getuid()) == -1) {
+        if (setuid(getuid()) < 0) {
             perror("bwping: setuid(getuid()) failed");
 
             exit(EX_OSERR);
@@ -439,15 +437,15 @@ int main(int argc, char **argv)
                                 bufsize = pktsize * (pktburst / PKTBURST_PRECISION + 1) * 2;
                             }
 
-                            if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &bufsize, sizeof(bufsize)) == -1) {
+                            if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &bufsize, sizeof(bufsize)) < 0) {
                                 fprintf(stderr, "bwping: setsockopt(SO_RCVBUF, %u) failed: %s\n", bufsize, strerror(errno));
                             }
-                            if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &bufsize, sizeof(bufsize)) == -1) {
+                            if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &bufsize, sizeof(bufsize)) < 0) {
                                 fprintf(stderr, "bwping: setsockopt(SO_SNDBUF, %u) failed: %s\n", bufsize, strerror(errno));
                             }
 
 #ifdef IP_TOS
-                            if (setsockopt(sock, IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) == -1) {
+                            if (setsockopt(sock, IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) < 0) {
                                 fprintf(stderr, "bwping: setsockopt(IP_TOS, %u) failed: %s\n", tos, strerror(errno));
                             }
 #endif

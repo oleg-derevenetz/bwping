@@ -118,12 +118,10 @@ static void send_ping(int sock, struct sockaddr_in6 *to6, size_t pktsize, uint16
 
     res = sendto(sock, packet, size, 0, (struct sockaddr *)to6, sizeof(*to6));
 
-    if (res == -1 || res != (ssize_t)size) {
-        if (res == -1) {
-            perror("bwping6: sendto() failed");
-        } else {
-            fprintf(stderr, "bwping6: partial write: packet size: %zu, sent: %zd\n", size, res);
-        }
+    if (res < 0) {
+        perror("bwping6: sendto() failed");
+    } else if (res != (ssize_t)size) {
+        fprintf(stderr, "bwping6: partial write: packet size: %zu, sent: %zd\n", size, res);
     }
 
     (*transmitted_number)++;
@@ -215,12 +213,12 @@ int main(int argc, char **argv)
 
     sock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
 
-    if (sock == -1) {
+    if (sock < 0) {
         perror("bwping6: socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6) failed");
 
         exit(EX_OSERR);
     } else {
-        if (setuid(getuid()) == -1) {
+        if (setuid(getuid()) < 0) {
             perror("bwping6: setuid(getuid()) failed");
 
             exit(EX_OSERR);
@@ -402,15 +400,15 @@ int main(int argc, char **argv)
                                 bufsize = pktsize * (pktburst / PKTBURST_PRECISION + 1) * 2;
                             }
 
-                            if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &bufsize, sizeof(bufsize)) == -1) {
+                            if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &bufsize, sizeof(bufsize)) < 0) {
                                 fprintf(stderr, "bwping6: setsockopt(SO_RCVBUF, %u) failed: %s\n", bufsize, strerror(errno));
                             }
-                            if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &bufsize, sizeof(bufsize)) == -1) {
+                            if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &bufsize, sizeof(bufsize)) < 0) {
                                 fprintf(stderr, "bwping6: setsockopt(SO_SNDBUF, %u) failed: %s\n", bufsize, strerror(errno));
                             }
 
 #ifdef IPV6_TCLASS
-                            if (setsockopt(sock, IPPROTO_IPV6, IPV6_TCLASS, &tclass, sizeof(tclass)) == -1) {
+                            if (setsockopt(sock, IPPROTO_IPV6, IPV6_TCLASS, &tclass, sizeof(tclass)) < 0) {
                                 fprintf(stderr, "bwping6: setsockopt(IPV6_TCLASS, %u) failed: %s\n", tclass, strerror(errno));
                             }
 #endif
