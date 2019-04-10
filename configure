@@ -586,8 +586,6 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
-BUILD_IPV6_FALSE
-BUILD_IPV6_TRUE
 AM_CFLAGS
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
@@ -676,7 +674,6 @@ ac_user_opts='
 enable_option_checking
 enable_silent_rules
 enable_warn
-enable_ipv6
 enable_dependency_tracking
 '
       ac_precious_vars='build_alias
@@ -1305,7 +1302,6 @@ Optional Features:
   --disable-silent-rules  verbose build output (undo: "make V=0")
   --disable-warn          Disable additional warnings (-Wall -Wextra
                           -Wpedantic)
-  --disable-ipv6          Disable IPv6
   --enable-dependency-tracking
                           do not reject slow dependency extractors
   --disable-dependency-tracking
@@ -2594,11 +2590,6 @@ fi
 # Check whether --enable-warn was given.
 if test "${enable_warn+set}" = set; then :
   enableval=$enable_warn;
-fi
-
-# Check whether --enable-ipv6 was given.
-if test "${enable_ipv6+set}" = set; then :
-  enableval=$enable_ipv6;
 fi
 
 
@@ -3906,6 +3897,7 @@ else
 fi
 
 fi
+
 ac_fn_c_check_func "$LINENO" "inet_ntop" "ac_cv_func_inet_ntop"
 if test "x$ac_cv_func_inet_ntop" = xyes; then :
 
@@ -3971,6 +3963,7 @@ else
 fi
 
 fi
+
 ac_fn_c_check_func "$LINENO" "getaddrinfo" "ac_cv_func_getaddrinfo"
 if test "x$ac_cv_func_getaddrinfo" = xyes; then :
 
@@ -4058,9 +4051,13 @@ else
   my_cv_wall=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+CFLAGS="$my_save_cflags"
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $my_cv_wall" >&5
 $as_echo "$my_cv_wall" >&6; }
-CFLAGS="$my_save_cflags"
+if test "$enable_warn" != "no" -a "$my_cv_wall" = "yes"; then
+    AM_CFLAGS="$AM_CFLAGS -Wall"
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler accepts -Wextra..." >&5
 $as_echo_n "checking whether the C compiler accepts -Wextra...... " >&6; }
 CFLAGS="$CFLAGS -Wextra"
@@ -4081,9 +4078,13 @@ else
   my_cv_wextra=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+CFLAGS="$my_save_cflags"
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $my_cv_wextra" >&5
 $as_echo "$my_cv_wextra" >&6; }
-CFLAGS="$my_save_cflags"
+if test "$enable_warn" != "no" -a "$my_cv_wextra" = "yes"; then
+    AM_CFLAGS="$AM_CFLAGS -Wextra"
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler accepts -Wpedantic..." >&5
 $as_echo_n "checking whether the C compiler accepts -Wpedantic...... " >&6; }
 CFLAGS="$CFLAGS -Wpedantic"
@@ -4104,19 +4105,13 @@ else
   my_cv_wpedantic=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+CFLAGS="$my_save_cflags"
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $my_cv_wpedantic" >&5
 $as_echo "$my_cv_wpedantic" >&6; }
-CFLAGS="$my_save_cflags"
-
-if test "$enable_warn" != "no" -a "$my_cv_wall" = "yes"; then
-    AM_CFLAGS="$AM_CFLAGS -Wall"
-fi
-if test "$enable_warn" != "no" -a "$my_cv_wextra" = "yes"; then
-    AM_CFLAGS="$AM_CFLAGS -Wextra"
-fi
 if test "$enable_warn" != "no" -a "$my_cv_wpedantic" = "yes"; then
     AM_CFLAGS="$AM_CFLAGS -Wpedantic"
 fi
+
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for IPv6 support" >&5
@@ -4288,15 +4283,9 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $my_cv_ipv6" >&5
 $as_echo "$my_cv_ipv6" >&6; }
-
- if test "$enable_ipv6" != "no" -a "$my_cv_ipv6" = "yes"; then
-  BUILD_IPV6_TRUE=
-  BUILD_IPV6_FALSE='#'
-else
-  BUILD_IPV6_TRUE='#'
-  BUILD_IPV6_FALSE=
+if test "$my_cv_ipv6" = "no"; then
+    as_fn_error $? "IPv6 support is required for build" "$LINENO" 5
 fi
-
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -4429,10 +4418,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCC\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${BUILD_IPV6_TRUE}" && test -z "${BUILD_IPV6_FALSE}"; then
-  as_fn_error $? "conditional \"BUILD_IPV6\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

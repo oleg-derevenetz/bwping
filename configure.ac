@@ -7,7 +7,6 @@ AC_CONFIG_FILES([Makefile])
 AM_INIT_AUTOMAKE
 
 AC_ARG_ENABLE([warn], [AS_HELP_STRING([--disable-warn], [Disable additional warnings (-Wall -Wextra -Wpedantic)])])
-AC_ARG_ENABLE([ipv6], [AS_HELP_STRING([--disable-ipv6], [Disable IPv6])])
 
 AC_PROG_CC
 AC_PROG_CC_C99
@@ -32,10 +31,12 @@ AC_CHECK_FUNC([socket])
 if test "$ac_cv_func_socket" = "no"; then
     AC_SEARCH_LIBS([socket], [socket], [], [AC_MSG_ERROR([socket() is required for build])])
 fi
+
 AC_CHECK_FUNC([inet_ntop])
 if test "$ac_cv_func_inet_ntop" = "no"; then
     AC_SEARCH_LIBS([inet_ntop], [resolv nsl socket], [], [AC_MSG_ERROR([inet_ntop() is required for build])])
 fi
+
 AC_CHECK_FUNC([getaddrinfo])
 if test "$ac_cv_func_getaddrinfo" = "no"; then
     AC_SEARCH_LIBS([getaddrinfo], [resolv nsl socket], [], [AC_MSG_ERROR([getaddrinfo() is required for build])])
@@ -47,32 +48,34 @@ CFLAGS="$CFLAGS -Wall"
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
                   [my_cv_wall=yes],
                   [my_cv_wall=no])
-AC_MSG_RESULT([$my_cv_wall])
 CFLAGS="$my_save_cflags"
+AC_MSG_RESULT([$my_cv_wall])
+if test "$enable_warn" != "no" -a "$my_cv_wall" = "yes"; then
+    AM_CFLAGS="$AM_CFLAGS -Wall"
+fi
+
 AC_MSG_CHECKING([whether the C compiler accepts -Wextra...])
 CFLAGS="$CFLAGS -Wextra"
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
                   [my_cv_wextra=yes],
                   [my_cv_wextra=no])
-AC_MSG_RESULT([$my_cv_wextra])
 CFLAGS="$my_save_cflags"
+AC_MSG_RESULT([$my_cv_wextra])
+if test "$enable_warn" != "no" -a "$my_cv_wextra" = "yes"; then
+    AM_CFLAGS="$AM_CFLAGS -Wextra"
+fi
+
 AC_MSG_CHECKING([whether the C compiler accepts -Wpedantic...])
 CFLAGS="$CFLAGS -Wpedantic"
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
                   [my_cv_wpedantic=yes],
                   [my_cv_wpedantic=no])
-AC_MSG_RESULT([$my_cv_wpedantic])
 CFLAGS="$my_save_cflags"
-
-if test "$enable_warn" != "no" -a "$my_cv_wall" = "yes"; then
-    AM_CFLAGS="$AM_CFLAGS -Wall"
-fi
-if test "$enable_warn" != "no" -a "$my_cv_wextra" = "yes"; then
-    AM_CFLAGS="$AM_CFLAGS -Wextra"
-fi
+AC_MSG_RESULT([$my_cv_wpedantic])
 if test "$enable_warn" != "no" -a "$my_cv_wpedantic" = "yes"; then
     AM_CFLAGS="$AM_CFLAGS -Wpedantic"
 fi
+
 AC_SUBST([AM_CFLAGS])
 
 AC_MSG_CHECKING([for IPv6 support])
@@ -223,7 +226,8 @@ struct icmp6_hdr {
     [my_cv_ipv6=no],
     [my_cv_ipv6=no])
 AC_MSG_RESULT([$my_cv_ipv6])
-
-AM_CONDITIONAL([BUILD_IPV6], [test "$enable_ipv6" != "no" -a "$my_cv_ipv6" = "yes"])
+if test "$my_cv_ipv6" = "no"; then
+    AC_MSG_ERROR([IPv6 support is required for build])
+fi
 
 AC_OUTPUT

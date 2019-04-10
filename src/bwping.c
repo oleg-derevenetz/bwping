@@ -24,7 +24,11 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/ip6.h>
 #include <netinet/ip_icmp.h>
+#ifdef HAVE_NETINET_ICMP6_H
+#include <netinet/icmp6.h>
+#endif
 
 #ifdef __CYGWIN__
 #include "../include/cygwin.h"
@@ -32,16 +36,17 @@
 
 #include <netdb.h>
 
-#define CALIBRATE_RETRIES  50
-#define DEF_MIN_RTT        0xFFFFFFFF
-#define PKTBURST_PRECISION 1000
-
 struct tv32 {
     uint32_t tv32_sec;
     uint32_t tv32_usec;
 };
 
-int64_t min_rtt, max_rtt, average_rtt;
+const uint32_t     CALIBRATE_RETRIES  = 50,
+                   PKTBURST_PRECISION = 1000;
+const char * const DEFAULT_CMD_NAME   = "bwping";
+
+int64_t     min_rtt, max_rtt, average_rtt;
+const char *cmd_name;
 
 static int64_t tvsub(struct timeval *t1, struct timeval *t2)
 {
@@ -82,7 +87,7 @@ static uint16_t cksum(uint16_t *addr, size_t len)
     return ~sum;
 }
 
-static int64_t calibrate_timer(void)
+static int64_t calibrate_timer()
 {
     int            n;
     uint32_t       i;
@@ -111,24 +116,24 @@ static int64_t calibrate_timer(void)
     return sum / CALIBRATE_RETRIES;
 }
 
-static void send_ping(int sock, struct sockaddr_in *to, size_t pktsize, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number)
+static void send_ping4(int sock, struct sockaddr_in *to4, size_t pktsize, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number)
 {
     size_t         size;
     ssize_t        res;
     unsigned char  packet[IP_MAXPACKET] __attribute__((aligned(4)));
-    struct icmp   *icmp;
+    struct icmp   *icmp4;
     struct timeval now;
     struct tv32    tv32;
 
-    icmp = (struct icmp *)packet;
+    icmp4 = (struct icmp *)packet;
 
-    memset(icmp, 0, sizeof(*icmp));
+    memset(icmp4, 0, sizeof(*icmp4));
 
-    icmp->icmp_type  = ICMP_ECHO;
-    icmp->icmp_code  = 0;
-    icmp->icmp_cksum = 0;
-    icmp->icmp_id    = ident;
-    icmp->icmp_seq   = htons(*transmitted_number);
+    icmp4->icmp_type  = ICMP_ECHO;
+    icmp4->icmp_code  = 0;
+    icmp4->icmp_cksum = 0;
+    icmp4->icmp_id    = ident;
+    icmp4->icmp_seq   = htons(*transmitted_number);
 
     gettimeofday(&now, NULL);
 
@@ -143,30 +148,73 @@ static void send_ping(int sock, struct sockaddr_in *to, size_t pktsize, uint16_t
 
     size = pktsize - sizeof(struct ip);
 
-    icmp->icmp_cksum = cksum((uint16_t *)icmp, size);
+    icmp4->icmp_cksum = cksum((uint16_t *)icmp4, size);
 
-    res = sendto(sock, packet, size, 0, (struct sockaddr *)to, sizeof(*to));
+    res = sendto(sock, packet, size, 0, (struct sockaddr *)to4, sizeof(*to4));
 
     if (res < 0) {
-        perror("bwping: sendto() failed");
+        fprintf(stderr, "%s: sendto() failed: %s\n", cmd_name, strerror(errno));
     } else if (res != (ssize_t)size) {
-        fprintf(stderr, "bwping: partial write: packet size: %zu, sent: %zd\n", size, res);
+        fprintf(stderr, "%s: partial write: packet size: %zu, sent: %zd\n", cmd_name, size, res);
     }
 
     (*transmitted_number)++;
 }
 
-static bool recv_ping(int sock, uint16_t ident, uint32_t *received_number, uint64_t *received_volume)
+static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pktsize, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number)
+{
+    size_t            size;
+    ssize_t           res;
+    unsigned char     packet[IP_MAXPACKET] __attribute__((aligned(4)));
+    struct icmp6_hdr *icmp6;
+    struct timeval    now;
+    struct tv32       tv32;
+
+    icmp6 = (struct icmp6_hdr *)packet;
+
+    memset(icmp6, 0, sizeof(*icmp6));
+
+    icmp6->icmp6_type  = ICMP6_ECHO_REQUEST;
+    icmp6->icmp6_code  = 0;
+    icmp6->icmp6_cksum = 0;
+    icmp6->icmp6_id    = ident;
+    icmp6->icmp6_seq   = htons(*transmitted_number);
+
+    gettimeofday(&now, NULL);
+
+    if (first_in_burst) {
+        tv32.tv32_sec  = htonl(now.tv_sec);
+        tv32.tv32_usec = htonl(now.tv_usec);
+    } else {
+        memset(&tv32, 0, sizeof(tv32));
+    }
+
+    memcpy(&packet[sizeof(struct icmp6_hdr)], &tv32, sizeof(tv32));
+
+    size = pktsize - sizeof(struct ip6_hdr);
+
+    res = sendto(sock, packet, size, 0, (struct sockaddr *)to6, sizeof(*to6));
+
+    if (res < 0) {
+        fprintf(stderr, "%s: sendto() failed: %s\n", cmd_name, strerror(errno));
+    } else if (res != (ssize_t)size) {
+        fprintf(stderr, "%s: partial write: packet size: %zu, sent: %zd\n", cmd_name, size, res);
+    }
+
+    (*transmitted_number)++;
+}
+
+static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint64_t *received_volume)
 {
     size_t             hlen;
     ssize_t            res;
     int64_t            rtt;
     unsigned char      packet[IP_MAXPACKET] __attribute__((aligned(4)));
-    struct sockaddr_in from;
+    struct sockaddr_in from4;
     struct iovec       iov;
     struct msghdr      msg;
-    struct ip         *ip;
-    struct icmp       *icmp;
+    struct ip         *ip4;
+    struct icmp       *icmp4;
     struct timeval     now, pkttime;
     struct tv32        tv32;
 
@@ -177,8 +225,8 @@ static bool recv_ping(int sock, uint16_t ident, uint32_t *received_number, uint6
 
     memset(&msg, 0, sizeof(msg));
 
-    msg.msg_name    = (caddr_t)&from;
-    msg.msg_namelen = sizeof(from);
+    msg.msg_name    = (caddr_t)&from4;
+    msg.msg_namelen = sizeof(from4);
     msg.msg_iov     = &iov;
     msg.msg_iovlen  = 1;
 
@@ -187,15 +235,15 @@ static bool recv_ping(int sock, uint16_t ident, uint32_t *received_number, uint6
     res = recvmsg(sock, &msg, MSG_DONTWAIT);
 
     if (res > 0) {
-        ip = (struct ip *)packet;
+        ip4 = (struct ip *)packet;
 
-        hlen = ip->ip_hl << 2;
+        hlen = ip4->ip_hl << 2;
 
         if (res >= (ssize_t)(hlen + sizeof(struct icmp))) {
-            icmp = (struct icmp *)(packet + hlen);
+            icmp4 = (struct icmp *)(packet + hlen);
 
-            if (icmp->icmp_type == ICMP_ECHOREPLY &&
-                icmp->icmp_id   == ident) {
+            if (icmp4->icmp_type == ICMP_ECHOREPLY &&
+                icmp4->icmp_id   == ident) {
                 (*received_number)++;
                 (*received_volume) += res;
 
@@ -227,315 +275,475 @@ static bool recv_ping(int sock, uint16_t ident, uint32_t *received_number, uint6
     }
 }
 
-int main(int argc, char **argv)
+static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint64_t *received_volume)
 {
-    bool               finish;
-    int                sock, exitval, ch, res, n;
-    unsigned int       bufsize, tos;
-    size_t             pktsize;
-    uint16_t           ident;
-    int32_t            rperiod;
-    uint32_t           kbps, transmitted_number, received_number, pktburst, pktburst_error, i;
-    int64_t            min_interval, interval, current_interval, interval_error;
-    uint64_t           volume, received_volume;
-    char              *ep,
-                      *bind_addr,
-                      *target,
-                       p_addr[INET_ADDRSTRLEN];
-    fd_set             fds;
-    struct sockaddr_in bind_to, to;
-    struct addrinfo    hints,
-                      *res_info;
-    struct timeval     begin, end, report, start, now, seltimeout;
+    ssize_t             res;
+    int64_t             rtt;
+    unsigned char       packet[IP_MAXPACKET] __attribute__((aligned(4)));
+    struct sockaddr_in6 from6;
+    struct iovec        iov;
+    struct msghdr       msg;
+    struct icmp6_hdr   *icmp6;
+    struct timeval      now, pkttime;
+    struct tv32         tv32;
 
-    sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    memset(&iov, 0, sizeof(iov));
 
-    if (sock < 0) {
-        perror("bwping: socket(AF_INET, SOCK_RAW, IPPROTO_ICMP) failed");
+    iov.iov_base = packet;
+    iov.iov_len  = sizeof(packet);
 
-        exit(EX_OSERR);
-    } else {
-        if (setuid(getuid()) < 0) {
-            perror("bwping: setuid(getuid()) failed");
+    memset(&msg, 0, sizeof(msg));
 
-            exit(EX_OSERR);
-        } else {
-            bufsize   = 0;
-            tos       = 0;
-            pktsize   = 0;
-            rperiod   = 0;
-            kbps      = 0;
-            volume    = 0;
-            bind_addr = NULL;
+    msg.msg_name    = (caddr_t)&from6;
+    msg.msg_namelen = sizeof(from6);
+    msg.msg_iov     = &iov;
+    msg.msg_iovlen  = 1;
 
-            exitval = EX_OK;
+    gettimeofday(&now, NULL);
 
-            while ((ch = getopt(argc, argv, "B:T:b:r:s:u:v:")) != -1) {
-                switch (ch) {
-                    case 'B':
-                        bind_addr = optarg;
+    res = recvmsg(sock, &msg, MSG_DONTWAIT);
 
-                        break;
-                    case 'T':
-                        tos = strtoul(optarg, &ep, 0);
+    if (res > 0) {
+        icmp6 = (struct icmp6_hdr *)packet;
 
-                        if (*ep || ep == optarg) {
-                            exitval = EX_USAGE;
-                        }
+        if (icmp6->icmp6_type == ICMP6_ECHO_REPLY &&
+            icmp6->icmp6_id   == ident) {
+            (*received_number)++;
+            (*received_volume) += res + sizeof(struct ip6_hdr);
 
-                        break;
-                    case 'b':
-                        kbps = strtoul(optarg, &ep, 0);
+            if (res >= (ssize_t)(sizeof(struct icmp6_hdr) + sizeof(tv32))) {
+                memcpy(&tv32, &packet[sizeof(struct icmp6_hdr)], sizeof(tv32));
 
-                        if (*ep || ep == optarg) {
-                            exitval = EX_USAGE;
-                        }
+                pkttime.tv_sec  = ntohl(tv32.tv32_sec);
+                pkttime.tv_usec = ntohl(tv32.tv32_usec);
 
-                        break;
-                    case 'r':
-                        rperiod = strtol(optarg, &ep, 0);
+                if (pkttime.tv_sec != 0 || pkttime.tv_usec != 0) {
+                    rtt = tvsub(&now, &pkttime) / 1000;
 
-                        if (*ep || ep == optarg || rperiod < 0) {
-                            exitval = EX_USAGE;
-                        }
+                    if (min_rtt > rtt) {
+                        min_rtt = rtt;
+                    }
+                    if (max_rtt < rtt) {
+                        max_rtt = rtt;
+                    }
 
-                        break;
-                    case 's':
-                        pktsize = strtoul(optarg, &ep, 0);
-
-                        if (*ep || ep == optarg) {
-                            exitval = EX_USAGE;
-                        }
-
-                        break;
-                    case 'u':
-                        bufsize = strtoul(optarg, &ep, 0);
-
-                        if (*ep || ep == optarg) {
-                            exitval = EX_USAGE;
-                        }
-
-                        break;
-                    case 'v':
-                        volume = strtoull(optarg, &ep, 0);
-
-                        if (*ep || ep == optarg) {
-                            exitval = EX_USAGE;
-                        }
-
-                        break;
-                    default:
-                        exitval = EX_USAGE;
+                    average_rtt = *received_number ? ((average_rtt * (*received_number - 1)) + rtt) / *received_number : average_rtt;
                 }
             }
+        }
 
-            if (pktsize == 0 || kbps == 0 || volume == 0) {
-                exitval = EX_USAGE;
-            } else if (argc - optind != 1) {
-                exitval = EX_USAGE;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+static bool resolve_name4(char *name, struct sockaddr_in *addr4)
+{
+    int              res;
+    struct addrinfo  hints;
+    struct addrinfo *res_info;
+
+    memset(&hints, 0, sizeof(hints));
+
+    hints.ai_flags    = AI_CANONNAME;
+    hints.ai_family   = AF_INET;
+    hints.ai_socktype = SOCK_RAW;
+    hints.ai_protocol = IPPROTO_ICMP;
+
+    res = getaddrinfo(name, NULL, &hints, &res_info);
+
+    if (res != 0) {
+        fprintf(stderr, "%s: cannot resolve %s: %s\n", cmd_name, name, gai_strerror(res));
+
+        return false;
+    } else if (res_info->ai_addr == NULL || res_info->ai_addrlen != sizeof(*addr4)) {
+        freeaddrinfo(res_info);
+
+        fprintf(stderr, "%s: getaddrinfo() returned an illegal address\n", cmd_name);
+
+        return false;
+    } else {
+        memcpy(addr4, res_info->ai_addr, sizeof(*addr4));
+
+        freeaddrinfo(res_info);
+
+        return true;
+    }
+}
+
+static bool resolve_name6(char *name, struct sockaddr_in6 *addr6)
+{
+    int              res;
+    struct addrinfo  hints;
+    struct addrinfo *res_info;
+
+    memset(&hints, 0, sizeof(hints));
+
+    hints.ai_flags    = AI_CANONNAME;
+    hints.ai_family   = AF_INET6;
+    hints.ai_socktype = SOCK_RAW;
+    hints.ai_protocol = IPPROTO_ICMPV6;
+
+    res = getaddrinfo(name, NULL, &hints, &res_info);
+
+    if (res != 0) {
+        fprintf(stderr, "%s: cannot resolve %s: %s\n", cmd_name, name, gai_strerror(res));
+
+        return false;
+    } else if (res_info->ai_addr == NULL || res_info->ai_addrlen != sizeof(*addr6)) {
+        freeaddrinfo(res_info);
+
+        fprintf(stderr, "%s: getaddrinfo() returned an illegal address\n", cmd_name);
+
+        return false;
+    } else {
+        memcpy(addr6, res_info->ai_addr, sizeof(*addr6));
+
+        freeaddrinfo(res_info);
+
+        return true;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    bool                ipv4_mode, finish;
+    int                 sock, exitval, ch, n;
+    unsigned int        bufsize, tos_or_tclass;
+    size_t              pktsize;
+    uint16_t            ident;
+    int32_t             rperiod;
+    uint32_t            kbps, transmitted_number, received_number, pktburst, pktburst_error, i;
+    int64_t             min_interval, interval, current_interval, interval_error;
+    uint64_t            volume, received_volume;
+    char               *ep,
+                       *bind_addr,
+                       *target;
+    char                p_addr4[INET_ADDRSTRLEN],
+                        p_addr6[INET6_ADDRSTRLEN];
+    fd_set              fds;
+    struct sockaddr_in  bind_to4, to4;
+    struct sockaddr_in6 bind_to6, to6;
+    struct timeval      begin, end, report, start, now, seltimeout;
+
+    if (argc > 0) {
+        cmd_name = argv[0];
+    } else {
+        cmd_name = DEFAULT_CMD_NAME;
+    }
+
+    if (strlen(cmd_name) > 0 && cmd_name[strlen(cmd_name) - 1] == '6') {
+        ipv4_mode = false;
+    } else {
+        ipv4_mode = true;
+    }
+
+    if (ipv4_mode) {
+        sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+
+        if (sock < 0) {
+            fprintf(stderr, "%s: socket(AF_INET, SOCK_RAW, IPPROTO_ICMP) failed: %s\n", cmd_name, strerror(errno));
+
+            exit(EX_OSERR);
+        }
+    } else {
+        sock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
+
+        if (sock < 0) {
+            fprintf(stderr, "%s: socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6) failed: %s\n", cmd_name, strerror(errno));
+
+            exit(EX_OSERR);
+        }
+    }
+
+    if (setuid(getuid()) < 0) {
+        fprintf(stderr, "%s: setuid(getuid()) failed: %s\n", cmd_name, strerror(errno));
+
+        exitval = EX_OSERR;
+    } else {
+        exitval = EX_OK;
+
+        bufsize       = 0;
+        tos_or_tclass = 0;
+        pktsize       = 0;
+        rperiod       = 0;
+        kbps          = 0;
+        volume        = 0;
+        bind_addr     = NULL;
+
+        while ((ch = getopt(argc, argv, "B:T:b:r:s:u:v:")) != -1) {
+            switch (ch) {
+                case 'B':
+                    bind_addr = optarg;
+
+                    break;
+                case 'T':
+                    tos_or_tclass = strtoul(optarg, &ep, 0);
+
+                    if (*ep || ep == optarg) {
+                        exitval = EX_USAGE;
+                    }
+
+                    break;
+                case 'b':
+                    kbps = strtoul(optarg, &ep, 0);
+
+                    if (*ep || ep == optarg) {
+                        exitval = EX_USAGE;
+                    }
+
+                    break;
+                case 'r':
+                    rperiod = strtol(optarg, &ep, 0);
+
+                    if (*ep || ep == optarg || rperiod < 0) {
+                        exitval = EX_USAGE;
+                    }
+
+                    break;
+                case 's':
+                    pktsize = strtoul(optarg, &ep, 0);
+
+                    if (*ep || ep == optarg) {
+                        exitval = EX_USAGE;
+                    }
+
+                    break;
+                case 'u':
+                    bufsize = strtoul(optarg, &ep, 0);
+
+                    if (*ep || ep == optarg) {
+                        exitval = EX_USAGE;
+                    }
+
+                    break;
+                case 'v':
+                    volume = strtoull(optarg, &ep, 0);
+
+                    if (*ep || ep == optarg) {
+                        exitval = EX_USAGE;
+                    }
+
+                    break;
+                default:
+                    exitval = EX_USAGE;
+            }
+        }
+
+        if (pktsize == 0 || kbps == 0 || volume == 0) {
+            exitval = EX_USAGE;
+        } else if (argc - optind != 1) {
+            exitval = EX_USAGE;
+        }
+
+        if (exitval == EX_OK) {
+            if (ipv4_mode) {
+                if (pktsize < sizeof(struct ip) + sizeof(struct icmp) + sizeof(struct tv32) || pktsize > IP_MAXPACKET) {
+                    fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", cmd_name,
+                                                                                                sizeof(struct ip) + sizeof(struct icmp) + sizeof(struct tv32),
+                                                                                                (size_t)IP_MAXPACKET);
+                    exitval = EX_USAGE;
+                }
+            } else {
+                if (pktsize < sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32) || pktsize > IP_MAXPACKET) {
+                    fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", cmd_name,
+                                                                                                sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32),
+                                                                                                (size_t)IP_MAXPACKET);
+                    exitval = EX_USAGE;
+                }
             }
 
             if (exitval == EX_OK) {
-                if (pktsize < sizeof(struct ip) + sizeof(struct icmp) + sizeof(struct tv32) || pktsize > IP_MAXPACKET) {
-                    fprintf(stderr, "bwping: invalid packet size, should be between %zu and %zu\n", sizeof(struct ip) + sizeof(struct icmp) + sizeof(struct tv32), (size_t)IP_MAXPACKET);
-                    exitval = EX_USAGE;
-                } else {
-                    if (bind_addr != NULL) {
-                        memset(&hints, 0, sizeof(hints));
-
-                        hints.ai_flags    = AI_CANONNAME;
-                        hints.ai_family   = AF_INET;
-                        hints.ai_socktype = SOCK_RAW;
-                        hints.ai_protocol = IPPROTO_ICMP;
-
-                        res = getaddrinfo(bind_addr, NULL, &hints, &res_info);
-
-                        if (res != 0) {
-                            fprintf(stderr, "bwping: cannot resolve %s: %s\n", bind_addr, gai_strerror(res));
-                            exitval = EX_SOFTWARE;
-                        } else if (res_info->ai_addr == NULL || res_info->ai_addrlen != sizeof(bind_to)) {
-                            freeaddrinfo(res_info);
-
-                            fprintf(stderr, "bwping: getaddrinfo() returned an illegal address\n");
-                            exitval = EX_SOFTWARE;
-                        } else {
-                            memcpy(&bind_to, res_info->ai_addr, sizeof(bind_to));
-
-                            freeaddrinfo(res_info);
-                        }
-
-                        if (exitval == EX_OK) {
-                            if (bind(sock, (struct sockaddr *)&bind_to, sizeof(bind_to)) < 0) {
-                                perror("bwping: bind() failed");
+                if (bind_addr != NULL) {
+                    if (ipv4_mode) {
+                        if (resolve_name4(bind_addr, &bind_to4)) {
+                            if (bind(sock, (struct sockaddr *)&bind_to4, sizeof(bind_to4)) < 0) {
+                                fprintf(stderr, "%s: bind() failed: %s\n", cmd_name, strerror(errno));
                                 exitval = EX_OSERR;
                             }
-                        }
-                    }
-
-                    if (exitval == EX_OK) {
-                        target = argv[optind];
-
-                        memset(&hints, 0, sizeof(hints));
-
-                        hints.ai_flags    = AI_CANONNAME;
-                        hints.ai_family   = AF_INET;
-                        hints.ai_socktype = SOCK_RAW;
-                        hints.ai_protocol = IPPROTO_ICMP;
-
-                        res = getaddrinfo(target, NULL, &hints, &res_info);
-
-                        if (res != 0) {
-                            fprintf(stderr, "bwping: cannot resolve %s: %s\n", target, gai_strerror(res));
-                            exitval = EX_SOFTWARE;
-                        } else if (res_info->ai_addr == NULL || res_info->ai_addrlen != sizeof(to)) {
-                            freeaddrinfo(res_info);
-
-                            fprintf(stderr, "bwping: getaddrinfo() returned an illegal address\n");
-                            exitval = EX_SOFTWARE;
                         } else {
-                            memcpy(&to, res_info->ai_addr, sizeof(to));
-
-                            freeaddrinfo(res_info);
+                            exitval = EX_SOFTWARE;
                         }
-
-                        if (exitval == EX_OK) {
-                            ident = getpid() & 0xFFFF;
-
-                            memset(&p_addr, 0, sizeof(p_addr));
-
-                            if (inet_ntop(AF_INET, &(to.sin_addr), p_addr, sizeof(p_addr)) == NULL) {
-                                strncpy(p_addr, "?", sizeof(p_addr) - 1);
+                    } else {
+                        if (resolve_name6(bind_addr, &bind_to6)) {
+                            if (bind(sock, (struct sockaddr *)&bind_to6, sizeof(bind_to6)) < 0) {
+                                fprintf(stderr, "%s: bind() failed: %s\n", cmd_name, strerror(errno));
+                                exitval = EX_OSERR;
                             }
-
-                            printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
-                                   target, p_addr, kbps, pktsize, volume);
-
-                            min_rtt     = DEF_MIN_RTT;
-                            max_rtt     = 0;
-                            average_rtt = 0;
-
-                            finish             = false;
-                            transmitted_number = 0;
-                            received_number    = 0;
-                            received_volume    = 0;
-
-                            interval = (int64_t)pktsize * 8000 / kbps;
-
-                            min_interval = calibrate_timer() * 2;
-
-                            if (interval >= min_interval) {
-                                pktburst = PKTBURST_PRECISION * 1;
-                            } else if (interval == 0) {
-                                pktburst = PKTBURST_PRECISION * min_interval * kbps / 8000 / pktsize;
-                                interval = min_interval;
-                            } else {
-                                pktburst = PKTBURST_PRECISION * min_interval / interval;
-                                interval = min_interval;
-                            }
-
-                            if (bufsize == 0) {
-                                bufsize = pktsize * (pktburst / PKTBURST_PRECISION + 1) * 2;
-                            }
-
-                            if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &bufsize, sizeof(bufsize)) < 0) {
-                                fprintf(stderr, "bwping: setsockopt(SO_RCVBUF, %u) failed: %s\n", bufsize, strerror(errno));
-                            }
-                            if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &bufsize, sizeof(bufsize)) < 0) {
-                                fprintf(stderr, "bwping: setsockopt(SO_SNDBUF, %u) failed: %s\n", bufsize, strerror(errno));
-                            }
-
-#ifdef IP_TOS
-                            if (setsockopt(sock, IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) < 0) {
-                                fprintf(stderr, "bwping: setsockopt(IP_TOS, %u) failed: %s\n", tos, strerror(errno));
-                            }
-#endif
-
-                            gettimeofday(&begin,  NULL);
-                            gettimeofday(&end,    NULL);
-                            gettimeofday(&report, NULL);
-
-                            current_interval = interval;
-                            pktburst_error   = 0;
-                            interval_error   = 0;
-
-                            while (!finish) {
-                                gettimeofday(&start, NULL);
-
-                                for (i = 0; i < pktburst / PKTBURST_PRECISION + pktburst_error / PKTBURST_PRECISION; i++) {
-                                    if ((uint64_t)pktsize * transmitted_number < volume) {
-                                        send_ping(sock, &to, pktsize, ident, !i, &transmitted_number);
-                                    }
-                                }
-
-                                if (pktburst_error >= PKTBURST_PRECISION) {
-                                    pktburst_error = pktburst_error % PKTBURST_PRECISION;
-                                }
-
-                                pktburst_error = pktburst_error + pktburst % PKTBURST_PRECISION;
-
-                                while (1) {
-                                    FD_ZERO(&fds);
-                                    FD_SET(sock, &fds);
-
-                                    seltimeout.tv_sec  = current_interval / 1000000;
-                                    seltimeout.tv_usec = current_interval % 1000000;
-
-                                    n = select(sock + 1, &fds, NULL, NULL, &seltimeout);
-
-                                    if (n > 0) {
-                                        while (recv_ping(sock, ident, &received_number, &received_volume)) {
-                                            if (received_number >= transmitted_number) {
-                                                break;
-                                            }
-                                        }
-                                    }
-
-                                    gettimeofday(&now, NULL);
-
-                                    if (tvsub(&now, &start) >= current_interval) {
-                                        if ((uint64_t)pktsize * transmitted_number >= volume) {
-                                            finish = true;
-                                        } else {
-                                            interval_error += tvsub(&now, &start) - current_interval;
-
-                                            if (interval_error >= interval / 2) {
-                                                current_interval = interval / 2;
-                                                interval_error   = interval_error - interval / 2;
-                                            } else {
-                                                current_interval = interval;
-                                            }
-                                        }
-
-                                        break;
-                                    }
-                                }
-
-                                gettimeofday(&end, NULL);
-
-                                if (rperiod != 0 && end.tv_sec - report.tv_sec >= rperiod) {
-                                    printf("Periodic: pkts sent/rcvd: %" PRIu32 "/%" PRIu32 ", volume rcvd: %" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRId64 "/%" PRId64 "/%" PRId64 " ms\n",
-                                           transmitted_number, received_number, received_volume, (long int)(end.tv_sec - begin.tv_sec),
-                                           end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
-                                           min_rtt == DEF_MIN_RTT ? 0 : min_rtt, max_rtt, average_rtt);
-
-                                    gettimeofday(&report, NULL);
-                                }
-                            }
-
-                            printf("Total: pkts sent/rcvd: %" PRIu32 "/%" PRIu32 ", volume rcvd: %" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRId64 "/%" PRId64 "/%" PRId64 " ms\n",
-                                   transmitted_number, received_number, received_volume, (long int)(end.tv_sec - begin.tv_sec),
-                                   end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
-                                   min_rtt == DEF_MIN_RTT ? 0 : min_rtt, max_rtt, average_rtt);
+                        } else {
+                            exitval = EX_SOFTWARE;
                         }
                     }
                 }
-            } else {
-                fprintf(stderr, "Usage: bwping [-u bufsize] [-r reporting_period] [-T tos] [-B bind_addr] -b kbps -s pktsize -v volume target\n");
+
+                if (exitval == EX_OK) {
+                    target = argv[optind];
+
+                    if (ipv4_mode ? resolve_name4(target, &to4) :
+                                    resolve_name6(target, &to6)) {
+                        ident = getpid() & 0xFFFF;
+
+                        if (ipv4_mode) {
+                            memset(&p_addr4, 0, sizeof(p_addr4));
+
+                            if (inet_ntop(AF_INET, &(to4.sin_addr), p_addr4, sizeof(p_addr4)) == NULL) {
+                                strncpy(p_addr4, "?", sizeof(p_addr4) - 1); p_addr4[sizeof(p_addr4) - 1] = 0;
+                            }
+
+                            printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
+                                   target, p_addr4, kbps, pktsize, volume);
+                        } else {
+                            memset(&p_addr6, 0, sizeof(p_addr6));
+
+                            if (inet_ntop(AF_INET6, &(to6.sin6_addr), p_addr6, sizeof(p_addr6)) == NULL) {
+                                strncpy(p_addr6, "?", sizeof(p_addr6) - 1); p_addr6[sizeof(p_addr6) - 1] = 0;
+                            }
+
+                            printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
+                                   target, p_addr6, kbps, pktsize, volume);
+                        }
+
+                        min_rtt     = INT64_MAX;
+                        max_rtt     = 0;
+                        average_rtt = 0;
+
+                        finish             = false;
+                        transmitted_number = 0;
+                        received_number    = 0;
+                        received_volume    = 0;
+
+                        interval = (int64_t)pktsize * 8000 / kbps;
+
+                        min_interval = calibrate_timer() * 2;
+
+                        if (interval >= min_interval) {
+                            pktburst = PKTBURST_PRECISION * 1;
+                        } else if (interval == 0) {
+                            pktburst = PKTBURST_PRECISION * min_interval * kbps / 8000 / pktsize;
+                            interval = min_interval;
+                        } else {
+                            pktburst = PKTBURST_PRECISION * min_interval / interval;
+                            interval = min_interval;
+                        }
+
+                        if (bufsize == 0) {
+                            bufsize = pktsize * (pktburst / PKTBURST_PRECISION + 1) * 2;
+                        }
+
+                        if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &bufsize, sizeof(bufsize)) < 0) {
+                            fprintf(stderr, "%s: setsockopt(SO_RCVBUF, %u) failed: %s\n", cmd_name, bufsize, strerror(errno));
+                        }
+                        if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &bufsize, sizeof(bufsize)) < 0) {
+                            fprintf(stderr, "%s: setsockopt(SO_SNDBUF, %u) failed: %s\n", cmd_name, bufsize, strerror(errno));
+                        }
+
+                        if (ipv4_mode) {
+                            if (setsockopt(sock, IPPROTO_IP, IP_TOS, &tos_or_tclass, sizeof(tos_or_tclass)) < 0) {
+                                fprintf(stderr, "%s: setsockopt(IP_TOS, %u) failed: %s\n", cmd_name, tos_or_tclass, strerror(errno));
+                            }
+                        } else {
+                            if (setsockopt(sock, IPPROTO_IPV6, IPV6_TCLASS, &tos_or_tclass, sizeof(tos_or_tclass)) < 0) {
+                                fprintf(stderr, "%s: setsockopt(IPV6_TCLASS, %u) failed: %s\n", cmd_name, tos_or_tclass, strerror(errno));
+                            }
+                        }
+
+                        gettimeofday(&begin,  NULL);
+                        gettimeofday(&end,    NULL);
+                        gettimeofday(&report, NULL);
+
+                        current_interval = interval;
+                        pktburst_error   = 0;
+                        interval_error   = 0;
+
+                        while (!finish) {
+                            gettimeofday(&start, NULL);
+
+                            for (i = 0; i < pktburst / PKTBURST_PRECISION + pktburst_error / PKTBURST_PRECISION; i++) {
+                                if ((uint64_t)pktsize * transmitted_number < volume) {
+                                    if (ipv4_mode) {
+                                        send_ping4(sock, &to4, pktsize, ident, !i, &transmitted_number);
+                                    } else {
+                                        send_ping6(sock, &to6, pktsize, ident, !i, &transmitted_number);
+                                    }
+                                }
+                            }
+
+                            if (pktburst_error >= PKTBURST_PRECISION) {
+                                pktburst_error = pktburst_error % PKTBURST_PRECISION;
+                            }
+
+                            pktburst_error = pktburst_error + pktburst % PKTBURST_PRECISION;
+
+                            while (1) {
+                                FD_ZERO(&fds);
+                                FD_SET(sock, &fds);
+
+                                seltimeout.tv_sec  = current_interval / 1000000;
+                                seltimeout.tv_usec = current_interval % 1000000;
+
+                                n = select(sock + 1, &fds, NULL, NULL, &seltimeout);
+
+                                if (n > 0) {
+                                    while (ipv4_mode ? recv_ping4(sock, ident, &received_number, &received_volume) :
+                                                       recv_ping6(sock, ident, &received_number, &received_volume)) {
+                                        if (received_number >= transmitted_number) {
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                gettimeofday(&now, NULL);
+
+                                if (tvsub(&now, &start) >= current_interval) {
+                                    if ((uint64_t)pktsize * transmitted_number >= volume) {
+                                        finish = true;
+                                    } else {
+                                        interval_error += tvsub(&now, &start) - current_interval;
+
+                                        if (interval_error >= interval / 2) {
+                                            current_interval = interval / 2;
+                                            interval_error   = interval_error - interval / 2;
+                                        } else {
+                                            current_interval = interval;
+                                        }
+                                    }
+
+                                    break;
+                                }
+                            }
+
+                            gettimeofday(&end, NULL);
+
+                            if (rperiod != 0 && end.tv_sec - report.tv_sec >= rperiod) {
+                                printf("Periodic: pkts sent/rcvd: %" PRIu32 "/%" PRIu32 ", volume rcvd: %" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRId64 "/%" PRId64 "/%" PRId64 " ms\n",
+                                       transmitted_number, received_number, received_volume, (long int)(end.tv_sec - begin.tv_sec),
+                                       end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
+                                       min_rtt == INT64_MAX ? 0 : min_rtt, max_rtt, average_rtt);
+
+                                gettimeofday(&report, NULL);
+                            }
+                        }
+
+                        printf("Total: pkts sent/rcvd: %" PRIu32 "/%" PRIu32 ", volume rcvd: %" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRId64 "/%" PRId64 "/%" PRId64 " ms\n",
+                               transmitted_number, received_number, received_volume, (long int)(end.tv_sec - begin.tv_sec),
+                               end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
+                               min_rtt == INT64_MAX ? 0 : min_rtt, max_rtt, average_rtt);
+                    } else {
+                        exitval = EX_SOFTWARE;
+                    }
+                }
             }
-
-            close(sock);
-
-            exit(exitval);
+        } else {
+            if (ipv4_mode) {
+                fprintf(stderr, "Usage: %s [-u bufsize] [-r reporting_period] [-T tos] [-B bind_addr] -b kbps -s pktsize -v volume target\n", cmd_name);
+            } else {
+                fprintf(stderr, "Usage: %s [-u bufsize] [-r reporting_period] [-T tclass] [-B bind_addr] -b kbps -s pktsize -v volume target\n", cmd_name);
+            }
         }
     }
+
+    close(sock);
+
+    exit(exitval);
 }
