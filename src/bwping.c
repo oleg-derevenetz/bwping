@@ -119,7 +119,7 @@ static int64_t calibrate_timer()
     return sum / CALIBRATION_CYCLES;
 }
 
-static void send_ping4(int sock, struct sockaddr_in *to4, size_t pktsize, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number)
+static void send_ping4(int sock, struct sockaddr_in *to4, size_t pktsize, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
 {
     size_t         size;
     ssize_t        res;
@@ -161,9 +161,10 @@ static void send_ping4(int sock, struct sockaddr_in *to4, size_t pktsize, uint16
     }
 
     (*transmitted_number)++;
+    (*transmitted_volume) += pktsize;
 }
 
-static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pktsize, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number)
+static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pktsize, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
 {
     size_t            size;
     ssize_t           res;
@@ -203,6 +204,7 @@ static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pktsize, uint1
     }
 
     (*transmitted_number)++;
+    (*transmitted_volume) += pktsize;
 }
 
 static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint64_t *received_volume)
@@ -409,7 +411,7 @@ int main(int argc, char **argv)
     int32_t             rperiod;
     uint32_t            kbps, transmitted_number, received_number, pktburst, pktburst_error, i;
     int64_t             min_interval, interval, current_interval, interval_error;
-    uint64_t            volume, received_volume;
+    uint64_t            volume, transmitted_volume, received_volume;
     char               *ep,
                        *bind_addr,
                        *target;
@@ -592,6 +594,7 @@ int main(int argc, char **argv)
                         finish             = false;
                         transmitted_number = 0;
                         received_number    = 0;
+                        transmitted_volume = 0;
                         received_volume    = 0;
 
                         interval = (int64_t)pktsize * 8000 / kbps;
@@ -643,9 +646,9 @@ int main(int argc, char **argv)
                             for (i = 0; i < pktburst / PKTBURST_PRECISION + pktburst_error / PKTBURST_PRECISION; i++) {
                                 if ((uint64_t)pktsize * transmitted_number < volume) {
                                     if (IPV4_MODE) {
-                                        send_ping4(sock, &to4, pktsize, ident, !i, &transmitted_number);
+                                        send_ping4(sock, &to4, pktsize, ident, !i, &transmitted_number, &transmitted_volume);
                                     } else {
-                                        send_ping6(sock, &to6, pktsize, ident, !i, &transmitted_number);
+                                        send_ping6(sock, &to6, pktsize, ident, !i, &transmitted_number, &transmitted_volume);
                                     }
                                 }
                             }
@@ -697,8 +700,8 @@ int main(int argc, char **argv)
                             gettimeofday(&end, NULL);
 
                             if (rperiod != 0 && end.tv_sec - report.tv_sec >= rperiod) {
-                                printf("Periodic: pkts sent/rcvd: %" PRIu32 "/%" PRIu32 ", volume rcvd: %" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRId64 "/%" PRId64 "/%" PRId64 " ms\n",
-                                       transmitted_number, received_number, received_volume, (long int)(end.tv_sec - begin.tv_sec),
+                                printf("Periodic: pkts sent/rcvd: %" PRIu32 "/%" PRIu32 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRId64 "/%" PRId64 "/%" PRId64 " ms\n",
+                                       transmitted_number, received_number, transmitted_volume, received_volume, (long int)(end.tv_sec - begin.tv_sec),
                                        end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
                                        min_rtt == INT64_MAX ? 0 : min_rtt, max_rtt, average_rtt);
 
@@ -706,8 +709,8 @@ int main(int argc, char **argv)
                             }
                         }
 
-                        printf("Total: pkts sent/rcvd: %" PRIu32 "/%" PRIu32 ", volume rcvd: %" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRId64 "/%" PRId64 "/%" PRId64 " ms\n",
-                               transmitted_number, received_number, received_volume, (long int)(end.tv_sec - begin.tv_sec),
+                        printf("Total: pkts sent/rcvd: %" PRIu32 "/%" PRIu32 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRId64 "/%" PRId64 "/%" PRId64 " ms\n",
+                               transmitted_number, received_number, transmitted_volume, received_volume, (long int)(end.tv_sec - begin.tv_sec),
                                end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
                                min_rtt == INT64_MAX ? 0 : min_rtt, max_rtt, average_rtt);
                     } else {
