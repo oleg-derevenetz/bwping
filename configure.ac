@@ -79,12 +79,7 @@ fi
 AC_SUBST([AM_CFLAGS])
 
 AC_MSG_CHECKING([for IPv6 support])
-AC_RUN_IFELSE([AC_LANG_PROGRAM([
-/* Make sure the definitions for AF_INET6, struct sockaddr_in6 and
- * struct icmp6_hdr are defined, and that we can actually create an
- * IPv6 socket.
- */
-
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 #include <stdlib.h>
 
 #include <sys/types.h>
@@ -216,11 +211,12 @@ struct icmp6_hdr {
 
 #endif
     ], [
-        int fd;
         struct sockaddr_in6 foo;
         struct icmp6_hdr bar;
-        fd = socket(AF_INET6, SOCK_STREAM, 0);
-        exit(fd >= 0 ? 0 : 1);
+
+        socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
+
+        exit(0);
     ])],
     [my_cv_ipv6=yes],
     [my_cv_ipv6=no],
