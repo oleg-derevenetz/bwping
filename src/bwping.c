@@ -90,7 +90,7 @@ static uint16_t cksum(uint16_t *addr, size_t len)
     return ~sum;
 }
 
-static int64_t calibrate_timer()
+static int64_t calibrate_timer(void)
 {
     int            n;
     uint32_t       i;
