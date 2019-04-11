@@ -36,11 +36,6 @@
 
 #include <netdb.h>
 
-struct tv32 {
-    uint32_t tv32_sec;
-    uint32_t tv32_usec;
-};
-
 #ifdef BUILD_BWPING
 const bool         IPV4_MODE          = true;
 #else
@@ -130,8 +125,7 @@ static void send_ping4(int sock, struct sockaddr_in *to4, size_t pktsize, uint16
     ssize_t        res;
     unsigned char  packet[IP_MAXPACKET] __attribute__((aligned(4)));
     struct icmp   *icmp4;
-    struct timeval now;
-    struct tv32    tv32;
+    struct timeval now, pkttime;
 
     icmp4 = (struct icmp *)packet;
 
@@ -143,16 +137,16 @@ static void send_ping4(int sock, struct sockaddr_in *to4, size_t pktsize, uint16
     icmp4->icmp_id    = ident;
     icmp4->icmp_seq   = htons(*transmitted_number);
 
-    gettimeofday(&now, NULL);
-
     if (first_in_burst) {
-        tv32.tv32_sec  = htonl(now.tv_sec);
-        tv32.tv32_usec = htonl(now.tv_usec);
+        gettimeofday(&now, NULL);
+
+        pkttime.tv_sec  = now.tv_sec;
+        pkttime.tv_usec = now.tv_usec;
     } else {
-        memset(&tv32, 0, sizeof(tv32));
+        memset(&pkttime, 0, sizeof(pkttime));
     }
 
-    memcpy(&packet[sizeof(struct icmp)], &tv32, sizeof(tv32));
+    memcpy(&packet[sizeof(struct icmp)], &pkttime, sizeof(pkttime));
 
     size = pktsize - sizeof(struct ip);
 
@@ -175,8 +169,7 @@ static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pktsize, uint1
     ssize_t           res;
     unsigned char     packet[IP_MAXPACKET] __attribute__((aligned(4)));
     struct icmp6_hdr *icmp6;
-    struct timeval    now;
-    struct tv32       tv32;
+    struct timeval    now, pkttime;
 
     icmp6 = (struct icmp6_hdr *)packet;
 
@@ -188,16 +181,16 @@ static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pktsize, uint1
     icmp6->icmp6_id    = ident;
     icmp6->icmp6_seq   = htons(*transmitted_number);
 
-    gettimeofday(&now, NULL);
-
     if (first_in_burst) {
-        tv32.tv32_sec  = htonl(now.tv_sec);
-        tv32.tv32_usec = htonl(now.tv_usec);
+        gettimeofday(&now, NULL);
+
+        pkttime.tv_sec  = now.tv_sec;
+        pkttime.tv_usec = now.tv_usec;
     } else {
-        memset(&tv32, 0, sizeof(tv32));
+        memset(&pkttime, 0, sizeof(pkttime));
     }
 
-    memcpy(&packet[sizeof(struct icmp6_hdr)], &tv32, sizeof(tv32));
+    memcpy(&packet[sizeof(struct icmp6_hdr)], &pkttime, sizeof(pkttime));
 
     size = pktsize - sizeof(struct ip6_hdr);
 
@@ -224,7 +217,6 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
     struct ip         *ip4;
     struct icmp       *icmp4;
     struct timeval     now, pkttime;
-    struct tv32        tv32;
 
     memset(&iov, 0, sizeof(iov));
 
@@ -237,8 +229,6 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
     msg.msg_namelen = sizeof(from4);
     msg.msg_iov     = &iov;
     msg.msg_iovlen  = 1;
-
-    gettimeofday(&now, NULL);
 
     res = recvmsg(sock, &msg, MSG_DONTWAIT);
 
@@ -255,13 +245,12 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
                 (*received_number)++;
                 (*received_volume) += res;
 
-                if (res >= (ssize_t)(hlen + sizeof(struct icmp) + sizeof(tv32))) {
-                    memcpy(&tv32, &packet[hlen + sizeof(struct icmp)], sizeof(tv32));
-
-                    pkttime.tv_sec  = ntohl(tv32.tv32_sec);
-                    pkttime.tv_usec = ntohl(tv32.tv32_usec);
+                if (res >= (ssize_t)(hlen + sizeof(struct icmp) + sizeof(pkttime))) {
+                    memcpy(&pkttime, &packet[hlen + sizeof(struct icmp)], sizeof(pkttime));
 
                     if (pkttime.tv_sec != 0 || pkttime.tv_usec != 0) {
+                        gettimeofday(&now, NULL);
+
                         rtt = tvsub(&now, &pkttime) / 1000;
 
                         if (min_rtt > rtt) {
@@ -293,7 +282,6 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
     struct msghdr       msg;
     struct icmp6_hdr   *icmp6;
     struct timeval      now, pkttime;
-    struct tv32         tv32;
 
     memset(&iov, 0, sizeof(iov));
 
@@ -307,8 +295,6 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
     msg.msg_iov     = &iov;
     msg.msg_iovlen  = 1;
 
-    gettimeofday(&now, NULL);
-
     res = recvmsg(sock, &msg, MSG_DONTWAIT);
 
     if (res > 0) {
@@ -319,13 +305,12 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
             (*received_number)++;
             (*received_volume) += res + sizeof(struct ip6_hdr);
 
-            if (res >= (ssize_t)(sizeof(struct icmp6_hdr) + sizeof(tv32))) {
-                memcpy(&tv32, &packet[sizeof(struct icmp6_hdr)], sizeof(tv32));
-
-                pkttime.tv_sec  = ntohl(tv32.tv32_sec);
-                pkttime.tv_usec = ntohl(tv32.tv32_usec);
+            if (res >= (ssize_t)(sizeof(struct icmp6_hdr) + sizeof(pkttime))) {
+                memcpy(&pkttime, &packet[sizeof(struct icmp6_hdr)], sizeof(pkttime));
 
                 if (pkttime.tv_sec != 0 || pkttime.tv_usec != 0) {
+                    gettimeofday(&now, NULL);
+
                     rtt = tvsub(&now, &pkttime) / 1000;
 
                     if (min_rtt > rtt) {
@@ -535,16 +520,16 @@ int main(int argc, char **argv)
 
         if (exitval == EX_OK) {
             if (IPV4_MODE) {
-                if (pktsize < sizeof(struct ip) + sizeof(struct icmp) + sizeof(struct tv32) || pktsize > IP_MAXPACKET) {
+                if (pktsize < sizeof(struct ip) + sizeof(struct icmp) + sizeof(struct timeval) || pktsize > IP_MAXPACKET) {
                     fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", PROG_NAME,
-                                                                                                sizeof(struct ip) + sizeof(struct icmp) + sizeof(struct tv32),
+                                                                                                sizeof(struct ip) + sizeof(struct icmp) + sizeof(struct timeval),
                                                                                                 (size_t)IP_MAXPACKET);
                     exitval = EX_USAGE;
                 }
             } else {
-                if (pktsize < sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32) || pktsize > IP_MAXPACKET) {
+                if (pktsize < sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct timeval) || pktsize > IP_MAXPACKET) {
                     fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", PROG_NAME,
-                                                                                                sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32),
+                                                                                                sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct timeval),
                                                                                                 (size_t)IP_MAXPACKET);
                     exitval = EX_USAGE;
                 }
