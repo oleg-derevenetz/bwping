@@ -41,12 +41,20 @@ struct tv32 {
     uint32_t tv32_usec;
 };
 
+#ifdef BWPING
+const bool         IPV4_MODE          = true;
+#else
+const bool         IPV4_MODE          = false;
+#endif
 const uint32_t     CALIBRATE_RETRIES  = 50,
                    PKTBURST_PRECISION = 1000;
-const char * const DEFAULT_CMD_NAME   = "bwping";
+#ifdef BWPING
+const char * const CMD_NAME           = "bwping";
+#else
+const char * const CMD_NAME           = "bwping6";
+#endif
 
-int64_t     min_rtt, max_rtt, average_rtt;
-const char *cmd_name;
+int64_t min_rtt, max_rtt, average_rtt;
 
 static int64_t tvsub(struct timeval *t1, struct timeval *t2)
 {
@@ -153,9 +161,9 @@ static void send_ping4(int sock, struct sockaddr_in *to4, size_t pktsize, uint16
     res = sendto(sock, packet, size, 0, (struct sockaddr *)to4, sizeof(*to4));
 
     if (res < 0) {
-        fprintf(stderr, "%s: sendto() failed: %s\n", cmd_name, strerror(errno));
+        fprintf(stderr, "%s: sendto() failed: %s\n", CMD_NAME, strerror(errno));
     } else if (res != (ssize_t)size) {
-        fprintf(stderr, "%s: partial write: packet size: %zu, sent: %zd\n", cmd_name, size, res);
+        fprintf(stderr, "%s: partial write: packet size: %zu, sent: %zd\n", CMD_NAME, size, res);
     }
 
     (*transmitted_number)++;
@@ -196,9 +204,9 @@ static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pktsize, uint1
     res = sendto(sock, packet, size, 0, (struct sockaddr *)to6, sizeof(*to6));
 
     if (res < 0) {
-        fprintf(stderr, "%s: sendto() failed: %s\n", cmd_name, strerror(errno));
+        fprintf(stderr, "%s: sendto() failed: %s\n", CMD_NAME, strerror(errno));
     } else if (res != (ssize_t)size) {
-        fprintf(stderr, "%s: partial write: packet size: %zu, sent: %zd\n", cmd_name, size, res);
+        fprintf(stderr, "%s: partial write: packet size: %zu, sent: %zd\n", CMD_NAME, size, res);
     }
 
     (*transmitted_number)++;
@@ -354,13 +362,13 @@ static bool resolve_name4(char *name, struct sockaddr_in *addr4)
     res = getaddrinfo(name, NULL, &hints, &res_info);
 
     if (res != 0) {
-        fprintf(stderr, "%s: cannot resolve %s: %s\n", cmd_name, name, gai_strerror(res));
+        fprintf(stderr, "%s: cannot resolve %s: %s\n", CMD_NAME, name, gai_strerror(res));
 
         return false;
     } else if (res_info->ai_addr == NULL || res_info->ai_addrlen != sizeof(*addr4)) {
         freeaddrinfo(res_info);
 
-        fprintf(stderr, "%s: getaddrinfo() returned an illegal address\n", cmd_name);
+        fprintf(stderr, "%s: getaddrinfo() returned an illegal address\n", CMD_NAME);
 
         return false;
     } else {
@@ -388,13 +396,13 @@ static bool resolve_name6(char *name, struct sockaddr_in6 *addr6)
     res = getaddrinfo(name, NULL, &hints, &res_info);
 
     if (res != 0) {
-        fprintf(stderr, "%s: cannot resolve %s: %s\n", cmd_name, name, gai_strerror(res));
+        fprintf(stderr, "%s: cannot resolve %s: %s\n", CMD_NAME, name, gai_strerror(res));
 
         return false;
     } else if (res_info->ai_addr == NULL || res_info->ai_addrlen != sizeof(*addr6)) {
         freeaddrinfo(res_info);
 
-        fprintf(stderr, "%s: getaddrinfo() returned an illegal address\n", cmd_name);
+        fprintf(stderr, "%s: getaddrinfo() returned an illegal address\n", CMD_NAME);
 
         return false;
     } else {
@@ -408,7 +416,7 @@ static bool resolve_name6(char *name, struct sockaddr_in6 *addr6)
 
 int main(int argc, char **argv)
 {
-    bool                ipv4_mode, finish;
+    bool                finish;
     int                 sock, exitval, ch, n;
     unsigned int        bufsize, tos_or_tclass;
     size_t              pktsize;
@@ -427,23 +435,11 @@ int main(int argc, char **argv)
     struct sockaddr_in6 bind_to6, to6;
     struct timeval      begin, end, report, start, now, seltimeout;
 
-    if (argc > 0) {
-        cmd_name = argv[0];
-    } else {
-        cmd_name = DEFAULT_CMD_NAME;
-    }
-
-    if (strlen(cmd_name) > 0 && cmd_name[strlen(cmd_name) - 1] == '6') {
-        ipv4_mode = false;
-    } else {
-        ipv4_mode = true;
-    }
-
-    if (ipv4_mode) {
+    if (IPV4_MODE) {
         sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 
         if (sock < 0) {
-            fprintf(stderr, "%s: socket(AF_INET, SOCK_RAW, IPPROTO_ICMP) failed: %s\n", cmd_name, strerror(errno));
+            fprintf(stderr, "%s: socket(AF_INET, SOCK_RAW, IPPROTO_ICMP) failed: %s\n", CMD_NAME, strerror(errno));
 
             exit(EX_OSERR);
         }
@@ -451,14 +447,14 @@ int main(int argc, char **argv)
         sock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
 
         if (sock < 0) {
-            fprintf(stderr, "%s: socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6) failed: %s\n", cmd_name, strerror(errno));
+            fprintf(stderr, "%s: socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6) failed: %s\n", CMD_NAME, strerror(errno));
 
             exit(EX_OSERR);
         }
     }
 
     if (setuid(getuid()) < 0) {
-        fprintf(stderr, "%s: setuid(getuid()) failed: %s\n", cmd_name, strerror(errno));
+        fprintf(stderr, "%s: setuid(getuid()) failed: %s\n", CMD_NAME, strerror(errno));
 
         exitval = EX_OSERR;
     } else {
@@ -538,16 +534,16 @@ int main(int argc, char **argv)
         }
 
         if (exitval == EX_OK) {
-            if (ipv4_mode) {
+            if (IPV4_MODE) {
                 if (pktsize < sizeof(struct ip) + sizeof(struct icmp) + sizeof(struct tv32) || pktsize > IP_MAXPACKET) {
-                    fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", cmd_name,
+                    fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", CMD_NAME,
                                                                                                 sizeof(struct ip) + sizeof(struct icmp) + sizeof(struct tv32),
                                                                                                 (size_t)IP_MAXPACKET);
                     exitval = EX_USAGE;
                 }
             } else {
                 if (pktsize < sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32) || pktsize > IP_MAXPACKET) {
-                    fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", cmd_name,
+                    fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", CMD_NAME,
                                                                                                 sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct tv32),
                                                                                                 (size_t)IP_MAXPACKET);
                     exitval = EX_USAGE;
@@ -556,10 +552,10 @@ int main(int argc, char **argv)
 
             if (exitval == EX_OK) {
                 if (bind_addr != NULL) {
-                    if (ipv4_mode) {
+                    if (IPV4_MODE) {
                         if (resolve_name4(bind_addr, &bind_to4)) {
                             if (bind(sock, (struct sockaddr *)&bind_to4, sizeof(bind_to4)) < 0) {
-                                fprintf(stderr, "%s: bind() failed: %s\n", cmd_name, strerror(errno));
+                                fprintf(stderr, "%s: bind() failed: %s\n", CMD_NAME, strerror(errno));
                                 exitval = EX_OSERR;
                             }
                         } else {
@@ -568,7 +564,7 @@ int main(int argc, char **argv)
                     } else {
                         if (resolve_name6(bind_addr, &bind_to6)) {
                             if (bind(sock, (struct sockaddr *)&bind_to6, sizeof(bind_to6)) < 0) {
-                                fprintf(stderr, "%s: bind() failed: %s\n", cmd_name, strerror(errno));
+                                fprintf(stderr, "%s: bind() failed: %s\n", CMD_NAME, strerror(errno));
                                 exitval = EX_OSERR;
                             }
                         } else {
@@ -580,11 +576,11 @@ int main(int argc, char **argv)
                 if (exitval == EX_OK) {
                     target = argv[optind];
 
-                    if (ipv4_mode ? resolve_name4(target, &to4) :
+                    if (IPV4_MODE ? resolve_name4(target, &to4) :
                                     resolve_name6(target, &to6)) {
                         ident = getpid() & 0xFFFF;
 
-                        if (ipv4_mode) {
+                        if (IPV4_MODE) {
                             memset(&p_addr4, 0, sizeof(p_addr4));
 
                             if (inet_ntop(AF_INET, &(to4.sin_addr), p_addr4, sizeof(p_addr4)) == NULL) {
@@ -632,19 +628,19 @@ int main(int argc, char **argv)
                         }
 
                         if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &bufsize, sizeof(bufsize)) < 0) {
-                            fprintf(stderr, "%s: setsockopt(SO_RCVBUF, %u) failed: %s\n", cmd_name, bufsize, strerror(errno));
+                            fprintf(stderr, "%s: setsockopt(SO_RCVBUF, %u) failed: %s\n", CMD_NAME, bufsize, strerror(errno));
                         }
                         if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &bufsize, sizeof(bufsize)) < 0) {
-                            fprintf(stderr, "%s: setsockopt(SO_SNDBUF, %u) failed: %s\n", cmd_name, bufsize, strerror(errno));
+                            fprintf(stderr, "%s: setsockopt(SO_SNDBUF, %u) failed: %s\n", CMD_NAME, bufsize, strerror(errno));
                         }
 
-                        if (ipv4_mode) {
+                        if (IPV4_MODE) {
                             if (setsockopt(sock, IPPROTO_IP, IP_TOS, &tos_or_tclass, sizeof(tos_or_tclass)) < 0) {
-                                fprintf(stderr, "%s: setsockopt(IP_TOS, %u) failed: %s\n", cmd_name, tos_or_tclass, strerror(errno));
+                                fprintf(stderr, "%s: setsockopt(IP_TOS, %u) failed: %s\n", CMD_NAME, tos_or_tclass, strerror(errno));
                             }
                         } else {
                             if (setsockopt(sock, IPPROTO_IPV6, IPV6_TCLASS, &tos_or_tclass, sizeof(tos_or_tclass)) < 0) {
-                                fprintf(stderr, "%s: setsockopt(IPV6_TCLASS, %u) failed: %s\n", cmd_name, tos_or_tclass, strerror(errno));
+                                fprintf(stderr, "%s: setsockopt(IPV6_TCLASS, %u) failed: %s\n", CMD_NAME, tos_or_tclass, strerror(errno));
                             }
                         }
 
@@ -661,7 +657,7 @@ int main(int argc, char **argv)
 
                             for (i = 0; i < pktburst / PKTBURST_PRECISION + pktburst_error / PKTBURST_PRECISION; i++) {
                                 if ((uint64_t)pktsize * transmitted_number < volume) {
-                                    if (ipv4_mode) {
+                                    if (IPV4_MODE) {
                                         send_ping4(sock, &to4, pktsize, ident, !i, &transmitted_number);
                                     } else {
                                         send_ping6(sock, &to6, pktsize, ident, !i, &transmitted_number);
@@ -685,7 +681,7 @@ int main(int argc, char **argv)
                                 n = select(sock + 1, &fds, NULL, NULL, &seltimeout);
 
                                 if (n > 0) {
-                                    while (ipv4_mode ? recv_ping4(sock, ident, &received_number, &received_volume) :
+                                    while (IPV4_MODE ? recv_ping4(sock, ident, &received_number, &received_volume) :
                                                        recv_ping6(sock, ident, &received_number, &received_volume)) {
                                         if (received_number >= transmitted_number) {
                                             break;
@@ -735,10 +731,10 @@ int main(int argc, char **argv)
                 }
             }
         } else {
-            if (ipv4_mode) {
-                fprintf(stderr, "Usage: %s [-u bufsize] [-r reporting_period] [-T tos] [-B bind_addr] -b kbps -s pktsize -v volume target\n", cmd_name);
+            if (IPV4_MODE) {
+                fprintf(stderr, "Usage: %s [-u bufsize] [-r reporting_period] [-T tos] [-B bind_addr] -b kbps -s pktsize -v volume target\n", CMD_NAME);
             } else {
-                fprintf(stderr, "Usage: %s [-u bufsize] [-r reporting_period] [-T tclass] [-B bind_addr] -b kbps -s pktsize -v volume target\n", cmd_name);
+                fprintf(stderr, "Usage: %s [-u bufsize] [-r reporting_period] [-T tclass] [-B bind_addr] -b kbps -s pktsize -v volume target\n", CMD_NAME);
             }
         }
     }
