@@ -6,8 +6,6 @@ AC_CONFIG_FILES([Makefile])
 
 AM_INIT_AUTOMAKE
 
-AC_ARG_ENABLE([warn], [AS_HELP_STRING([--disable-warn], [Disable additional warnings (-Wall -Wextra -Wpedantic)])])
-
 AC_PROG_CC
 AC_PROG_CC_C99
 if test "$ac_cv_prog_cc_c99" = "no"; then
@@ -41,42 +39,6 @@ AC_CHECK_FUNC([getaddrinfo])
 if test "$ac_cv_func_getaddrinfo" = "no"; then
     AC_SEARCH_LIBS([getaddrinfo], [resolv nsl socket], [], [AC_MSG_ERROR([getaddrinfo() is required for build])])
 fi
-
-my_save_cflags="$CFLAGS"
-AC_MSG_CHECKING([whether the C compiler accepts -Wall...])
-CFLAGS="$CFLAGS -Wall"
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
-                  [my_cv_wall=yes],
-                  [my_cv_wall=no])
-CFLAGS="$my_save_cflags"
-AC_MSG_RESULT([$my_cv_wall])
-if test "$enable_warn" != "no" -a "$my_cv_wall" = "yes"; then
-    AM_CFLAGS="$AM_CFLAGS -Wall"
-fi
-
-AC_MSG_CHECKING([whether the C compiler accepts -Wextra...])
-CFLAGS="$CFLAGS -Wextra"
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
-                  [my_cv_wextra=yes],
-                  [my_cv_wextra=no])
-CFLAGS="$my_save_cflags"
-AC_MSG_RESULT([$my_cv_wextra])
-if test "$enable_warn" != "no" -a "$my_cv_wextra" = "yes"; then
-    AM_CFLAGS="$AM_CFLAGS -Wextra"
-fi
-
-AC_MSG_CHECKING([whether the C compiler accepts -Wpedantic...])
-CFLAGS="$CFLAGS -Wpedantic"
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
-                  [my_cv_wpedantic=yes],
-                  [my_cv_wpedantic=no])
-CFLAGS="$my_save_cflags"
-AC_MSG_RESULT([$my_cv_wpedantic])
-if test "$enable_warn" != "no" -a "$my_cv_wpedantic" = "yes"; then
-    AM_CFLAGS="$AM_CFLAGS -Wpedantic"
-fi
-
-AC_SUBST([AM_CFLAGS])
 
 AC_MSG_CHECKING([for IPv6 support])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
@@ -218,11 +180,11 @@ struct icmp6_hdr {
 
         exit(0);
     ])],
-    [my_cv_ipv6=yes],
-    [my_cv_ipv6=no],
-    [my_cv_ipv6=no])
-AC_MSG_RESULT([$my_cv_ipv6])
-if test "$my_cv_ipv6" = "no"; then
+    [bwping_cv_sys_ipv6=yes],
+    [bwping_cv_sys_ipv6=no],
+    [bwping_cv_sys_ipv6=no])
+AC_MSG_RESULT([$bwping_cv_sys_ipv6])
+if test "$bwping_cv_sys_ipv6" = "no"; then
     AC_MSG_ERROR([IPv6 support is required for build])
 fi
 

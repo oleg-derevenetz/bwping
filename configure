@@ -586,7 +586,6 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
-AM_CFLAGS
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
 CCDEPMODE
@@ -673,7 +672,6 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_silent_rules
-enable_warn
 enable_dependency_tracking
 '
       ac_precious_vars='build_alias
@@ -1300,8 +1298,6 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-silent-rules   less verbose build output (undo: "make V=1")
   --disable-silent-rules  verbose build output (undo: "make V=0")
-  --disable-warn          Disable additional warnings (-Wall -Wextra
-                          -Wpedantic)
   --enable-dependency-tracking
                           do not reject slow dependency extractors
   --disable-dependency-tracking
@@ -2542,12 +2538,6 @@ to "yes", and re-run configure.
 END
     as_fn_error $? "Your 'rm' program is bad, sorry." "$LINENO" 5
   fi
-fi
-
-
-# Check whether --enable-warn was given.
-if test "${enable_warn+set}" = set; then :
-  enableval=$enable_warn;
 fi
 
 
@@ -3988,90 +3978,6 @@ fi
 
 fi
 
-my_save_cflags="$CFLAGS"
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler accepts -Wall..." >&5
-$as_echo_n "checking whether the C compiler accepts -Wall...... " >&6; }
-CFLAGS="$CFLAGS -Wall"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  my_cv_wall=yes
-else
-  my_cv_wall=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-CFLAGS="$my_save_cflags"
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $my_cv_wall" >&5
-$as_echo "$my_cv_wall" >&6; }
-if test "$enable_warn" != "no" -a "$my_cv_wall" = "yes"; then
-    AM_CFLAGS="$AM_CFLAGS -Wall"
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler accepts -Wextra..." >&5
-$as_echo_n "checking whether the C compiler accepts -Wextra...... " >&6; }
-CFLAGS="$CFLAGS -Wextra"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  my_cv_wextra=yes
-else
-  my_cv_wextra=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-CFLAGS="$my_save_cflags"
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $my_cv_wextra" >&5
-$as_echo "$my_cv_wextra" >&6; }
-if test "$enable_warn" != "no" -a "$my_cv_wextra" = "yes"; then
-    AM_CFLAGS="$AM_CFLAGS -Wextra"
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler accepts -Wpedantic..." >&5
-$as_echo_n "checking whether the C compiler accepts -Wpedantic...... " >&6; }
-CFLAGS="$CFLAGS -Wpedantic"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  my_cv_wpedantic=yes
-else
-  my_cv_wpedantic=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-CFLAGS="$my_save_cflags"
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $my_cv_wpedantic" >&5
-$as_echo "$my_cv_wpedantic" >&6; }
-if test "$enable_warn" != "no" -a "$my_cv_wpedantic" = "yes"; then
-    AM_CFLAGS="$AM_CFLAGS -Wpedantic"
-fi
-
-
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for IPv6 support" >&5
 $as_echo_n "checking for IPv6 support... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -4224,14 +4130,14 @@ main ()
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  my_cv_ipv6=yes
+  bwping_cv_sys_ipv6=yes
 else
-  my_cv_ipv6=no
+  bwping_cv_sys_ipv6=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $my_cv_ipv6" >&5
-$as_echo "$my_cv_ipv6" >&6; }
-if test "$my_cv_ipv6" = "no"; then
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $bwping_cv_sys_ipv6" >&5
+$as_echo "$bwping_cv_sys_ipv6" >&6; }
+if test "$bwping_cv_sys_ipv6" = "no"; then
     as_fn_error $? "IPv6 support is required for build" "$LINENO" 5
 fi
 
