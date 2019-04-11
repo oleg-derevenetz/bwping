@@ -46,7 +46,7 @@ const bool         IPV4_MODE          = true;
 #else
 const bool         IPV4_MODE          = false;
 #endif
-const uint32_t     CALIBRATE_RETRIES  = 50,
+const uint32_t     CALIBRATE_RETRIES  = 1000,
                    PKTBURST_PRECISION = 1000;
 #ifdef BUILD_BWPING
 const char * const PROG_NAME          = "bwping";
