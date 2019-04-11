@@ -41,7 +41,7 @@ const bool         IPV4_MODE          = true;
 #else
 const bool         IPV4_MODE          = false;
 #endif
-const uint32_t     CALIBRATE_RETRIES  = 1000,
+const uint32_t     CALIBRATION_CYCLES = 100,
                    PKTBURST_PRECISION = 1000;
 #ifdef BUILD_BWPING
 const char * const PROG_NAME          = "bwping";
@@ -99,7 +99,7 @@ static int64_t calibrate_timer()
 
     sum = 0;
 
-    for (i = 0; i < CALIBRATE_RETRIES; i++) {
+    for (i = 0; i < CALIBRATION_CYCLES; i++) {
         n = -1;
 
         seltimeout.tv_sec  = 0;
@@ -116,7 +116,7 @@ static int64_t calibrate_timer()
         sum += tvsub(&end, &begin);
     }
 
-    return sum / CALIBRATE_RETRIES;
+    return sum / CALIBRATION_CYCLES;
 }
 
 static void send_ping4(int sock, struct sockaddr_in *to4, size_t pktsize, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number)
