@@ -3758,7 +3758,7 @@ fi
 
 
 if test "$ac_cv_prog_cc_c99" = "no"; then
-    as_fn_error $? "C99-capable compiler is required for build" "$LINENO" 5
+    as_fn_error $? "C99 compiler is required for build" "$LINENO" 5
 fi
 
 

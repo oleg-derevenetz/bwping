@@ -9,7 +9,7 @@ AM_INIT_AUTOMAKE
 AC_PROG_CC
 AC_PROG_CC_C99
 if test "$ac_cv_prog_cc_c99" = "no"; then
-    AC_MSG_ERROR([C99-capable compiler is required for build])
+    AC_MSG_ERROR([C99 compiler is required for build])
 fi
 
 AC_PROG_INSTALL
