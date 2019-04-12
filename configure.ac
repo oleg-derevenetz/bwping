@@ -22,20 +22,9 @@ AC_CHECK_HEADERS([netinet/icmp6.h], [], [], [
 #include <netinet/ip6.h>
     ])
 
-AC_CHECK_FUNC([socket])
-if test "$ac_cv_func_socket" = "no"; then
-    AC_SEARCH_LIBS([socket], [socket], [], [AC_MSG_ERROR([socket() is required for build])])
-fi
-
-AC_CHECK_FUNC([inet_ntop])
-if test "$ac_cv_func_inet_ntop" = "no"; then
-    AC_SEARCH_LIBS([inet_ntop], [resolv nsl], [], [AC_MSG_ERROR([inet_ntop() is required for build])])
-fi
-
-AC_CHECK_FUNC([getaddrinfo])
-if test "$ac_cv_func_getaddrinfo" = "no"; then
-    AC_SEARCH_LIBS([getaddrinfo], [resolv nsl], [], [AC_MSG_ERROR([getaddrinfo() is required for build])])
-fi
+AC_SEARCH_LIBS([socket],      [socket],     [], [AC_MSG_ERROR([socket() is required for build])])
+AC_SEARCH_LIBS([inet_ntop],   [resolv nsl], [], [AC_MSG_ERROR([inet_ntop() is required for build])])
+AC_SEARCH_LIBS([getaddrinfo], [resolv nsl], [], [AC_MSG_ERROR([getaddrinfo() is required for build])])
 
 AC_MSG_CHECKING([for IPv6 support])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
