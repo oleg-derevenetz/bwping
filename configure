@@ -3764,7 +3764,9 @@ fi
 
 
 
-ac_fn_c_check_header_compile "$LINENO" "netinet/icmp6.h" "ac_cv_header_netinet_icmp6_h" "
+for ac_header in netinet/icmp6.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "netinet/icmp6.h" "ac_cv_header_netinet_icmp6_h" "
 #include <sys/types.h>
 
 #include <netinet/in.h>
@@ -3773,11 +3775,13 @@ ac_fn_c_check_header_compile "$LINENO" "netinet/icmp6.h" "ac_cv_header_netinet_i
 
 "
 if test "x$ac_cv_header_netinet_icmp6_h" = xyes; then :
-
-$as_echo "#define HAVE_NETINET_ICMP6_H 1" >>confdefs.h
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_NETINET_ICMP6_H 1
+_ACEOF
 
 fi
 
+done
 
 
 ac_fn_c_check_func "$LINENO" "socket" "ac_cv_func_socket"

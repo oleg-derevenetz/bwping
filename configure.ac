@@ -14,16 +14,13 @@ fi
 
 AC_PROG_INSTALL
 
-AC_CHECK_HEADER([netinet/icmp6.h],
-                [AC_DEFINE([HAVE_NETINET_ICMP6_H], [1], [Define to 1 if you have the <netinet/icmp6.h> header file.])],
-                [],
-                [
+AC_CHECK_HEADERS([netinet/icmp6.h], [], [], [
 #include <sys/types.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip6.h>
-                ])
+    ])
 
 AC_CHECK_FUNC([socket])
 if test "$ac_cv_func_socket" = "no"; then
