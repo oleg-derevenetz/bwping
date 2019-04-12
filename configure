@@ -3876,7 +3876,7 @@ return inet_ntop ();
   return 0;
 }
 _ACEOF
-for ac_lib in '' resolv nsl socket; do
+for ac_lib in '' resolv nsl; do
   if test -z "$ac_lib"; then
     ac_res="none required"
   else
@@ -3942,7 +3942,7 @@ return getaddrinfo ();
   return 0;
 }
 _ACEOF
-for ac_lib in '' resolv nsl socket; do
+for ac_lib in '' resolv nsl; do
   if test -z "$ac_lib"; then
     ac_res="none required"
   else
