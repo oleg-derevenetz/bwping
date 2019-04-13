@@ -102,11 +102,11 @@ static int64_t calibrate_timer(void)
     for (i = 0; i < CALIBRATION_CYCLES; i++) {
         n = -1;
 
-        seltimeout.tv_sec  = 0;
-        seltimeout.tv_usec = 10;
-
         while (n < 0) {
             gettimeofday(&begin, NULL);
+
+            seltimeout.tv_sec  = 0;
+            seltimeout.tv_usec = 10;
 
             n = select(0, NULL, NULL, NULL, &seltimeout);
         }
