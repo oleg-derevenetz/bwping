@@ -97,7 +97,6 @@ script:
             echo && \
             sonar-scanner -Dsonar.projectKey=oleg-derevenetz:bwping \
                           -Dsonar.projectName=BWPing \
-                          -Dsonar.projectVersion="$TRAVIS_BRANCH" \
                           -Dsonar.sources=. \
                           -Dsonar.sourceEncoding=UTF-8 \
                           -Dsonar.cfamily.build-wrapper-output=bw-output
