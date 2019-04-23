@@ -1,8 +1,8 @@
 ## NAME
 
-bwping  and  bwping6  are tools to measure bandwidth and response times
-between two hosts using Internet Control Message Protocol  (ICMP)  echo
-request/echo  reply  mechanism.  bwping deals with IPv4 networks, while
+bwping  and  bwping6  are  tools  to  measure  bandwidth and response times
+between  two  hosts  using  Internet  Control  Message Protocol (ICMP) echo
+request/echo  reply  mechanism.  bwping  deals  with  IPv4  networks, while
 bwping6 - with IPv6 networks.
 
 ## SYNOPSIS
