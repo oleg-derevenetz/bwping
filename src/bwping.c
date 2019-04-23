@@ -12,12 +12,12 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sysexits.h>
+#include <time.h>
 #include <errno.h>
 #include <string.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 
 #include <arpa/inet.h>
 
@@ -51,13 +51,9 @@ const char * const PROG_NAME          = "bwping6";
 
 int64_t min_rtt, max_rtt, average_rtt;
 
-static int64_t tvsub(struct timeval *t1, struct timeval *t2)
+static int64_t tssub(struct timespec *t1, struct timespec *t2)
 {
-    if (t1->tv_usec > t2->tv_usec) {
-        return (int64_t)(t1->tv_sec - t2->tv_sec)     * 1000000 + (t1->tv_usec           - t2->tv_usec);
-    } else {
-        return (int64_t)(t1->tv_sec - t2->tv_sec - 1) * 1000000 + (t1->tv_usec + 1000000 - t2->tv_usec);
-    }
+    return ((int64_t)t1->tv_sec - (int64_t)t2->tv_sec) * 1000000 + (t1->tv_nsec - t2->tv_nsec) / 1000;
 }
 
 static uint16_t cksum(uint16_t *addr, size_t len)
@@ -92,10 +88,11 @@ static uint16_t cksum(uint16_t *addr, size_t len)
 
 static int64_t calibrate_timer(void)
 {
-    int            n;
-    uint32_t       i;
-    int64_t        sum;
-    struct timeval begin, end, seltimeout;
+    int             n;
+    uint32_t        i;
+    int64_t         sum;
+    struct timeval  seltimeout;
+    struct timespec begin, end;
 
     sum = 0;
 
@@ -103,7 +100,7 @@ static int64_t calibrate_timer(void)
         n = -1;
 
         while (n < 0) {
-            gettimeofday(&begin, NULL);
+            clock_gettime(CLOCK_MONOTONIC, &begin);
 
             seltimeout.tv_sec  = 0;
             seltimeout.tv_usec = 10;
@@ -111,9 +108,9 @@ static int64_t calibrate_timer(void)
             n = select(0, NULL, NULL, NULL, &seltimeout);
         }
 
-        gettimeofday(&end, NULL);
+        clock_gettime(CLOCK_MONOTONIC, &end);
 
-        sum += tvsub(&end, &begin);
+        sum += tssub(&end, &begin);
     }
 
     return sum / CALIBRATION_CYCLES;
@@ -121,11 +118,11 @@ static int64_t calibrate_timer(void)
 
 static void send_ping4(int sock, struct sockaddr_in *to4, size_t pktsize, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
 {
-    size_t         size;
-    ssize_t        res;
-    unsigned char  packet[IP_MAXPACKET] __attribute__((aligned(4)));
-    struct icmp   *icmp4;
-    struct timeval now, pkttime;
+    size_t          size;
+    ssize_t         res;
+    unsigned char   packet[IP_MAXPACKET] __attribute__((aligned(4)));
+    struct icmp    *icmp4;
+    struct timespec now, pkttime;
 
     icmp4 = (struct icmp *)packet;
 
@@ -138,10 +135,10 @@ static void send_ping4(int sock, struct sockaddr_in *to4, size_t pktsize, uint16
     icmp4->icmp_seq   = htons(*transmitted_number);
 
     if (first_in_burst) {
-        gettimeofday(&now, NULL);
+        clock_gettime(CLOCK_MONOTONIC, &now);
 
         pkttime.tv_sec  = now.tv_sec;
-        pkttime.tv_usec = now.tv_usec;
+        pkttime.tv_nsec = now.tv_nsec;
     } else {
         memset(&pkttime, 0, sizeof(pkttime));
     }
@@ -170,7 +167,7 @@ static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pktsize, uint1
     ssize_t           res;
     unsigned char     packet[IP_MAXPACKET] __attribute__((aligned(4)));
     struct icmp6_hdr *icmp6;
-    struct timeval    now, pkttime;
+    struct timespec   now, pkttime;
 
     icmp6 = (struct icmp6_hdr *)packet;
 
@@ -183,10 +180,10 @@ static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pktsize, uint1
     icmp6->icmp6_seq   = htons(*transmitted_number);
 
     if (first_in_burst) {
-        gettimeofday(&now, NULL);
+        clock_gettime(CLOCK_MONOTONIC, &now);
 
         pkttime.tv_sec  = now.tv_sec;
-        pkttime.tv_usec = now.tv_usec;
+        pkttime.tv_nsec = now.tv_nsec;
     } else {
         memset(&pkttime, 0, sizeof(pkttime));
     }
@@ -218,7 +215,7 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
     struct msghdr      msg;
     struct ip         *ip4;
     struct icmp       *icmp4;
-    struct timeval     now, pkttime;
+    struct timespec    now, pkttime;
 
     memset(&iov, 0, sizeof(iov));
 
@@ -250,10 +247,10 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
                 if (res >= (ssize_t)(hlen + sizeof(struct icmp) + sizeof(pkttime))) {
                     memcpy(&pkttime, &packet[hlen + sizeof(struct icmp)], sizeof(pkttime));
 
-                    if (pkttime.tv_sec != 0 || pkttime.tv_usec != 0) {
-                        gettimeofday(&now, NULL);
+                    if (pkttime.tv_sec != 0 || pkttime.tv_nsec != 0) {
+                        clock_gettime(CLOCK_MONOTONIC, &now);
 
-                        rtt = tvsub(&now, &pkttime) / 1000;
+                        rtt = tssub(&now, &pkttime) / 1000;
 
                         if (min_rtt > rtt) {
                             min_rtt = rtt;
@@ -283,7 +280,7 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
     struct iovec        iov;
     struct msghdr       msg;
     struct icmp6_hdr   *icmp6;
-    struct timeval      now, pkttime;
+    struct timespec     now, pkttime;
 
     memset(&iov, 0, sizeof(iov));
 
@@ -310,10 +307,10 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
             if (res >= (ssize_t)(sizeof(struct icmp6_hdr) + sizeof(pkttime))) {
                 memcpy(&pkttime, &packet[sizeof(struct icmp6_hdr)], sizeof(pkttime));
 
-                if (pkttime.tv_sec != 0 || pkttime.tv_usec != 0) {
-                    gettimeofday(&now, NULL);
+                if (pkttime.tv_sec != 0 || pkttime.tv_nsec != 0) {
+                    clock_gettime(CLOCK_MONOTONIC, &now);
 
-                    rtt = tvsub(&now, &pkttime) / 1000;
+                    rtt = tssub(&now, &pkttime) / 1000;
 
                     if (min_rtt > rtt) {
                         min_rtt = rtt;
@@ -420,7 +417,8 @@ int main(int argc, char **argv)
     fd_set              fds;
     struct sockaddr_in  bind_to4, to4;
     struct sockaddr_in6 bind_to6, to6;
-    struct timeval      begin, end, report, start, now, seltimeout;
+    struct timeval      seltimeout;
+    struct timespec     begin, end, report, start, now;
 
     if (IPV4_MODE) {
         sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
@@ -522,16 +520,16 @@ int main(int argc, char **argv)
 
         if (exitval == EX_OK) {
             if (IPV4_MODE) {
-                if (pktsize < sizeof(struct ip) + sizeof(struct icmp) + sizeof(struct timeval) || pktsize > IP_MAXPACKET) {
+                if (pktsize < sizeof(struct ip) + sizeof(struct icmp) + sizeof(struct timespec) || pktsize > IP_MAXPACKET) {
                     fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", PROG_NAME,
-                                                                                                sizeof(struct ip) + sizeof(struct icmp) + sizeof(struct timeval),
+                                                                                                sizeof(struct ip) + sizeof(struct icmp) + sizeof(struct timespec),
                                                                                                 (size_t)IP_MAXPACKET);
                     exitval = EX_USAGE;
                 }
             } else {
-                if (pktsize < sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct timeval) || pktsize > IP_MAXPACKET) {
+                if (pktsize < sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct timespec) || pktsize > IP_MAXPACKET) {
                     fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", PROG_NAME,
-                                                                                                sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct timeval),
+                                                                                                sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct timespec),
                                                                                                 (size_t)IP_MAXPACKET);
                     exitval = EX_USAGE;
                 }
@@ -632,16 +630,16 @@ int main(int argc, char **argv)
                             }
                         }
 
-                        gettimeofday(&begin,  NULL);
-                        gettimeofday(&end,    NULL);
-                        gettimeofday(&report, NULL);
+                        clock_gettime(CLOCK_MONOTONIC, &begin);
+                        clock_gettime(CLOCK_MONOTONIC, &end);
+                        clock_gettime(CLOCK_MONOTONIC, &report);
 
                         current_interval = interval;
                         pktburst_error   = 0;
                         interval_error   = 0;
 
                         while (!finish) {
-                            gettimeofday(&start, NULL);
+                            clock_gettime(CLOCK_MONOTONIC, &start);
 
                             for (i = 0; i < pktburst / PKTBURST_PRECISION + pktburst_error / PKTBURST_PRECISION; i++) {
                                 if ((uint64_t)pktsize * transmitted_number < volume) {
@@ -677,17 +675,17 @@ int main(int argc, char **argv)
                                     }
                                 }
 
-                                gettimeofday(&now, NULL);
+                                clock_gettime(CLOCK_MONOTONIC, &now);
 
-                                if (tvsub(&now, &start) >= current_interval) {
+                                if (tssub(&now, &start) >= current_interval) {
                                     if ((uint64_t)pktsize * transmitted_number >= volume) {
                                         finish = true;
                                     } else {
-                                        interval_error += tvsub(&now, &start) - current_interval;
+                                        interval_error += tssub(&now, &start) - current_interval;
 
                                         if (interval_error >= interval / 2) {
-                                            current_interval = interval / 2;
-                                            interval_error   = interval_error - interval / 2;
+                                            current_interval  = interval / 2;
+                                            interval_error   -= interval / 2;
                                         } else {
                                             current_interval = interval;
                                         }
@@ -697,7 +695,7 @@ int main(int argc, char **argv)
                                 }
                             }
 
-                            gettimeofday(&end, NULL);
+                            clock_gettime(CLOCK_MONOTONIC, &end);
 
                             if (rperiod != 0 && end.tv_sec - report.tv_sec >= rperiod) {
                                 printf("Periodic: pkts sent/rcvd: %" PRIu32 "/%" PRIu32 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRId64 "/%" PRId64 "/%" PRId64 " ms\n",
@@ -705,7 +703,7 @@ int main(int argc, char **argv)
                                        end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
                                        min_rtt == INT64_MAX ? 0 : min_rtt, max_rtt, average_rtt);
 
-                                gettimeofday(&report, NULL);
+                                clock_gettime(CLOCK_MONOTONIC, &report);
                             }
                         }
 
