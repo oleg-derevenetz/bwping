@@ -8,19 +8,19 @@ bwping6 - with IPv6 networks.
 ## SYNOPSIS
 
 ```
-bwping [ -u bufsize ] [ -r reporting_period ] [ -T tos ]
-       [ -B bind_addr] -b kbps -s pktsize -v volume target
+bwping [ -u buf_size ] [ -r reporting_period ] [ -T tos ]
+       [ -B bind_addr] -b kbps -s pkt_size -v volume target
 ```
 
 ```
-bwping6 [ -u bufsize ] [ -r reporting_period ] [ -T tclass ]
-        [ -B bind_addr] -b kbps -s pktsize -v volume target
+bwping6 [ -u buf_size ] [ -r reporting_period ] [ -T traf_class ]
+        [ -B bind_addr] -b kbps -s pkt_size -v volume target
 ```
 
 ## OPTIONS
 
 ```
--u bufsize
+-u buf_size
 ```
 
 Sets  the  send/receive  buffer  size  in  bytes.  Default  value  will  be
@@ -41,7 +41,7 @@ loss  reports.  If  zero,  there  will be no periodic reports (default).
 Sets the TOS value of outgoing ip packets. Default value is zero.
 
 ```
--T tclass (bwping6 only)
+-T traf_class (bwping6 only)
 ```
 
 Sets the IPv6 Traffic Class value of outgoing ip packets.  Default value is
@@ -61,7 +61,7 @@ of the outgoing interface will be used.
 Sets the transfer speed in kilobits per second.
 
 ```
--s pktsize
+-s pkt_size
 ```
 
 Sets the packet size in bytes.

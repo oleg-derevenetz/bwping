@@ -1,6 +1,4 @@
-bwping(8)                                                            bwping(8)
-
-
+bwping(8)                   System Manager's Manual                  bwping(8)
 
 NAME
        bwping  and  bwping6  are tools to measure bandwidth and response times
@@ -9,14 +7,14 @@ NAME
        bwping6 - with IPv6 networks.
 
 SYNOPSIS
-       bwping [ -u bufsize ] [ -r reporting_period ] [ -T tos ] [ -B bind_addr
-       ] -b kbps -s pktsize -v volume target
+       bwping [ -u buf_size ] [  -r  reporting_period  ]  [  -T  tos  ]  [  -B
+       bind_addr ] -b kbps -s pkt_size -v volume target
 
-       bwping6  [  -u  bufsize  ]  [  -r reporting_period ] [ -T tclass ] [ -B
-       bind_addr ] -b kbps -s pktsize -v volume target
+       bwping6  [ -u buf_size ] [ -r reporting_period ] [ -T traf_class ] [ -B
+       bind_addr ] -b kbps -s pkt_size -v volume target
 
 OPTIONS
-       -u bufsize
+       -u buf_size
             Sets the send/receive buffer size in bytes. Default value will  be
             automatically  calculated based on transfer speed, packet size and
             host timer accuracy.
@@ -29,7 +27,7 @@ OPTIONS
        -T tos (bwping only)
             Sets the TOS value of outgoing ip packets. Default value is zero.
 
-       -T tclass (bwping6 only)
+       -T traf_class (bwping6 only)
             Sets the IPv6 Traffic Class value of outgoing ip packets.  Default
             value is zero.
 
@@ -40,7 +38,7 @@ OPTIONS
        -b kbps
             Sets the transfer speed in kilobits per second.
 
-       -s pktsize
+       -s pkt_size
             Sets the packet size in bytes.
 
        -v volume
@@ -53,13 +51,13 @@ BUGS
        None known.
 
 RESTRICTIONS
-       This utility uses raw sockets to deal with ICMP messages, so root priv‐
-       ileges are required to run it.
+       This utility uses raw sockets to  deal  with  ICMP  messages,  so  root
+       privileges are required to run it.
 
        Although  bwping  and  bwping6 does not require any special software on
-       the remote host (only the ability to respond on ICMP echo request  mes‐
-       sages),  there are some special requirements to network infrastructure,
-       local and remote host performance:
+       the remote host (only the ability  to  respond  on  ICMP  echo  request
+       messages),   there   are   some   special   requirements   to   network
+       infrastructure, local and remote host performance:
 
        1. There should be no ICMP echo request/reply filtering on the network.
        This includes QoS mechanisms (which often affects ICMP) at any point in
@@ -77,7 +75,5 @@ RESTRICTIONS
 
 SEE ALSO
        netstat(1), ping(8)
-
-
 
                                                                      bwping(8)

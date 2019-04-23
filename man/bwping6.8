@@ -12,20 +12,20 @@ deals with IPv4 networks, while
 - with IPv6 networks.
 .SH SYNOPSIS
 .B bwping
-[ \fB-u\fR \fIbufsize\fR ]
+[ \fB-u\fR \fIbuf_size\fR ]
 [ \fB-r\fR \fIreporting_period\fR ]
 [ \fB-T\fR \fItos\fR ]
 [ \fB-B\fR \fIbind_addr\fR ]
-\fB-b\fR \fIkbps\fR \fB-s\fR \fIpktsize\fR \fB-v\fR \fIvolume\fR \fItarget\fR
+\fB-b\fR \fIkbps\fR \fB-s\fR \fIpkt_size\fR \fB-v\fR \fIvolume\fR \fItarget\fR
 
 .B bwping6
-[ \fB-u\fR \fIbufsize\fR ]
+[ \fB-u\fR \fIbuf_size\fR ]
 [ \fB-r\fR \fIreporting_period\fR ]
-[ \fB-T\fR \fItclass\fR ]
+[ \fB-T\fR \fItraf_class\fR ]
 [ \fB-B\fR \fIbind_addr\fR ]
-\fB-b\fR \fIkbps\fR \fB-s\fR \fIpktsize\fR \fB-v\fR \fIvolume\fR \fItarget\fR
+\fB-b\fR \fIkbps\fR \fB-s\fR \fIpkt_size\fR \fB-v\fR \fIvolume\fR \fItarget\fR
 .SH OPTIONS
-.IP "\fB-u\fR \fIbufsize\fR" 5
+.IP "\fB-u\fR \fIbuf_size\fR" 5
 Sets the send/receive buffer size in bytes. Default value will be
 automatically calculated based on transfer speed, packet size and
 host timer accuracy.
@@ -34,14 +34,14 @@ Sets the interval time in seconds between periodic bandwidth, RTT,
 and loss reports. If zero, there will be no periodic reports (default).
 .IP "\fB-T\fR \fItos\fR (\fBbwping only\fR)" 5
 Sets the TOS value of outgoing ip packets. Default value is zero.
-.IP "\fB-T\fR \fItclass\fR (\fBbwping6 only\fR)" 5
+.IP "\fB-T\fR \fItraf_class\fR (\fBbwping6 only\fR)" 5
 Sets the IPv6 Traffic Class value of outgoing ip packets. Default value is zero.
 .IP "\fB-B\fR \fIbind_addr\fR" 5
 Sets the source address of outgoing ip packets. By default the address
 of the outgoing interface will be used.
 .IP "\fB-b\fR \fIkbps\fR" 5
 Sets the transfer speed in kilobits per second.
-.IP "\fB-s\fR \fIpktsize\fR" 5
+.IP "\fB-s\fR \fIpkt_size\fR" 5
 Sets the packet size in bytes.
 .IP "\fB-v\fR \fIvolume\fR" 5
 Sets the volume to transfer in bytes.
