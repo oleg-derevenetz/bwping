@@ -597,7 +597,7 @@ int main(int argc, char **argv)
 
                         interval = (int64_t)pkt_size * 8000 / kbps;
 
-                        min_interval = calibrate_timer() * 2;
+                        min_interval = calibrate_timer();
 
                         if (interval >= min_interval) {
                             pkt_burst = PKT_BURST_PRECISION * 1;
