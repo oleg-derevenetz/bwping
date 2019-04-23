@@ -407,7 +407,7 @@ int main(int argc, char **argv)
     uint16_t            ident;
     int32_t             reporting_period;
     uint32_t            kbps, transmitted_number, received_number, pkt_burst, pkt_burst_error, i;
-    int64_t             min_interval, interval, current_interval, interval_error;
+    int64_t             min_interval, interval, current_interval, interval_error, select_interval;
     uint64_t            volume, transmitted_volume, received_volume;
     char               *ep,
                        *bind_addr,
@@ -652,14 +652,16 @@ int main(int argc, char **argv)
                             }
 
                             pkt_burst_error  = pkt_burst_error % PKT_BURST_PRECISION;
-                            pkt_burst_error += pkt_burst % PKT_BURST_PRECISION;
+                            pkt_burst_error += pkt_burst       % PKT_BURST_PRECISION;
+
+                            select_interval = current_interval;
 
                             while (1) {
                                 FD_ZERO(&fds);
                                 FD_SET(sock, &fds);
 
-                                select_timeout.tv_sec  = current_interval / 1000000;
-                                select_timeout.tv_usec = current_interval % 1000000;
+                                select_timeout.tv_sec  = select_interval / 1000000;
+                                select_timeout.tv_usec = select_interval % 1000000;
 
                                 n = select(sock + 1, &fds, NULL, NULL, &select_timeout);
 
@@ -689,6 +691,8 @@ int main(int argc, char **argv)
                                     }
 
                                     break;
+                                } else {
+                                    select_interval = current_interval - tssub(&now, &start);
                                 }
                             }
 
