@@ -69,7 +69,8 @@ static void get_time(struct timespec *ts)
     if (clock_gettime(id, ts) < 0) {
         fprintf(stderr, "%s: clock_gettime() failed: %s\n", PROG_NAME, strerror(errno));
 
-        exit(EX_OSERR);
+        ts->tv_sec  = 0;
+        ts->tv_nsec = 0;
     }
 #else
     struct timeval tv;
@@ -77,11 +78,12 @@ static void get_time(struct timespec *ts)
     if (gettimeofday(&tv, NULL) < 0) {
         fprintf(stderr, "%s: gettimeofday() failed: %s\n", PROG_NAME, strerror(errno));
 
-        exit(EX_OSERR);
+        ts->tv_sec  = 0;
+        ts->tv_nsec = 0;
+    } else {
+        ts->tv_sec  = tv.tv_sec;
+        ts->tv_nsec = tv.tv_usec * 1000;
     }
-
-    ts->tv_sec  = tv.tv_sec;
-    ts->tv_nsec = tv.tv_usec * 1000;
 #endif /* HAVE_CLOCK_GETTIME */
 }
 
