@@ -22,9 +22,10 @@ AC_CHECK_HEADERS([netinet/icmp6.h], [], [], [
 #include <netinet/ip6.h>
     ])
 
-AC_SEARCH_LIBS([socket],      [socket],     [], [AC_MSG_ERROR([socket() is required for build])])
-AC_SEARCH_LIBS([inet_ntop],   [resolv nsl], [], [AC_MSG_ERROR([inet_ntop() is required for build])])
-AC_SEARCH_LIBS([getaddrinfo], [resolv nsl], [], [AC_MSG_ERROR([getaddrinfo() is required for build])])
+AC_SEARCH_LIBS([clock_gettime], [rt],         [], [AC_MSG_ERROR([clock_gettime() is required for build])])
+AC_SEARCH_LIBS([socket],        [socket],     [], [AC_MSG_ERROR([socket() is required for build])])
+AC_SEARCH_LIBS([inet_ntop],     [resolv nsl], [], [AC_MSG_ERROR([inet_ntop() is required for build])])
+AC_SEARCH_LIBS([getaddrinfo],   [resolv nsl], [], [AC_MSG_ERROR([getaddrinfo() is required for build])])
 
 AC_MSG_CHECKING([for IPv6 support])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
