@@ -53,20 +53,25 @@ const char * const PROG_NAME           = "bwping6";
 
 int64_t min_rtt, max_rtt, average_rtt;
 
-static int get_time(struct timespec *t)
+static void get_time(struct timespec *t)
 {
 #if defined HAVE_CLOCK_GETTIME && defined CLOCK_MONOTONIC
-    return clock_gettime(CLOCK_MONOTONIC, t);
+    if (clock_gettime(CLOCK_MONOTONIC, t) < 0) {
+        fprintf(stderr, "%s: clock_gettime() failed: %s\n", PROG_NAME, strerror(errno));
+
+        exit(EX_OSERR);
+    }
 #else
-    int            res;
     struct timeval tv;
 
-    res = gettimeofday(&tv, NULL);
+    if (gettimeofday(&tv, NULL) < 0) {
+        fprintf(stderr, "%s: gettimeofday() failed: %s\n", PROG_NAME, strerror(errno));
+
+        exit(EX_OSERR);
+    }
 
     t->tv_sec  = tv.tv_sec;
     t->tv_nsec = tv.tv_usec * 1000;
-
-    return res;
 #endif
 }
 
