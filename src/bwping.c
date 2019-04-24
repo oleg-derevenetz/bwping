@@ -53,7 +53,7 @@ const char * const PROG_NAME           = "bwping6";
 
 int64_t min_rtt, max_rtt, average_rtt;
 
-static void get_time(struct timespec *t)
+static void get_time(struct timespec *ts)
 {
 #if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_REALTIME)
 #if defined(CLOCK_HIGHRES)
@@ -66,7 +66,7 @@ static void get_time(struct timespec *t)
     const clockid_t id = CLOCK_REALTIME;
 #endif /* CLOCK_XXX */
 
-    if (clock_gettime(id, t) < 0) {
+    if (clock_gettime(id, ts) < 0) {
         fprintf(stderr, "%s: clock_gettime() failed: %s\n", PROG_NAME, strerror(errno));
 
         exit(EX_OSERR);
@@ -80,14 +80,14 @@ static void get_time(struct timespec *t)
         exit(EX_OSERR);
     }
 
-    t->tv_sec  = tv.tv_sec;
-    t->tv_nsec = tv.tv_usec * 1000;
+    ts->tv_sec  = tv.tv_sec;
+    ts->tv_nsec = tv.tv_usec * 1000;
 #endif /* HAVE_CLOCK_GETTIME */
 }
 
-static int64_t ts_sub(struct timespec *t1, struct timespec *t2)
+static int64_t ts_sub(struct timespec *ts1, struct timespec *ts2)
 {
-    return ((int64_t)t1->tv_sec - (int64_t)t2->tv_sec) * 1000000 + (t1->tv_nsec - t2->tv_nsec) / 1000;
+    return ((int64_t)ts1->tv_sec - (int64_t)ts2->tv_sec) * 1000000 + (ts1->tv_nsec - ts2->tv_nsec) / 1000;
 }
 
 static uint16_t cksum(uint16_t *addr, size_t len)
