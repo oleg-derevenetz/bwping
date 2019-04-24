@@ -1,6 +1,6 @@
 #include "../include/features.h"
 
-#if defined(HAVE_CONFIG_H)
+#ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
@@ -28,24 +28,24 @@
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <netinet/ip_icmp.h>
-#if defined(HAVE_NETINET_ICMP6_H)
+#ifdef HAVE_NETINET_ICMP6_H
 #include <netinet/icmp6.h>
 #endif
 
-#if defined(__CYGWIN__)
+#ifdef __CYGWIN__
 #include "../include/cygwin.h"
 #endif
 
 #include <netdb.h>
 
-#if defined(BUILD_BWPING)
+#ifdef BUILD_BWPING
 const bool         IPV4_MODE           = true;
 #else
 const bool         IPV4_MODE           = false;
 #endif
 const uint32_t     CALIBRATION_CYCLES  = 100,
                    PKT_BURST_PRECISION = 1000;
-#if defined(BUILD_BWPING)
+#ifdef BUILD_BWPING
 const char * const PROG_NAME           = "bwping";
 #else
 const char * const PROG_NAME           = "bwping6";
@@ -56,15 +56,15 @@ int64_t min_rtt, max_rtt, average_rtt;
 static void get_time(struct timespec *t)
 {
 #if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_REALTIME)
-#   if defined(CLOCK_HIGHRES)
-        const clockid_t id = CLOCK_HIGHRES;
-#   elif defined(CLOCK_MONOTONIC_RAW)
-        const clockid_t id = CLOCK_MONOTONIC_RAW;
-#   elif defined(CLOCK_MONOTONIC)
-        const clockid_t id = CLOCK_MONOTONIC;
-#   else
-        const clockid_t id = CLOCK_REALTIME;
-#   endif
+#if defined(CLOCK_HIGHRES)
+    const clockid_t id = CLOCK_HIGHRES;
+#elif defined(CLOCK_MONOTONIC_RAW)
+    const clockid_t id = CLOCK_MONOTONIC_RAW;
+#elif defined(CLOCK_MONOTONIC)
+    const clockid_t id = CLOCK_MONOTONIC;
+#else
+    const clockid_t id = CLOCK_REALTIME;
+#endif /* CLOCK_XXX */
 
     if (clock_gettime(id, t) < 0) {
         fprintf(stderr, "%s: clock_gettime() failed: %s\n", PROG_NAME, strerror(errno));
@@ -82,7 +82,7 @@ static void get_time(struct timespec *t)
 
     t->tv_sec  = tv.tv_sec;
     t->tv_nsec = tv.tv_usec * 1000;
-#endif
+#endif /* HAVE_CLOCK_GETTIME */
 }
 
 static int64_t ts_sub(struct timespec *t1, struct timespec *t2)
