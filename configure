@@ -3955,10 +3955,10 @@ $as_echo_n "checking for IPv6 support... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-#include <stdlib.h>
-
 #include <sys/types.h>
 #include <sys/socket.h>
+
+#include <stdlib.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>

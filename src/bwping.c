@@ -1,8 +1,12 @@
+#include "../include/features.h"
+
 #if defined HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#include "../include/features.h"
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -15,12 +19,6 @@
 #include <time.h>
 #include <errno.h>
 #include <string.h>
-
-#if !defined HAVE_CLOCK_GETTIME || !defined CLOCK_MONOTONIC
-#include <sys/time.h>
-#endif
-#include <sys/types.h>
-#include <sys/socket.h>
 
 #include <arpa/inet.h>
 

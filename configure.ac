@@ -34,10 +34,10 @@ AC_SEARCH_LIBS([getaddrinfo], [resolv nsl], [],
 
 AC_MSG_CHECKING([for IPv6 support])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
-#include <stdlib.h>
-
 #include <sys/types.h>
 #include <sys/socket.h>
+
+#include <stdlib.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
