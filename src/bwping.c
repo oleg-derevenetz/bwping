@@ -1,4 +1,4 @@
-#ifdef HAVE_CONFIG_H
+#if defined HAVE_CONFIG_H
 #include <config.h>
 #endif
 
@@ -16,6 +16,9 @@
 #include <errno.h>
 #include <string.h>
 
+#if !defined HAVE_CLOCK_GETTIME || !defined CLOCK_MONOTONIC
+#include <sys/time.h>
+#endif
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -26,24 +29,24 @@
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <netinet/ip_icmp.h>
-#ifdef HAVE_NETINET_ICMP6_H
+#if defined HAVE_NETINET_ICMP6_H
 #include <netinet/icmp6.h>
 #endif
 
-#ifdef __CYGWIN__
+#if defined __CYGWIN__
 #include "../include/cygwin.h"
 #endif
 
 #include <netdb.h>
 
-#ifdef BUILD_BWPING
+#if defined BUILD_BWPING
 const bool         IPV4_MODE           = true;
 #else
 const bool         IPV4_MODE           = false;
 #endif
 const uint32_t     CALIBRATION_CYCLES  = 100,
                    PKT_BURST_PRECISION = 1000;
-#ifdef BUILD_BWPING
+#if defined BUILD_BWPING
 const char * const PROG_NAME           = "bwping";
 #else
 const char * const PROG_NAME           = "bwping6";
@@ -51,7 +54,24 @@ const char * const PROG_NAME           = "bwping6";
 
 int64_t min_rtt, max_rtt, average_rtt;
 
-static int64_t tssub(struct timespec *t1, struct timespec *t2)
+static int get_time(struct timespec *t)
+{
+#if defined HAVE_CLOCK_GETTIME && defined CLOCK_MONOTONIC
+    return clock_gettime(CLOCK_MONOTONIC, t);
+#else
+    int            res;
+    struct timeval tv;
+
+    res = gettimeofday(&tv, NULL);
+
+    t->tv_sec  = tv.tv_sec;
+    t->tv_nsec = tv.tv_usec * 1000;
+
+    return res;
+#endif
+}
+
+static int64_t ts_sub(struct timespec *t1, struct timespec *t2)
 {
     return ((int64_t)t1->tv_sec - (int64_t)t2->tv_sec) * 1000000 + (t1->tv_nsec - t2->tv_nsec) / 1000;
 }
@@ -100,7 +120,7 @@ static int64_t calibrate_timer(void)
         n = -1;
 
         while (n < 0) {
-            clock_gettime(CLOCK_MONOTONIC, &begin);
+            get_time(&begin);
 
             select_timeout.tv_sec  = 0;
             select_timeout.tv_usec = 10;
@@ -108,9 +128,9 @@ static int64_t calibrate_timer(void)
             n = select(0, NULL, NULL, NULL, &select_timeout);
         }
 
-        clock_gettime(CLOCK_MONOTONIC, &end);
+        get_time(&end);
 
-        sum += tssub(&end, &begin);
+        sum += ts_sub(&end, &begin);
     }
 
     return sum / CALIBRATION_CYCLES;
@@ -135,7 +155,7 @@ static void send_ping4(int sock, struct sockaddr_in *to4, size_t pkt_size, uint1
     icmp4->icmp_seq   = htons(*transmitted_number);
 
     if (first_in_burst) {
-        clock_gettime(CLOCK_MONOTONIC, &now);
+        get_time(&now);
 
         pkt_time.tv_sec  = now.tv_sec;
         pkt_time.tv_nsec = now.tv_nsec;
@@ -180,7 +200,7 @@ static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pkt_size, uint
     icmp6->icmp6_seq   = htons(*transmitted_number);
 
     if (first_in_burst) {
-        clock_gettime(CLOCK_MONOTONIC, &now);
+        get_time(&now);
 
         pkt_time.tv_sec  = now.tv_sec;
         pkt_time.tv_nsec = now.tv_nsec;
@@ -248,9 +268,9 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
                     memcpy(&pkt_time, &packet[hdr_len + sizeof(struct icmp)], sizeof(pkt_time));
 
                     if (pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0) {
-                        clock_gettime(CLOCK_MONOTONIC, &now);
+                        get_time(&now);
 
-                        rtt = tssub(&now, &pkt_time) / 1000;
+                        rtt = ts_sub(&now, &pkt_time) / 1000;
 
                         if (min_rtt > rtt) {
                             min_rtt = rtt;
@@ -308,9 +328,9 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
                 memcpy(&pkt_time, &packet[sizeof(struct icmp6_hdr)], sizeof(pkt_time));
 
                 if (pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0) {
-                    clock_gettime(CLOCK_MONOTONIC, &now);
+                    get_time(&now);
 
-                    rtt = tssub(&now, &pkt_time) / 1000;
+                    rtt = ts_sub(&now, &pkt_time) / 1000;
 
                     if (min_rtt > rtt) {
                         min_rtt = rtt;
@@ -630,16 +650,16 @@ int main(int argc, char **argv)
                             }
                         }
 
-                        clock_gettime(CLOCK_MONOTONIC, &begin);
-                        clock_gettime(CLOCK_MONOTONIC, &end);
-                        clock_gettime(CLOCK_MONOTONIC, &report);
+                        get_time(&begin);
+                        get_time(&end);
+                        get_time(&report);
 
                         current_interval = interval;
                         pkt_burst_error  = 0;
                         interval_error   = 0;
 
                         while (!finish) {
-                            clock_gettime(CLOCK_MONOTONIC, &start);
+                            get_time(&start);
 
                             for (i = 0; i < pkt_burst / PKT_BURST_PRECISION + pkt_burst_error / PKT_BURST_PRECISION; i++) {
                                 if ((uint64_t)pkt_size * transmitted_number < volume) {
@@ -674,13 +694,13 @@ int main(int argc, char **argv)
                                     }
                                 }
 
-                                clock_gettime(CLOCK_MONOTONIC, &now);
+                                get_time(&now);
 
-                                if (tssub(&now, &start) >= current_interval) {
+                                if (ts_sub(&now, &start) >= current_interval) {
                                     if ((uint64_t)pkt_size * transmitted_number >= volume) {
                                         finish = true;
                                     } else {
-                                        interval_error += tssub(&now, &start) - current_interval;
+                                        interval_error += ts_sub(&now, &start) - current_interval;
 
                                         if (interval_error >= interval / 2) {
                                             current_interval  = interval / 2;
@@ -692,11 +712,11 @@ int main(int argc, char **argv)
 
                                     break;
                                 } else {
-                                    select_interval = current_interval - tssub(&now, &start);
+                                    select_interval = current_interval - ts_sub(&now, &start);
                                 }
                             }
 
-                            clock_gettime(CLOCK_MONOTONIC, &end);
+                            get_time(&end);
 
                             if (reporting_period != 0 && end.tv_sec - report.tv_sec >= reporting_period) {
                                 printf("Periodic: pkts sent/rcvd: %" PRIu32 "/%" PRIu32 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRId64 "/%" PRId64 "/%" PRId64 " ms\n",
@@ -704,7 +724,7 @@ int main(int argc, char **argv)
                                        end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
                                        min_rtt == INT64_MAX ? 0 : min_rtt, max_rtt, average_rtt);
 
-                                clock_gettime(CLOCK_MONOTONIC, &report);
+                                get_time(&report);
                             }
                         }
 
