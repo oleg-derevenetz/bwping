@@ -39,16 +39,17 @@
 #include <netdb.h>
 
 #ifdef BUILD_BWPING
-const bool         IPV4_MODE           = true;
+const bool         IPV4_MODE               = true;
 #else
-const bool         IPV4_MODE           = false;
+const bool         IPV4_MODE               = false;
 #endif
-const uint32_t     CALIBRATION_CYCLES  = 100,
-                   PKT_BURST_PRECISION = 1000;
+const uint32_t     CALIBRATION_CYCLES      = 100,
+                   PKT_BURST_PRECISION     = 1000,
+                   BUF_SIZE_RESERVE_FACTOR = 10;
 #ifdef BUILD_BWPING
-const char * const PROG_NAME           = "bwping";
+const char * const PROG_NAME               = "bwping";
 #else
-const char * const PROG_NAME           = "bwping6";
+const char * const PROG_NAME               = "bwping6";
 #endif
 
 int64_t min_rtt, max_rtt, average_rtt;
@@ -646,7 +647,7 @@ int main(int argc, char **argv)
                         }
 
                         if (buf_size == 0) {
-                            buf_size = pkt_size * (pkt_burst / PKT_BURST_PRECISION + 1) * 2;
+                            buf_size = pkt_size * (pkt_burst / PKT_BURST_PRECISION + 1) * BUF_SIZE_RESERVE_FACTOR;
                         }
 
                         if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(buf_size)) < 0) {
