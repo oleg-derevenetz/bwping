@@ -127,7 +127,7 @@ static int64_t calibrate_timer(void)
     int             n;
     uint32_t        i;
     int64_t         sum;
-    struct timeval  select_timeout;
+    struct timeval  timeout;
     struct timespec begin, end;
 
     sum = 0;
@@ -138,10 +138,10 @@ static int64_t calibrate_timer(void)
         while (n < 0) {
             get_time(&begin);
 
-            select_timeout.tv_sec  = 0;
-            select_timeout.tv_usec = 10;
+            timeout.tv_sec  = 0;
+            timeout.tv_usec = 10;
 
-            n = select(0, NULL, NULL, NULL, &select_timeout);
+            n = select(0, NULL, NULL, NULL, &timeout);
         }
 
         get_time(&end);
@@ -443,7 +443,7 @@ int main(int argc, char **argv)
     uint16_t            ident;
     int32_t             reporting_period;
     uint32_t            kbps, transmitted_number, received_number, pkt_burst, pkt_burst_error, i;
-    int64_t             min_interval, interval, current_interval, interval_error, select_interval;
+    int64_t             min_interval, interval, current_interval, interval_error, select_timeout;
     uint64_t            volume, transmitted_volume, received_volume;
     char               *ep,
                        *bind_addr,
@@ -453,7 +453,7 @@ int main(int argc, char **argv)
     fd_set              fds;
     struct sockaddr_in  bind_to4, to4;
     struct sockaddr_in6 bind_to6, to6;
-    struct timeval      select_timeout;
+    struct timeval      timeout;
     struct timespec     begin, end, report, start, now;
 
     if (IPV4_MODE) {
@@ -690,16 +690,16 @@ int main(int argc, char **argv)
                             pkt_burst_error  = pkt_burst_error % PKT_BURST_PRECISION;
                             pkt_burst_error += pkt_burst       % PKT_BURST_PRECISION;
 
-                            select_interval = current_interval;
+                            select_timeout = current_interval;
 
                             while (1) {
                                 FD_ZERO(&fds);
                                 FD_SET(sock, &fds);
 
-                                select_timeout.tv_sec  = select_interval / 1000000;
-                                select_timeout.tv_usec = select_interval % 1000000;
+                                timeout.tv_sec  = select_timeout / 1000000;
+                                timeout.tv_usec = select_timeout % 1000000;
 
-                                n = select(sock + 1, &fds, NULL, NULL, &select_timeout);
+                                n = select(sock + 1, &fds, NULL, NULL, &timeout);
 
                                 if (n > 0) {
                                     while (IPV4_MODE ? recv_ping4(sock, ident, &received_number, &received_volume) :
@@ -728,7 +728,7 @@ int main(int argc, char **argv)
 
                                     break;
                                 } else {
-                                    select_interval = current_interval - ts_sub(&now, &start);
+                                    select_timeout = current_interval - ts_sub(&now, &start);
                                 }
                             }
 
