@@ -157,7 +157,7 @@ static void send_ping4(int sock, struct sockaddr_in *to4, size_t pkt_size, uint1
 {
     size_t          size;
     ssize_t         res;
-    unsigned char   packet[IP_MAXPACKET] __attribute__((aligned(4)));
+    unsigned char   packet[IP_MAXPACKET] __attribute__((aligned));
     struct icmp    *icmp4;
     struct timespec now, pkt_time;
 
@@ -202,7 +202,7 @@ static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pkt_size, uint
 {
     size_t            size;
     ssize_t           res;
-    unsigned char     packet[IP_MAXPACKET] __attribute__((aligned(4)));
+    unsigned char     packet[IP_MAXPACKET] __attribute__((aligned));
     struct icmp6_hdr *icmp6;
     struct timespec   now, pkt_time;
 
@@ -246,7 +246,7 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
     size_t             hdr_len;
     ssize_t            res;
     int64_t            rtt;
-    unsigned char      packet[IP_MAXPACKET] __attribute__((aligned(4)));
+    unsigned char      packet[IP_MAXPACKET] __attribute__((aligned));
     struct sockaddr_in from4;
     struct iovec       iov;
     struct msghdr      msg;
@@ -312,7 +312,7 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
 {
     ssize_t             res;
     int64_t             rtt;
-    unsigned char       packet[IP_MAXPACKET] __attribute__((aligned(4)));
+    unsigned char       packet[IP_MAXPACKET] __attribute__((aligned));
     struct sockaddr_in6 from6;
     struct iovec        iov;
     struct msghdr       msg;

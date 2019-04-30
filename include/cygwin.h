@@ -15,7 +15,7 @@ struct icmp_ra_addr
 {
     u_int32_t ira_addr;
     u_int32_t ira_preference;
-};
+} __attribute__((packed));
 
 struct icmp
 {
@@ -30,7 +30,7 @@ struct icmp
         {
             u_int16_t icd_id;
             u_int16_t icd_seq;
-        } ih_idseq;
+        } __attribute__((packed)) ih_idseq;
         u_int32_t ih_void;
 
         /* ICMP_UNREACH_NEEDFRAG -- Path MTU Discovery (RFC1191) */
@@ -38,15 +38,15 @@ struct icmp
         {
             u_int16_t ipm_void;
             u_int16_t ipm_nextmtu;
-        } ih_pmtu;
+        } __attribute__((packed)) ih_pmtu;
 
         struct ih_rtradv
         {
             u_int8_t irt_num_addrs;
             u_int8_t irt_wpa;
             u_int16_t irt_lifetime;
-        } ih_rtradv;
-    } icmp_hun;
+        } __attribute__((packed)) ih_rtradv;
+    } __attribute__((packed)) icmp_hun;
 #define icmp_pptr       icmp_hun.ih_pptr
 #define icmp_gwaddr     icmp_hun.ih_gwaddr
 #define icmp_id         icmp_hun.ih_idseq.icd_id
@@ -64,16 +64,16 @@ struct icmp
             u_int32_t its_otime;
             u_int32_t its_rtime;
             u_int32_t its_ttime;
-        } id_ts;
+        } __attribute__((packed)) id_ts;
         struct
         {
             struct ip idi_ip;
             /* options and then 64 bits of data */
-        } id_ip;
+        } __attribute__((packed)) id_ip;
         struct icmp_ra_addr id_radv;
         u_int32_t   id_mask;
         u_int8_t    id_data[1];
-    } icmp_dun;
+    } __attribute__((packed)) icmp_dun;
 #define icmp_otime      icmp_dun.id_ts.its_otime
 #define icmp_rtime      icmp_dun.id_ts.its_rtime
 #define icmp_ttime      icmp_dun.id_ts.its_ttime
@@ -81,7 +81,7 @@ struct icmp
 #define icmp_radv       icmp_dun.id_radv
 #define icmp_mask       icmp_dun.id_mask
 #define icmp_data       icmp_dun.id_data
-};
+} __attribute__((packed));
 
 struct icmp6_hdr {
     u_int8_t  icmp6_type;     /* type field */
@@ -91,8 +91,8 @@ struct icmp6_hdr {
         u_int32_t icmp6_un_data32[1]; /* type-specific field */
         u_int16_t icmp6_un_data16[2]; /* type-specific field */
         u_int8_t  icmp6_un_data8[4];  /* type-specific field */
-    } icmp6_dataun;
-} __packed;
+    } __attribute__((packed)) icmp6_dataun;
+} __attribute__((packed));
 
 #define icmp6_data32    icmp6_dataun.icmp6_un_data32
 #define icmp6_data16    icmp6_dataun.icmp6_un_data16
