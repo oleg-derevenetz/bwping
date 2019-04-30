@@ -157,19 +157,19 @@ static void send_ping4(int sock, struct sockaddr_in *to4, size_t pkt_size, uint1
 {
     size_t          size;
     ssize_t         res;
-    unsigned char   packet[IP_MAXPACKET] __attribute__((aligned));
-    struct icmp    *icmp4;
+    char            packet[IP_MAXPACKET] __attribute__((aligned));
+    struct icmp     icmp4;
     struct timespec now, pkt_time;
 
-    icmp4 = (struct icmp *)packet;
+    memset(&icmp4, 0, sizeof(icmp4));
 
-    memset(icmp4, 0, sizeof(*icmp4));
+    icmp4.icmp_type  = ICMP_ECHO;
+    icmp4.icmp_code  = 0;
+    icmp4.icmp_cksum = 0;
+    icmp4.icmp_id    = ident;
+    icmp4.icmp_seq   = htons(*transmitted_number);
 
-    icmp4->icmp_type  = ICMP_ECHO;
-    icmp4->icmp_code  = 0;
-    icmp4->icmp_cksum = 0;
-    icmp4->icmp_id    = ident;
-    icmp4->icmp_seq   = htons(*transmitted_number);
+    memcpy(packet, &icmp4, sizeof(icmp4));
 
     if (first_in_burst) {
         get_time(&now);
@@ -180,11 +180,13 @@ static void send_ping4(int sock, struct sockaddr_in *to4, size_t pkt_size, uint1
         memset(&pkt_time, 0, sizeof(pkt_time));
     }
 
-    memcpy(&packet[sizeof(struct icmp)], &pkt_time, sizeof(pkt_time));
+    memcpy(&packet[sizeof(icmp4)], &pkt_time, sizeof(pkt_time));
 
     size = pkt_size - sizeof(struct ip);
 
-    icmp4->icmp_cksum = cksum((uint16_t *)icmp4, size);
+    icmp4.icmp_cksum = cksum((uint16_t *)packet, size);
+
+    memcpy(packet, &icmp4, sizeof(icmp4));
 
     res = sendto(sock, packet, size, 0, (struct sockaddr *)to4, sizeof(*to4));
 
@@ -200,21 +202,21 @@ static void send_ping4(int sock, struct sockaddr_in *to4, size_t pkt_size, uint1
 
 static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pkt_size, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
 {
-    size_t            size;
-    ssize_t           res;
-    unsigned char     packet[IP_MAXPACKET] __attribute__((aligned));
-    struct icmp6_hdr *icmp6;
-    struct timespec   now, pkt_time;
+    size_t           size;
+    ssize_t          res;
+    char             packet[IP_MAXPACKET];
+    struct icmp6_hdr icmp6;
+    struct timespec  now, pkt_time;
 
-    icmp6 = (struct icmp6_hdr *)packet;
+    memset(&icmp6, 0, sizeof(icmp6));
 
-    memset(icmp6, 0, sizeof(*icmp6));
+    icmp6.icmp6_type  = ICMP6_ECHO_REQUEST;
+    icmp6.icmp6_code  = 0;
+    icmp6.icmp6_cksum = 0;
+    icmp6.icmp6_id    = ident;
+    icmp6.icmp6_seq   = htons(*transmitted_number);
 
-    icmp6->icmp6_type  = ICMP6_ECHO_REQUEST;
-    icmp6->icmp6_code  = 0;
-    icmp6->icmp6_cksum = 0;
-    icmp6->icmp6_id    = ident;
-    icmp6->icmp6_seq   = htons(*transmitted_number);
+    memcpy(packet, &icmp6, sizeof(icmp6));
 
     if (first_in_burst) {
         get_time(&now);
@@ -225,7 +227,7 @@ static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pkt_size, uint
         memset(&pkt_time, 0, sizeof(pkt_time));
     }
 
-    memcpy(&packet[sizeof(struct icmp6_hdr)], &pkt_time, sizeof(pkt_time));
+    memcpy(&packet[sizeof(icmp6)], &pkt_time, sizeof(pkt_time));
 
     size = pkt_size - sizeof(struct ip6_hdr);
 
@@ -246,12 +248,12 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
     size_t             hdr_len;
     ssize_t            res;
     int64_t            rtt;
-    unsigned char      packet[IP_MAXPACKET] __attribute__((aligned));
+    char               packet[IP_MAXPACKET] __attribute__((aligned));
     struct sockaddr_in from4;
     struct iovec       iov;
     struct msghdr      msg;
     struct ip         *ip4;
-    struct icmp       *icmp4;
+    struct icmp        icmp4;
     struct timespec    now, pkt_time;
 
     memset(&iov, 0, sizeof(iov));
@@ -273,16 +275,16 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
 
         hdr_len = ip4->ip_hl << 2;
 
-        if (res >= (ssize_t)(hdr_len + sizeof(struct icmp))) {
-            icmp4 = (struct icmp *)(packet + hdr_len);
+        if (res >= (ssize_t)(hdr_len + sizeof(icmp4))) {
+            memcpy(&icmp4, &packet[hdr_len], sizeof(icmp4));
 
-            if (icmp4->icmp_type == ICMP_ECHOREPLY &&
-                icmp4->icmp_id   == ident) {
+            if (icmp4.icmp_type == ICMP_ECHOREPLY &&
+                icmp4.icmp_id   == ident) {
                 (*received_number)++;
                 (*received_volume) += res;
 
-                if (res >= (ssize_t)(hdr_len + sizeof(struct icmp) + sizeof(pkt_time))) {
-                    memcpy(&pkt_time, &packet[hdr_len + sizeof(struct icmp)], sizeof(pkt_time));
+                if (res >= (ssize_t)(hdr_len + sizeof(icmp4) + sizeof(pkt_time))) {
+                    memcpy(&pkt_time, &packet[hdr_len + sizeof(icmp4)], sizeof(pkt_time));
 
                     if (pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0) {
                         get_time(&now);
@@ -312,11 +314,11 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
 {
     ssize_t             res;
     int64_t             rtt;
-    unsigned char       packet[IP_MAXPACKET] __attribute__((aligned));
+    char                packet[IP_MAXPACKET];
     struct sockaddr_in6 from6;
     struct iovec        iov;
     struct msghdr       msg;
-    struct icmp6_hdr   *icmp6;
+    struct icmp6_hdr    icmp6;
     struct timespec     now, pkt_time;
 
     memset(&iov, 0, sizeof(iov));
@@ -333,16 +335,16 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
 
     res = recvmsg(sock, &msg, MSG_DONTWAIT);
 
-    if (res > 0) {
-        icmp6 = (struct icmp6_hdr *)packet;
+    if (res >= (ssize_t)sizeof(icmp6)) {
+        memcpy(&icmp6, packet, sizeof(icmp6));
 
-        if (icmp6->icmp6_type == ICMP6_ECHO_REPLY &&
-            icmp6->icmp6_id   == ident) {
+        if (icmp6.icmp6_type == ICMP6_ECHO_REPLY &&
+            icmp6.icmp6_id   == ident) {
             (*received_number)++;
             (*received_volume) += res + sizeof(struct ip6_hdr);
 
-            if (res >= (ssize_t)(sizeof(struct icmp6_hdr) + sizeof(pkt_time))) {
-                memcpy(&pkt_time, &packet[sizeof(struct icmp6_hdr)], sizeof(pkt_time));
+            if (res >= (ssize_t)(sizeof(icmp6) + sizeof(pkt_time))) {
+                memcpy(&pkt_time, &packet[sizeof(icmp6)], sizeof(pkt_time));
 
                 if (pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0) {
                     get_time(&now);
