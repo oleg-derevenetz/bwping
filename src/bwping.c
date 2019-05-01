@@ -94,28 +94,19 @@ static int64_t ts_sub(struct timespec *ts1, struct timespec *ts2)
     return ((int64_t)ts1->tv_sec - (int64_t)ts2->tv_sec) * 1000000 + (ts1->tv_nsec - ts2->tv_nsec) / 1000;
 }
 
-static uint16_t cksum(uint16_t *addr, size_t len)
+static uint16_t cksum(void *packet, size_t pkt_size)
 {
-    ssize_t   left;
-    uint16_t  last;
-    uint32_t  sum;
-    uint16_t *w;
+    size_t   i;
+    uint32_t sum;
+    uint16_t buf[IP_MAXPACKET];
 
-    left = len;
-    sum  = 0;
-    w    = addr;
+    memset(&buf, 0,      sizeof(buf));
+    memcpy(&buf, packet, pkt_size);
 
-    while (left > 1) {
-        sum  += *w++;
-        left -= 2;
-    }
+    sum = 0;
 
-    if (left == 1) {
-        last = 0;
-
-        memcpy(&last, w, left);
-
-        sum += last;
+    for (i = 0; i < pkt_size / 2 + pkt_size % 2; i++) {
+        sum += buf[i];
     }
 
     sum  = (sum >> 16) + (sum & 0xFFFF);
@@ -157,7 +148,7 @@ static int64_t calibrate_timer(void)
 static void send_ping4(int sock, struct sockaddr_in *to4, size_t pkt_size, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
 {
     ssize_t         res;
-    char            packet[IP_MAXPACKET] __attribute__((aligned));
+    char            packet[IP_MAXPACKET];
     struct icmp     icmp4;
     struct timespec now, pkt_time;
 
@@ -182,7 +173,7 @@ static void send_ping4(int sock, struct sockaddr_in *to4, size_t pkt_size, uint1
 
     memcpy(&packet[sizeof(icmp4)], &pkt_time, sizeof(pkt_time));
 
-    icmp4.icmp_cksum = cksum((uint16_t *)packet, pkt_size);
+    icmp4.icmp_cksum = cksum(packet, pkt_size);
 
     memcpy(packet, &icmp4, sizeof(icmp4));
 
