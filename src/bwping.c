@@ -43,6 +43,7 @@ const bool         IPV4_MODE               = true;
 #else
 const bool         IPV4_MODE               = false;
 #endif
+const size_t       MAX_IPV4_HDR_SIZE       = 60;
 const uint32_t     CALIBRATION_CYCLES      = 100,
                    PKT_BURST_PRECISION     = 1000,
                    BUF_SIZE_RESERVE_FACTOR = 10;
@@ -155,7 +156,6 @@ static int64_t calibrate_timer(void)
 
 static void send_ping4(int sock, struct sockaddr_in *to4, size_t pkt_size, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
 {
-    size_t          size;
     ssize_t         res;
     char            packet[IP_MAXPACKET] __attribute__((aligned));
     struct icmp     icmp4;
@@ -182,18 +182,16 @@ static void send_ping4(int sock, struct sockaddr_in *to4, size_t pkt_size, uint1
 
     memcpy(&packet[sizeof(icmp4)], &pkt_time, sizeof(pkt_time));
 
-    size = pkt_size - sizeof(struct ip);
-
-    icmp4.icmp_cksum = cksum((uint16_t *)packet, size);
+    icmp4.icmp_cksum = cksum((uint16_t *)packet, pkt_size);
 
     memcpy(packet, &icmp4, sizeof(icmp4));
 
-    res = sendto(sock, packet, size, 0, (struct sockaddr *)to4, sizeof(*to4));
+    res = sendto(sock, packet, pkt_size, 0, (struct sockaddr *)to4, sizeof(*to4));
 
     if (res < 0) {
         fprintf(stderr, "%s: sendto() failed: %s\n", PROG_NAME, strerror(errno));
-    } else if (res != (ssize_t)size) {
-        fprintf(stderr, "%s: partial write: packet size: %zu, sent: %zd\n", PROG_NAME, size, res);
+    } else if (res != (ssize_t)pkt_size) {
+        fprintf(stderr, "%s: partial write: packet size: %zu, sent: %zd\n", PROG_NAME, pkt_size, res);
     }
 
     (*transmitted_number)++;
@@ -202,7 +200,6 @@ static void send_ping4(int sock, struct sockaddr_in *to4, size_t pkt_size, uint1
 
 static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pkt_size, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
 {
-    size_t           size;
     ssize_t          res;
     char             packet[IP_MAXPACKET];
     struct icmp6_hdr icmp6;
@@ -229,14 +226,12 @@ static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pkt_size, uint
 
     memcpy(&packet[sizeof(icmp6)], &pkt_time, sizeof(pkt_time));
 
-    size = pkt_size - sizeof(struct ip6_hdr);
-
-    res = sendto(sock, packet, size, 0, (struct sockaddr *)to6, sizeof(*to6));
+    res = sendto(sock, packet, pkt_size, 0, (struct sockaddr *)to6, sizeof(*to6));
 
     if (res < 0) {
         fprintf(stderr, "%s: sendto() failed: %s\n", PROG_NAME, strerror(errno));
-    } else if (res != (ssize_t)size) {
-        fprintf(stderr, "%s: partial write: packet size: %zu, sent: %zd\n", PROG_NAME, size, res);
+    } else if (res != (ssize_t)pkt_size) {
+        fprintf(stderr, "%s: partial write: packet size: %zu, sent: %zd\n", PROG_NAME, pkt_size, res);
     }
 
     (*transmitted_number)++;
@@ -281,7 +276,7 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
             if (icmp4.icmp_type == ICMP_ECHOREPLY &&
                 icmp4.icmp_id   == ident) {
                 (*received_number)++;
-                (*received_volume) += res;
+                (*received_volume) += res - hdr_len;
 
                 if (res >= (ssize_t)(hdr_len + sizeof(icmp4) + sizeof(pkt_time))) {
                     memcpy(&pkt_time, &packet[hdr_len + sizeof(icmp4)], sizeof(pkt_time));
@@ -341,7 +336,7 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
         if (icmp6.icmp6_type == ICMP6_ECHO_REPLY &&
             icmp6.icmp6_id   == ident) {
             (*received_number)++;
-            (*received_volume) += res + sizeof(struct ip6_hdr);
+            (*received_volume) += res;
 
             if (res >= (ssize_t)(sizeof(icmp6) + sizeof(pkt_time))) {
                 memcpy(&pkt_time, &packet[sizeof(icmp6)], sizeof(pkt_time));
@@ -559,16 +554,16 @@ int main(int argc, char **argv)
 
         if (exit_val == EX_OK) {
             if (IPV4_MODE) {
-                if (pkt_size < sizeof(struct ip) + sizeof(struct icmp) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET) {
+                if (pkt_size < sizeof(struct icmp) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET - MAX_IPV4_HDR_SIZE) {
                     fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", PROG_NAME,
-                                                                                                sizeof(struct ip) + sizeof(struct icmp) + sizeof(struct timespec),
-                                                                                                (size_t)IP_MAXPACKET);
+                                                                                                sizeof(struct icmp) + sizeof(struct timespec),
+                                                                                                (size_t)IP_MAXPACKET - MAX_IPV4_HDR_SIZE);
                     exit_val = EX_USAGE;
                 }
             } else {
-                if (pkt_size < sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET) {
+                if (pkt_size < sizeof(struct icmp6_hdr) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET) {
                     fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", PROG_NAME,
-                                                                                                sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct timespec),
+                                                                                                sizeof(struct icmp6_hdr) + sizeof(struct timespec),
                                                                                                 (size_t)IP_MAXPACKET);
                     exit_val = EX_USAGE;
                 }
