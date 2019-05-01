@@ -64,7 +64,7 @@ Sets the transfer speed in kilobits per second.
 -s pkt_size
 ```
 
-Sets the packet size in bytes.
+Sets the size of ICMP packet (excluding IPv4/IPv6 header) in bytes.
 
 ```
 -v volume
