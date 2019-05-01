@@ -100,8 +100,8 @@ static uint16_t cksum(void *packet, size_t pkt_size)
     uint32_t sum;
     uint16_t buf[IP_MAXPACKET];
 
-    memset(&buf, 0,      sizeof(buf));
-    memcpy(&buf, packet, pkt_size);
+    memset(buf, 0,      sizeof(buf));
+    memcpy(buf, packet, pkt_size);
 
     sum = 0;
 
@@ -591,19 +591,17 @@ int main(int argc, char **argv)
                         ident = getpid() & 0xFFFF;
 
                         if (IPV4_MODE) {
-                            memset(&p_addr4, 0, sizeof(p_addr4));
-
                             if (inet_ntop(AF_INET, &(to4.sin_addr), p_addr4, sizeof(p_addr4)) == NULL) {
-                                strncpy(p_addr4, "?", sizeof(p_addr4) - 1); p_addr4[sizeof(p_addr4) - 1] = 0;
+                                p_addr4[0] = '?';
+                                p_addr4[1] = 0;
                             }
 
                             printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
                                    target, p_addr4, kbps, pkt_size, volume);
                         } else {
-                            memset(&p_addr6, 0, sizeof(p_addr6));
-
                             if (inet_ntop(AF_INET6, &(to6.sin6_addr), p_addr6, sizeof(p_addr6)) == NULL) {
-                                strncpy(p_addr6, "?", sizeof(p_addr6) - 1); p_addr6[sizeof(p_addr6) - 1] = 0;
+                                p_addr6[0] = '?';
+                                p_addr6[1] = 0;
                             }
 
                             printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
