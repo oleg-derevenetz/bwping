@@ -243,11 +243,11 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
     size_t             hdr_len;
     ssize_t            res;
     int64_t            rtt;
-    char               packet[IP_MAXPACKET] __attribute__((aligned));
+    char               packet[IP_MAXPACKET];
     struct sockaddr_in from4;
     struct iovec       iov;
     struct msghdr      msg;
-    struct ip         *ip4;
+    struct ip          ip4;
     struct icmp        icmp4;
     struct timespec    now, pkt_time;
 
@@ -265,10 +265,10 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
 
     res = recvmsg(sock, &msg, MSG_DONTWAIT);
 
-    if (res > 0) {
-        ip4 = (struct ip *)packet;
+    if (res >= (ssize_t)sizeof(ip4)) {
+        memcpy(&ip4, packet, sizeof(ip4));
 
-        hdr_len = ip4->ip_hl << 2;
+        hdr_len = ip4.ip_hl << 2;
 
         if (res >= (ssize_t)(hdr_len + sizeof(icmp4))) {
             memcpy(&icmp4, &packet[hdr_len], sizeof(icmp4));
