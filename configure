@@ -586,6 +586,7 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
+AM_CFLAGS
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
 CCDEPMODE
@@ -3690,7 +3691,7 @@ if test "x$ac_cv_prog_cc_c99" != xno; then :
 fi
 
 
-if test "$ac_cv_prog_cc_c99" = "no"; then
+if test "${ac_cv_prog_cc_c99}" = "no"; then
     as_fn_error $? "C99 compiler is required for build" "$LINENO" 5
 fi
 
@@ -3950,6 +3951,87 @@ else
 fi
 
 
+bwping_save_cflags=${CFLAGS}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler accepts -Wall..." >&5
+$as_echo_n "checking whether the C compiler accepts -Wall...... " >&6; }
+CFLAGS="${CFLAGS} -Wall"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  bwping_cv_c_wall=yes
+else
+  bwping_cv_c_wall=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+CFLAGS=${bwping_save_cflags}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${bwping_cv_c_wall}" >&5
+$as_echo "${bwping_cv_c_wall}" >&6; }
+if test "${bwping_cv_c_wall}" = "yes"; then
+    AM_CFLAGS="${AM_CFLAGS} -Wall"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler accepts -Wextra..." >&5
+$as_echo_n "checking whether the C compiler accepts -Wextra...... " >&6; }
+CFLAGS="${CFLAGS} -Wextra"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  bwping_cv_c_wextra=yes
+else
+  bwping_cv_c_wextra=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+CFLAGS=${bwping_save_cflags}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${bwping_cv_c_wextra}" >&5
+$as_echo "${bwping_cv_c_wextra}" >&6; }
+if test "${bwping_cv_c_wextra}" = "yes"; then
+    AM_CFLAGS="${AM_CFLAGS} -Wextra"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler accepts -Wpedantic..." >&5
+$as_echo_n "checking whether the C compiler accepts -Wpedantic...... " >&6; }
+CFLAGS="${CFLAGS} -Wpedantic"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  bwping_cv_c_wpedantic=yes
+else
+  bwping_cv_c_wpedantic=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+CFLAGS=${bwping_save_cflags}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${bwping_cv_c_wpedantic}" >&5
+$as_echo "${bwping_cv_c_wpedantic}" >&6; }
+if test "${bwping_cv_c_wpedantic}" = "yes"; then
+    AM_CFLAGS="${AM_CFLAGS} -Wpedantic"
+fi
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for IPv6 support" >&5
 $as_echo_n "checking for IPv6 support... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -4107,9 +4189,9 @@ else
   bwping_cv_sys_ipv6=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $bwping_cv_sys_ipv6" >&5
-$as_echo "$bwping_cv_sys_ipv6" >&6; }
-if test "$bwping_cv_sys_ipv6" = "no"; then
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${bwping_cv_sys_ipv6}" >&5
+$as_echo "${bwping_cv_sys_ipv6}" >&6; }
+if test "${bwping_cv_sys_ipv6}" = "no"; then
     as_fn_error $? "IPv6 support is required for build" "$LINENO" 5
 fi
 

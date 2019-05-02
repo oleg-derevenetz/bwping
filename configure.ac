@@ -8,7 +8,7 @@ AM_INIT_AUTOMAKE
 
 AC_PROG_CC
 AC_PROG_CC_C99
-if test "$ac_cv_prog_cc_c99" = "no"; then
+if test "${ac_cv_prog_cc_c99}" = "no"; then
     AC_MSG_ERROR([C99 compiler is required for build])
 fi
 
@@ -31,6 +31,39 @@ AC_SEARCH_LIBS([inet_ntop], [resolv nsl], [],
     [AC_MSG_ERROR([inet_ntop() is required for build])])
 AC_SEARCH_LIBS([getaddrinfo], [resolv nsl], [],
     [AC_MSG_ERROR([getaddrinfo() is required for build])])
+
+bwping_save_cflags=${CFLAGS}
+AC_MSG_CHECKING([whether the C compiler accepts -Wall...])
+CFLAGS="${CFLAGS} -Wall"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
+                  [bwping_cv_c_wall=yes],
+                  [bwping_cv_c_wall=no])
+CFLAGS=${bwping_save_cflags}
+AC_MSG_RESULT([${bwping_cv_c_wall}])
+if test "${bwping_cv_c_wall}" = "yes"; then
+    AM_CFLAGS="${AM_CFLAGS} -Wall"
+fi
+AC_MSG_CHECKING([whether the C compiler accepts -Wextra...])
+CFLAGS="${CFLAGS} -Wextra"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
+                  [bwping_cv_c_wextra=yes],
+                  [bwping_cv_c_wextra=no])
+CFLAGS=${bwping_save_cflags}
+AC_MSG_RESULT([${bwping_cv_c_wextra}])
+if test "${bwping_cv_c_wextra}" = "yes"; then
+    AM_CFLAGS="${AM_CFLAGS} -Wextra"
+fi
+AC_MSG_CHECKING([whether the C compiler accepts -Wpedantic...])
+CFLAGS="${CFLAGS} -Wpedantic"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
+                  [bwping_cv_c_wpedantic=yes],
+                  [bwping_cv_c_wpedantic=no])
+CFLAGS=${bwping_save_cflags}
+AC_MSG_RESULT([${bwping_cv_c_wpedantic}])
+if test "${bwping_cv_c_wpedantic}" = "yes"; then
+    AM_CFLAGS="${AM_CFLAGS} -Wpedantic"
+fi
+AC_SUBST([AM_CFLAGS])
 
 AC_MSG_CHECKING([for IPv6 support])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
@@ -175,8 +208,8 @@ struct icmp6_hdr {
     [bwping_cv_sys_ipv6=yes],
     [bwping_cv_sys_ipv6=no],
     [bwping_cv_sys_ipv6=no])
-AC_MSG_RESULT([$bwping_cv_sys_ipv6])
-if test "$bwping_cv_sys_ipv6" = "no"; then
+AC_MSG_RESULT([${bwping_cv_sys_ipv6}])
+if test "${bwping_cv_sys_ipv6}" = "no"; then
     AC_MSG_ERROR([IPv6 support is required for build])
 fi
 
