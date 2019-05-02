@@ -3952,6 +3952,32 @@ fi
 
 
 bwping_save_cflags=${CFLAGS}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler accepts -D..." >&5
+$as_echo_n "checking whether the C compiler accepts -D...... " >&6; }
+CFLAGS="${CFLAGS} -DBWPING_INT_TYPE=int"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+BWPING_INT_TYPE foo = 0;
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  bwping_cv_c_d=yes
+else
+  bwping_cv_c_d=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+CFLAGS=${bwping_save_cflags}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${bwping_cv_c_d}" >&5
+$as_echo "${bwping_cv_c_d}" >&6; }
+if test "${bwping_cv_c_d}" = "no"; then
+    as_fn_error $? "Support of the -D flag by the C compiler is required for build" "$LINENO" 5
+fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler accepts -Wall..." >&5
 $as_echo_n "checking whether the C compiler accepts -Wall...... " >&6; }
 CFLAGS="${CFLAGS} -Wall"
