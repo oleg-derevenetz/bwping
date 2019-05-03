@@ -41,7 +41,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([BWPING_INT_TYPE foo = 0;])],
 CFLAGS=${bwping_save_cflags}
 AC_MSG_RESULT([${bwping_cv_c_d}])
 if test "${bwping_cv_c_d}" = "no"; then
-    AC_MSG_ERROR([Support of the -D flag by the C compiler is required for build])
+    AC_MSG_ERROR([support for the -D flag by the C compiler is required for build])
 fi
 AC_MSG_CHECKING([whether the C compiler accepts -Wall...])
 CFLAGS="${CFLAGS} -Wall"
