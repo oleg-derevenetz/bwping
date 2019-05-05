@@ -175,7 +175,7 @@ static void send_ping4(int sock, struct sockaddr_in *to4, size_t pkt_size, uint1
 
     icmp4.icmp_cksum = cksum(packet, pkt_size);
 
-    memcpy(packet, &icmp4, sizeof(icmp4));
+    memcpy(&packet[offsetof(struct icmp, icmp_cksum)], &icmp4.icmp_cksum, sizeof(icmp4.icmp_cksum));
 
     res = sendto(sock, packet, pkt_size, 0, (struct sockaddr *)to4, sizeof(*to4));
 
