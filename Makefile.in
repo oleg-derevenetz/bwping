@@ -429,6 +429,7 @@ INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
@@ -492,10 +493,11 @@ bwping_SOURCES = include/cygwin.h include/features.h src/bwping.c
 bwping_CFLAGS = ${AM_CFLAGS} -DBUILD_BWPING
 bwping6_SOURCES = include/cygwin.h include/features.h src/bwping.c
 bwping6_CFLAGS = ${AM_CFLAGS} -DBUILD_BWPING6
-man_MANS = man/bwping.8 man/bwping6.8
-EXTRA_DIST = man/bwping.8 man/bwping6.8
+man_MANS = man/bwping.8
+EXTRA_DIST = man/bwping.8
 dist_check_SCRIPTS = tests/bwping tests/bwping6
 TESTS = tests/bwping tests/bwping6
+bwpinglinks = bwping6
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -1177,7 +1179,8 @@ info: info-am
 info-am:
 
 install-data-am: install-man
-
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) install-data-hook
 install-dvi: install-dvi-am
 
 install-dvi-am:
@@ -1225,10 +1228,12 @@ ps: ps-am
 ps-am:
 
 uninstall-am: uninstall-man uninstall-sbinPROGRAMS
-
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) uninstall-hook
 uninstall-man: uninstall-man8
 
-.MAKE: all check-am install-am install-strip
+.MAKE: all check-am install-am install-data-am install-strip \
+	uninstall-am
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles am--refresh check \
 	check-TESTS check-am clean clean-cscope clean-generic \
@@ -1238,18 +1243,34 @@ uninstall-man: uninstall-man8
 	distclean-generic distclean-hdr distclean-tags distcleancheck \
 	distdir distuninstallcheck dvi dvi-am html html-am info \
 	info-am install install-am install-data install-data-am \
-	install-dvi install-dvi-am install-exec install-exec-am \
-	install-html install-html-am install-info install-info-am \
-	install-man install-man8 install-pdf install-pdf-am install-ps \
-	install-ps-am install-sbinPROGRAMS install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic pdf pdf-am ps ps-am recheck tags tags-am \
-	uninstall uninstall-am uninstall-man uninstall-man8 \
-	uninstall-sbinPROGRAMS
+	install-data-hook install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-man install-man8 install-pdf \
+	install-pdf-am install-ps install-ps-am install-sbinPROGRAMS \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
+	recheck tags tags-am uninstall uninstall-am uninstall-hook \
+	uninstall-man uninstall-man8 uninstall-sbinPROGRAMS
 
 .PRECIOUS: Makefile
 
+
+install-data-hook:
+	cd $(DESTDIR)$(mandir)/man8 && \
+	target=`echo bwping | sed '$(transform)'` && \
+	for name in $(bwpinglinks); do \
+		link=`echo $$name | sed '$(transform)'` && \
+		rm -f $$link.8 && \
+		$(LN_S) $$target.8 $$link.8; \
+	done
+
+uninstall-hook:
+	cd $(DESTDIR)$(mandir)/man8 && \
+	for name in $(bwpinglinks); do \
+		link=`echo $$name | sed '$(transform)'` && \
+		rm -f $$link.1; \
+	done
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

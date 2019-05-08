@@ -12,6 +12,7 @@ if test "${ac_cv_prog_cc_c99}" = "no"; then
     AC_MSG_ERROR([C99 compiler is required for build])
 fi
 
+AC_PROG_LN_S
 AC_PROG_INSTALL
 
 AC_CHECK_HEADERS([netinet/icmp6.h], [], [], [
