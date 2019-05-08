@@ -20,6 +20,7 @@
 #include <time.h>
 #include <errno.h>
 #include <string.h>
+#include <libgen.h>
 
 #include <arpa/inet.h>
 
@@ -38,20 +39,11 @@
 
 #include <netdb.h>
 
-#ifdef BUILD_BWPING
-const bool         IPV4_MODE               = true;
-#else
-const bool         IPV4_MODE               = false;
-#endif
 const size_t       MAX_IPV4_HDR_SIZE       = 60;
 const uint32_t     CALIBRATION_CYCLES      = 100,
                    PKT_BURST_PRECISION     = 1000,
                    BUF_SIZE_RESERVE_FACTOR = 10;
-#ifdef BUILD_BWPING
-const char * const PROG_NAME               = "bwping";
-#else
-const char * const PROG_NAME               = "bwping6";
-#endif
+char *             PROG_NAME;
 
 int64_t min_rtt, max_rtt, average_rtt;
 
@@ -427,6 +419,7 @@ int main(int argc, char **argv)
 {
     bool                finish;
     int                 sock, exit_val, ch, n;
+    bool                use_v4;
     unsigned int        buf_size, tos_or_traf_class;
     size_t              pkt_size;
     uint16_t            ident;
@@ -455,8 +448,19 @@ int main(int argc, char **argv)
     volume            = 10000;
     bind_addr         = NULL;
 
-    while ((ch = getopt(argc, argv, "B:T:b:r:s:u:v:")) != -1) {
+    PROG_NAME         = basename(argv[0]);
+    use_v4            = strcmp(PROG_NAME, "bwping6");
+
+    while ((ch = getopt(argc, argv, "46B:T:b:r:s:u:v:")) != -1) {
         switch (ch) {
+            case '4':
+                use_v4 = true;
+
+                break;
+            case '6':
+                use_v4 = false;
+
+                break;
             case 'B':
                 bind_addr = optarg;
 
@@ -520,7 +524,7 @@ int main(int argc, char **argv)
         exit_val = EX_USAGE;
     }
 
-    if (IPV4_MODE) {
+    if (use_v4) {
         if (pkt_size < sizeof(struct icmp) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET - MAX_IPV4_HDR_SIZE) {
             fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", PROG_NAME,
                                                                                         sizeof(struct icmp) + sizeof(struct timespec),
@@ -537,15 +541,11 @@ int main(int argc, char **argv)
     }
 
     if (exit_val != EX_OK) {
-        if (IPV4_MODE) {
-            fprintf(stderr, "Usage: %s [-u buf_size] [-r reporting_period] [-T tos] [-B bind_addr] [-b kbps] [-s pkt_size] [-v volume] target\n", PROG_NAME);
-        } else {
-            fprintf(stderr, "Usage: %s [-u buf_size] [-r reporting_period] [-T traf_class] [-B bind_addr] [-b kbps] [-s pkt_size] [-v volume] target\n", PROG_NAME);
-        }
+        fprintf(stderr, "Usage: %s [-4|-6] [-u buf_size] [-r reporting_period] [-T tos(v4)|traf_class(v6)] [-B bind_addr] [-b kbps] [-s pkt_size] [-v volume] target\n", PROG_NAME);
         exit(exit_val);
     }
 
-    if (IPV4_MODE) {
+    if (use_v4) {
         sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 
         if (sock < 0) {
@@ -571,7 +571,7 @@ int main(int argc, char **argv)
         if (exit_val == EX_OK) {
             if (exit_val == EX_OK) {
                 if (bind_addr != NULL) {
-                    if (IPV4_MODE) {
+                    if (use_v4) {
                         if (resolve_name4(bind_addr, &bind_to4)) {
                             if (bind(sock, (struct sockaddr *)&bind_to4, sizeof(bind_to4)) < 0) {
                                 fprintf(stderr, "%s: bind() failed: %s\n", PROG_NAME, strerror(errno));
@@ -595,11 +595,11 @@ int main(int argc, char **argv)
                 if (exit_val == EX_OK) {
                     target = argv[optind];
 
-                    if (IPV4_MODE ? resolve_name4(target, &to4) :
-                                    resolve_name6(target, &to6)) {
+                    if (use_v4 ? resolve_name4(target, &to4) :
+                                 resolve_name6(target, &to6)) {
                         ident = getpid() & 0xFFFF;
 
-                        if (IPV4_MODE) {
+                        if (use_v4) {
                             if (inet_ntop(AF_INET, &(to4.sin_addr), p_addr4, sizeof(p_addr4)) == NULL) {
                                 p_addr4[0] = '?';
                                 p_addr4[1] = 0;
@@ -652,7 +652,7 @@ int main(int argc, char **argv)
                             fprintf(stderr, "%s: setsockopt(SO_SNDBUF, %u) failed: %s\n", PROG_NAME, buf_size, strerror(errno));
                         }
 
-                        if (IPV4_MODE) {
+                        if (use_v4) {
                             if (setsockopt(sock, IPPROTO_IP, IP_TOS, &tos_or_traf_class, sizeof(tos_or_traf_class)) < 0) {
                                 fprintf(stderr, "%s: setsockopt(IP_TOS, %u) failed: %s\n", PROG_NAME, tos_or_traf_class, strerror(errno));
                             }
@@ -675,7 +675,7 @@ int main(int argc, char **argv)
 
                             for (i = 0; i < pkt_burst / PKT_BURST_PRECISION + pkt_burst_error / PKT_BURST_PRECISION; i++) {
                                 if ((uint64_t)pkt_size * transmitted_number < volume) {
-                                    if (IPV4_MODE) {
+                                    if (use_v4) {
                                         send_ping4(sock, &to4, pkt_size, ident, !i, &transmitted_number, &transmitted_volume);
                                     } else {
                                         send_ping6(sock, &to6, pkt_size, ident, !i, &transmitted_number, &transmitted_volume);
@@ -698,7 +698,7 @@ int main(int argc, char **argv)
                                 n = select(sock + 1, &fds, NULL, NULL, &timeout);
 
                                 if (n > 0) {
-                                    while (IPV4_MODE ? recv_ping4(sock, ident, &received_number, &received_volume) :
+                                    while (use_v4 ? recv_ping4(sock, ident, &received_number, &received_volume) :
                                                        recv_ping6(sock, ident, &received_number, &received_volume)) {
                                         if (received_number >= transmitted_number) {
                                             break;
@@ -750,11 +750,7 @@ int main(int argc, char **argv)
                 }
             }
         } else {
-            if (IPV4_MODE) {
-                fprintf(stderr, "Usage: %s [-u buf_size] [-r reporting_period] [-T tos] [-B bind_addr] [-b kbps] [-s pkt_size] [-v volume] target\n", PROG_NAME);
-            } else {
-                fprintf(stderr, "Usage: %s [-u buf_size] [-r reporting_period] [-T traf_class] [-B bind_addr] [-b kbps] [-s pkt_size] [-v volume] target\n", PROG_NAME);
-            }
+            fprintf(stderr, "Usage: %s [-4|-6] [-u buf_size] [-r reporting_period] [-T tos(v4)|traf_class(v6)] [-B bind_addr] [-b kbps] [-s pkt_size] [-v volume] target\n", PROG_NAME);
         }
     }
 
