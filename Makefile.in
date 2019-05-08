@@ -86,7 +86,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-sbin_PROGRAMS = bwping$(EXEEXT) bwping6$(EXEEXT)
+sbin_PROGRAMS = bwping$(EXEEXT)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -108,11 +108,6 @@ bwping_OBJECTS = $(am_bwping_OBJECTS)
 bwping_LDADD = $(LDADD)
 bwping_LINK = $(CCLD) $(bwping_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am_bwping6_OBJECTS = src/bwping6-bwping.$(OBJEXT)
-bwping6_OBJECTS = $(am_bwping6_OBJECTS)
-bwping6_LDADD = $(LDADD)
-bwping6_LINK = $(CCLD) $(bwping6_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -128,8 +123,7 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = src/$(DEPDIR)/bwping-bwping.Po \
-	src/$(DEPDIR)/bwping6-bwping.Po
+am__depfiles_remade = src/$(DEPDIR)/bwping-bwping.Po
 am__mv = mv -f
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -147,8 +141,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(bwping_SOURCES) $(bwping6_SOURCES)
-DIST_SOURCES = $(bwping_SOURCES) $(bwping6_SOURCES)
+SOURCES = $(bwping_SOURCES)
+DIST_SOURCES = $(bwping_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -490,9 +484,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = subdir-objects
 bwping_SOURCES = include/cygwin.h include/features.h src/bwping.c
-bwping_CFLAGS = ${AM_CFLAGS} -DBUILD_BWPING
-bwping6_SOURCES = include/cygwin.h include/features.h src/bwping.c
-bwping6_CFLAGS = ${AM_CFLAGS} -DBUILD_BWPING6
+bwping_CFLAGS = ${AM_CFLAGS}
 man_MANS = man/bwping.8
 EXTRA_DIST = man/bwping.8
 dist_check_SCRIPTS = tests/bwping tests/bwping6
@@ -605,12 +597,6 @@ src/bwping-bwping.$(OBJEXT): src/$(am__dirstamp) \
 bwping$(EXEEXT): $(bwping_OBJECTS) $(bwping_DEPENDENCIES) $(EXTRA_bwping_DEPENDENCIES) 
 	@rm -f bwping$(EXEEXT)
 	$(AM_V_CCLD)$(bwping_LINK) $(bwping_OBJECTS) $(bwping_LDADD) $(LIBS)
-src/bwping6-bwping.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-
-bwping6$(EXEEXT): $(bwping6_OBJECTS) $(bwping6_DEPENDENCIES) $(EXTRA_bwping6_DEPENDENCIES) 
-	@rm -f bwping6$(EXEEXT)
-	$(AM_V_CCLD)$(bwping6_LINK) $(bwping6_OBJECTS) $(bwping6_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -620,7 +606,6 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bwping-bwping.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bwping6-bwping.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -657,20 +642,6 @@ src/bwping-bwping.obj: src/bwping.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/bwping.c' object='src/bwping-bwping.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(bwping_CFLAGS) $(CFLAGS) -c -o src/bwping-bwping.obj `if test -f 'src/bwping.c'; then $(CYGPATH_W) 'src/bwping.c'; else $(CYGPATH_W) '$(srcdir)/src/bwping.c'; fi`
-
-src/bwping6-bwping.o: src/bwping.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(bwping6_CFLAGS) $(CFLAGS) -MT src/bwping6-bwping.o -MD -MP -MF src/$(DEPDIR)/bwping6-bwping.Tpo -c -o src/bwping6-bwping.o `test -f 'src/bwping.c' || echo '$(srcdir)/'`src/bwping.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bwping6-bwping.Tpo src/$(DEPDIR)/bwping6-bwping.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/bwping.c' object='src/bwping6-bwping.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(bwping6_CFLAGS) $(CFLAGS) -c -o src/bwping6-bwping.o `test -f 'src/bwping.c' || echo '$(srcdir)/'`src/bwping.c
-
-src/bwping6-bwping.obj: src/bwping.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(bwping6_CFLAGS) $(CFLAGS) -MT src/bwping6-bwping.obj -MD -MP -MF src/$(DEPDIR)/bwping6-bwping.Tpo -c -o src/bwping6-bwping.obj `if test -f 'src/bwping.c'; then $(CYGPATH_W) 'src/bwping.c'; else $(CYGPATH_W) '$(srcdir)/src/bwping.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bwping6-bwping.Tpo src/$(DEPDIR)/bwping6-bwping.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/bwping.c' object='src/bwping6-bwping.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(bwping6_CFLAGS) $(CFLAGS) -c -o src/bwping6-bwping.obj `if test -f 'src/bwping.c'; then $(CYGPATH_W) 'src/bwping.c'; else $(CYGPATH_W) '$(srcdir)/src/bwping.c'; fi`
 install-man8: $(man_MANS)
 	@$(NORMAL_INSTALL)
 	@list1=''; \
@@ -1161,7 +1132,6 @@ clean-am: clean-generic clean-sbinPROGRAMS mostlyclean-am
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 		-rm -f src/$(DEPDIR)/bwping-bwping.Po
-	-rm -f src/$(DEPDIR)/bwping6-bwping.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-tags
@@ -1186,7 +1156,8 @@ install-dvi: install-dvi-am
 install-dvi-am:
 
 install-exec-am: install-sbinPROGRAMS
-
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
 install-html: install-html-am
 
 install-html-am:
@@ -1211,7 +1182,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
 		-rm -f src/$(DEPDIR)/bwping-bwping.Po
-	-rm -f src/$(DEPDIR)/bwping6-bwping.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -1232,8 +1202,8 @@ uninstall-am: uninstall-man uninstall-sbinPROGRAMS
 	$(MAKE) $(AM_MAKEFLAGS) uninstall-hook
 uninstall-man: uninstall-man8
 
-.MAKE: all check-am install-am install-data-am install-strip \
-	uninstall-am
+.MAKE: all check-am install-am install-data-am install-exec-am \
+	install-strip uninstall-am
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles am--refresh check \
 	check-TESTS check-am clean clean-cscope clean-generic \
@@ -1244,17 +1214,27 @@ uninstall-man: uninstall-man8
 	distdir distuninstallcheck dvi dvi-am html html-am info \
 	info-am install install-am install-data install-data-am \
 	install-data-hook install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-man8 install-pdf \
-	install-pdf-am install-ps install-ps-am install-sbinPROGRAMS \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
-	recheck tags tags-am uninstall uninstall-am uninstall-hook \
-	uninstall-man uninstall-man8 uninstall-sbinPROGRAMS
+	install-exec-am install-exec-hook install-html install-html-am \
+	install-info install-info-am install-man install-man8 \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-sbinPROGRAMS install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic pdf pdf-am ps ps-am recheck tags tags-am \
+	uninstall uninstall-am uninstall-hook uninstall-man \
+	uninstall-man8 uninstall-sbinPROGRAMS
 
 .PRECIOUS: Makefile
 
+
+install-exec-hook:
+	cd $(DESTDIR)$(sbindir) && \
+	target=`echo bwping | sed '$(transform)'`$(EXEEXT) && \
+	for name in $(bwpinglinks); do \
+		link=`echo $$name | sed '$(transform)'`$(LN_EXEEXT) && \
+		rm -f $$link && \
+		$(LN_S) $$target $$link; \
+	done
 
 install-data-hook:
 	cd $(DESTDIR)$(mandir)/man8 && \
@@ -1266,6 +1246,11 @@ install-data-hook:
 	done
 
 uninstall-hook:
+	cd $(DESTDIR)$(sbindir) && \
+	for name in $(bwpinglinks); do \
+		link=`echo $$name | sed '$(transform)'`$(LN_EXEEXT) && \
+		rm -f $$link; \
+	done
 	cd $(DESTDIR)$(mandir)/man8 && \
 	for name in $(bwpinglinks); do \
 		link=`echo $$name | sed '$(transform)'` && \

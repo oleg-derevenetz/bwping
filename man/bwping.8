@@ -5,12 +5,9 @@ and
 .B bwping6
 are tools to measure bandwidth and response times between two hosts using
 Internet Control Message Protocol (ICMP) echo request/echo reply mechanism.
-.B bwping
-deals with IPv4 networks, while
-.B bwping6
-- with IPv6 networks.
 .SH SYNOPSIS
 .B bwping
+[ \fB-4\fR | \fB-6\fR ]
 [ \fB-u\fR \fIbuf_size\fR ]
 [ \fB-r\fR \fIreporting_period\fR ]
 [ \fB-T\fR \fItos\fR ]
@@ -20,6 +17,7 @@ deals with IPv4 networks, while
 [ \fB-v\fR \fIvolume\fR \fItarget\fR ]
 
 .B bwping6
+[ \fB-4\fR | \fB-6\fR ]
 [ \fB-u\fR \fIbuf_size\fR ]
 [ \fB-r\fR \fIreporting_period\fR ]
 [ \fB-T\fR \fItraf_class\fR ]
@@ -28,6 +26,18 @@ deals with IPv4 networks, while
 [ \fB-s\fR \fIpkt_size\fR ]
 [ \fB-v\fR \fIvolume\fR \fItarget\fR ]
 .SH OPTIONS
+.IP "\fB-4\fR" 5
+Forces IPv4 mode. Default mode of operation is IPv4 for
+.B bwping
+and IPv6 for
+.B bwping6
+otherwise.
+.IP "\fB-6\fR" 5
+Forces IPv6 mode. Default mode of operation is IPv4 for
+.B bwping
+and IPv6 for
+.B bwping6
+otherwise.
 .IP "\fB-u\fR \fIbuf_size\fR" 5
 Sets the send/receive buffer size in bytes. Default value will be
 automatically calculated based on transfer speed, packet size and

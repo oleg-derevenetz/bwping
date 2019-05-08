@@ -1,12 +1,9 @@
 AUTOMAKE_OPTIONS   = subdir-objects
 
-sbin_PROGRAMS      = bwping bwping6
+sbin_PROGRAMS      = bwping
 
 bwping_SOURCES     = include/cygwin.h include/features.h src/bwping.c
-bwping_CFLAGS      = ${AM_CFLAGS} -DBUILD_BWPING
-
-bwping6_SOURCES    = include/cygwin.h include/features.h src/bwping.c
-bwping6_CFLAGS     = ${AM_CFLAGS} -DBUILD_BWPING6
+bwping_CFLAGS      = ${AM_CFLAGS}
 
 man_MANS           = man/bwping.8
 EXTRA_DIST         = man/bwping.8
@@ -16,6 +13,15 @@ TESTS              = tests/bwping tests/bwping6
 
 ## Create symlinks for bwping6 for convenience.
 bwpinglinks        = bwping6
+
+install-exec-hook:
+	cd $(DESTDIR)$(sbindir) && \
+	target=`echo bwping | sed '$(transform)'`$(EXEEXT) && \
+	for name in $(bwpinglinks); do \
+		link=`echo $$name | sed '$(transform)'`$(LN_EXEEXT) && \
+		rm -f $$link && \
+		$(LN_S) $$target $$link; \
+	done
 
 install-data-hook:
 	cd $(DESTDIR)$(mandir)/man8 && \
@@ -27,6 +33,11 @@ install-data-hook:
 	done
 
 uninstall-hook:
+	cd $(DESTDIR)$(sbindir) && \
+	for name in $(bwpinglinks); do \
+		link=`echo $$name | sed '$(transform)'`$(LN_EXEEXT) && \
+		rm -f $$link; \
+	done
 	cd $(DESTDIR)$(mandir)/man8 && \
 	for name in $(bwpinglinks); do \
 		link=`echo $$name | sed '$(transform)'` && \

@@ -3,17 +3,23 @@ bwping(8)                   System Manager's Manual                  bwping(8)
 NAME
        bwping  and  bwping6  are tools to measure bandwidth and response times
        between two hosts using Internet Control Message Protocol  (ICMP)  echo
-       request/echo  reply  mechanism.  bwping deals with IPv4 networks, while
-       bwping6 - with IPv6 networks.
+       request/echo reply mechanism.
 
 SYNOPSIS
-       bwping [ -u buf_size ] [  -r  reporting_period  ]  [  -T  tos  ]  [  -B
-       bind_addr ] [ -b kbps ] [ -s pkt_size ] [ -v volume target ]
+       bwping [ -4 | -6 ] [ -u buf_size ] [ -r reporting_period ] [ -T tos ] [
+       -B bind_addr ] [ -b kbps ] [ -s pkt_size ] [ -v volume target ]
 
-       bwping6  [ -u buf_size ] [ -r reporting_period ] [ -T traf_class ] [ -B
-       bind_addr ] [ -b kbps ] [ -s pkt_size ] [ -v volume target ]
+       bwping6 [ -4 | -6 ] [ -u buf_size  ]  [  -r  reporting_period  ]  [  -T
+       traf_class  ]  [ -B bind_addr ] [ -b kbps ] [ -s pkt_size ] [ -v volume
+       target ]
 
 OPTIONS
+       -4   Forces IPv4 mode. Default mode of operation is IPv4 for bwping and
+            IPv6 for bwping6 otherwise.
+
+       -6   Forces IPv6 mode. Default mode of operation is IPv4 for bwping and
+            IPv6 for bwping6 otherwise.
+
        -u buf_size
             Sets the send/receive buffer size in bytes. Default value will  be
             automatically  calculated based on transfer speed, packet size and
