@@ -445,6 +445,106 @@ int main(int argc, char **argv)
     struct timeval      timeout;
     struct timespec     begin, end, report, start, now;
 
+    exit_val = EX_OK;
+
+    buf_size          = 0;
+    tos_or_traf_class = 0;
+    pkt_size          = 0;
+    reporting_period  = 0;
+    kbps              = 0;
+    volume            = 0;
+    bind_addr         = NULL;
+
+    while ((ch = getopt(argc, argv, "B:T:b:r:s:u:v:")) != -1) {
+        switch (ch) {
+            case 'B':
+                bind_addr = optarg;
+
+                break;
+            case 'T':
+                tos_or_traf_class = strtoul(optarg, &ep, 0);
+
+                if (*ep || ep == optarg) {
+                    exit_val = EX_USAGE;
+                }
+
+                break;
+            case 'b':
+                kbps = strtoul(optarg, &ep, 0);
+
+                if (*ep || ep == optarg) {
+                    exit_val = EX_USAGE;
+                }
+
+                break;
+            case 'r':
+                reporting_period = strtol(optarg, &ep, 0);
+
+                if (*ep || ep == optarg || reporting_period < 0) {
+                    exit_val = EX_USAGE;
+                }
+
+                break;
+            case 's':
+                pkt_size = strtoul(optarg, &ep, 0);
+
+                if (*ep || ep == optarg) {
+                    exit_val = EX_USAGE;
+                }
+
+                break;
+            case 'u':
+                buf_size = strtoul(optarg, &ep, 0);
+
+                if (*ep || ep == optarg) {
+                    exit_val = EX_USAGE;
+                }
+
+                break;
+            case 'v':
+                volume = strtoull(optarg, &ep, 0);
+
+                if (*ep || ep == optarg) {
+                    exit_val = EX_USAGE;
+                }
+
+                break;
+            default:
+                exit_val = EX_USAGE;
+        }
+    }
+
+    if (pkt_size == 0 || kbps == 0 || volume == 0) {
+        exit_val = EX_USAGE;
+    } else if (argc - optind != 1) {
+        exit_val = EX_USAGE;
+    }
+
+    if (IPV4_MODE) {
+        if (pkt_size < sizeof(struct icmp) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET - MAX_IPV4_HDR_SIZE) {
+            fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", PROG_NAME,
+                                                                                        sizeof(struct icmp) + sizeof(struct timespec),
+                                                                                        (size_t)IP_MAXPACKET - MAX_IPV4_HDR_SIZE);
+            exit_val = EX_USAGE;
+        }
+    } else {
+        if (pkt_size < sizeof(struct icmp6_hdr) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET) {
+            fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", PROG_NAME,
+                                                                                        sizeof(struct icmp6_hdr) + sizeof(struct timespec),
+                                                                                        (size_t)IP_MAXPACKET);
+            exit_val = EX_USAGE;
+        }
+    }
+
+    if (exit_val != EX_OK) {
+        if (IPV4_MODE) {
+            fprintf(stderr, "Usage: %s [-u buf_size] [-r reporting_period] [-T tos] [-B bind_addr] -b kbps -s pkt_size -v volume target\n", PROG_NAME);
+        } else {
+            fprintf(stderr, "Usage: %s [-u buf_size] [-r reporting_period] [-T traf_class] [-B bind_addr] -b kbps -s pkt_size -v volume target\n", PROG_NAME);
+        }
+        exit(exit_val);
+    }
+
     if (IPV4_MODE) {
         sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 
@@ -468,98 +568,7 @@ int main(int argc, char **argv)
 
         exit_val = EX_OSERR;
     } else {
-        exit_val = EX_OK;
-
-        buf_size          = 0;
-        tos_or_traf_class = 0;
-        pkt_size          = 0;
-        reporting_period  = 0;
-        kbps              = 0;
-        volume            = 0;
-        bind_addr         = NULL;
-
-        while ((ch = getopt(argc, argv, "B:T:b:r:s:u:v:")) != -1) {
-            switch (ch) {
-                case 'B':
-                    bind_addr = optarg;
-
-                    break;
-                case 'T':
-                    tos_or_traf_class = strtoul(optarg, &ep, 0);
-
-                    if (*ep || ep == optarg) {
-                        exit_val = EX_USAGE;
-                    }
-
-                    break;
-                case 'b':
-                    kbps = strtoul(optarg, &ep, 0);
-
-                    if (*ep || ep == optarg) {
-                        exit_val = EX_USAGE;
-                    }
-
-                    break;
-                case 'r':
-                    reporting_period = strtol(optarg, &ep, 0);
-
-                    if (*ep || ep == optarg || reporting_period < 0) {
-                        exit_val = EX_USAGE;
-                    }
-
-                    break;
-                case 's':
-                    pkt_size = strtoul(optarg, &ep, 0);
-
-                    if (*ep || ep == optarg) {
-                        exit_val = EX_USAGE;
-                    }
-
-                    break;
-                case 'u':
-                    buf_size = strtoul(optarg, &ep, 0);
-
-                    if (*ep || ep == optarg) {
-                        exit_val = EX_USAGE;
-                    }
-
-                    break;
-                case 'v':
-                    volume = strtoull(optarg, &ep, 0);
-
-                    if (*ep || ep == optarg) {
-                        exit_val = EX_USAGE;
-                    }
-
-                    break;
-                default:
-                    exit_val = EX_USAGE;
-            }
-        }
-
-        if (pkt_size == 0 || kbps == 0 || volume == 0) {
-            exit_val = EX_USAGE;
-        } else if (argc - optind != 1) {
-            exit_val = EX_USAGE;
-        }
-
         if (exit_val == EX_OK) {
-            if (IPV4_MODE) {
-                if (pkt_size < sizeof(struct icmp) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET - MAX_IPV4_HDR_SIZE) {
-                    fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", PROG_NAME,
-                                                                                                sizeof(struct icmp) + sizeof(struct timespec),
-                                                                                                (size_t)IP_MAXPACKET - MAX_IPV4_HDR_SIZE);
-                    exit_val = EX_USAGE;
-                }
-            } else {
-                if (pkt_size < sizeof(struct icmp6_hdr) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET) {
-                    fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", PROG_NAME,
-                                                                                                sizeof(struct icmp6_hdr) + sizeof(struct timespec),
-                                                                                                (size_t)IP_MAXPACKET);
-                    exit_val = EX_USAGE;
-                }
-            }
-
             if (exit_val == EX_OK) {
                 if (bind_addr != NULL) {
                     if (IPV4_MODE) {
