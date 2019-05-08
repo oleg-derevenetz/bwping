@@ -449,10 +449,10 @@ int main(int argc, char **argv)
 
     buf_size          = 0;
     tos_or_traf_class = 0;
-    pkt_size          = 0;
+    pkt_size          = 56;
     reporting_period  = 0;
-    kbps              = 0;
-    volume            = 0;
+    kbps              = 100;
+    volume            = 10000;
     bind_addr         = NULL;
 
     while ((ch = getopt(argc, argv, "B:T:b:r:s:u:v:")) != -1) {
@@ -538,9 +538,9 @@ int main(int argc, char **argv)
 
     if (exit_val != EX_OK) {
         if (IPV4_MODE) {
-            fprintf(stderr, "Usage: %s [-u buf_size] [-r reporting_period] [-T tos] [-B bind_addr] -b kbps -s pkt_size -v volume target\n", PROG_NAME);
+            fprintf(stderr, "Usage: %s [-u buf_size] [-r reporting_period] [-T tos] [-B bind_addr] [-b kbps] [-s pkt_size] [-v volume] target\n", PROG_NAME);
         } else {
-            fprintf(stderr, "Usage: %s [-u buf_size] [-r reporting_period] [-T traf_class] [-B bind_addr] -b kbps -s pkt_size -v volume target\n", PROG_NAME);
+            fprintf(stderr, "Usage: %s [-u buf_size] [-r reporting_period] [-T traf_class] [-B bind_addr] [-b kbps] [-s pkt_size] [-v volume] target\n", PROG_NAME);
         }
         exit(exit_val);
     }
@@ -751,9 +751,9 @@ int main(int argc, char **argv)
             }
         } else {
             if (IPV4_MODE) {
-                fprintf(stderr, "Usage: %s [-u buf_size] [-r reporting_period] [-T tos] [-B bind_addr] -b kbps -s pkt_size -v volume target\n", PROG_NAME);
+                fprintf(stderr, "Usage: %s [-u buf_size] [-r reporting_period] [-T tos] [-B bind_addr] [-b kbps] [-s pkt_size] [-v volume] target\n", PROG_NAME);
             } else {
-                fprintf(stderr, "Usage: %s [-u buf_size] [-r reporting_period] [-T traf_class] [-B bind_addr] -b kbps -s pkt_size -v volume target\n", PROG_NAME);
+                fprintf(stderr, "Usage: %s [-u buf_size] [-r reporting_period] [-T traf_class] [-B bind_addr] [-b kbps] [-s pkt_size] [-v volume] target\n", PROG_NAME);
             }
         }
     }
