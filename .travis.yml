@@ -88,18 +88,20 @@ script:
             echo "--------------- MAKE CHECK ----------------" && \
             echo && \
             sudo make check "TESTS=tests/bwping" && \
-            echo && \
-            echo "-------------- SONAR WRAPPER --------------" && \
-            echo && \
-            build-wrapper-linux-x86-64 --out-dir bw-output make clean all && \
-            echo && \
-            echo "-------------- SONAR SCANNER --------------" && \
-            echo && \
-            sonar-scanner -Dsonar.projectKey=oleg-derevenetz:bwping \
-                          -Dsonar.projectName=BWPing \
-                          -Dsonar.sources=. \
-                          -Dsonar.sourceEncoding=UTF-8 \
-                          -Dsonar.cfamily.build-wrapper-output=bw-output
+            if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then \
+                echo && \
+                echo "-------------- SONAR WRAPPER --------------" && \
+                echo && \
+                build-wrapper-linux-x86-64 --out-dir bw-output make clean all && \
+                echo && \
+                echo "-------------- SONAR SCANNER --------------" && \
+                echo && \
+                sonar-scanner -Dsonar.projectKey=oleg-derevenetz:bwping \
+                              -Dsonar.projectName=BWPing \
+                              -Dsonar.sources=. \
+                              -Dsonar.sourceEncoding=UTF-8 \
+                              -Dsonar.cfamily.build-wrapper-output=bw-output; \
+            fi
 
             STATUS=$?
         fi
