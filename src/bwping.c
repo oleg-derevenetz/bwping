@@ -524,25 +524,26 @@ int main(int argc, char **argv)
         exit_val = EX_USAGE;
     }
 
+    if (exit_val != EX_OK) {
+        fprintf(stderr, "Usage: %s [-4|-6] [-u buf_size] [-r reporting_period] [-T tos(v4)|traf_class(v6)] [-B bind_addr] -b kbps -s pkt_size -v volume target\n", PROG_NAME);
+
+        exit(exit_val);
+    }
+
     if (use_v4) {
         if (pkt_size < sizeof(struct icmp) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET - MAX_IPV4_HDR_SIZE) {
             fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", PROG_NAME,
                                                                                         sizeof(struct icmp) + sizeof(struct timespec),
                                                                                         (size_t)IP_MAXPACKET - MAX_IPV4_HDR_SIZE);
-            exit_val = EX_USAGE;
+            exit(EX_USAGE);
         }
     } else {
         if (pkt_size < sizeof(struct icmp6_hdr) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET) {
             fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", PROG_NAME,
                                                                                         sizeof(struct icmp6_hdr) + sizeof(struct timespec),
                                                                                         (size_t)IP_MAXPACKET);
-            exit_val = EX_USAGE;
+            exit(EX_USAGE);
         }
-    }
-
-    if (exit_val != EX_OK) {
-        fprintf(stderr, "Usage: %s [-4|-6] [-u buf_size] [-r reporting_period] [-T tos(v4)|traf_class(v6)] [-B bind_addr] -b kbps -s pkt_size -v volume target\n", PROG_NAME);
-        exit(exit_val);
     }
 
     if (use_v4) {
@@ -568,189 +569,185 @@ int main(int argc, char **argv)
 
         exit_val = EX_OSERR;
     } else {
+        if (bind_addr != NULL) {
+            if (use_v4) {
+                if (resolve_name4(bind_addr, &bind_to4)) {
+                    if (bind(sock, (struct sockaddr *)&bind_to4, sizeof(bind_to4)) < 0) {
+                        fprintf(stderr, "%s: bind() failed: %s\n", PROG_NAME, strerror(errno));
+
+                        exit_val = EX_OSERR;
+                    }
+                } else {
+                    exit_val = EX_SOFTWARE;
+                }
+            } else {
+                if (resolve_name6(bind_addr, &bind_to6)) {
+                    if (bind(sock, (struct sockaddr *)&bind_to6, sizeof(bind_to6)) < 0) {
+                        fprintf(stderr, "%s: bind() failed: %s\n", PROG_NAME, strerror(errno));
+
+                        exit_val = EX_OSERR;
+                    }
+                } else {
+                    exit_val = EX_SOFTWARE;
+                }
+            }
+        }
+
         if (exit_val == EX_OK) {
-            if (exit_val == EX_OK) {
-                if (bind_addr != NULL) {
-                    if (use_v4) {
-                        if (resolve_name4(bind_addr, &bind_to4)) {
-                            if (bind(sock, (struct sockaddr *)&bind_to4, sizeof(bind_to4)) < 0) {
-                                fprintf(stderr, "%s: bind() failed: %s\n", PROG_NAME, strerror(errno));
-                                exit_val = EX_OSERR;
-                            }
-                        } else {
-                            exit_val = EX_SOFTWARE;
-                        }
-                    } else {
-                        if (resolve_name6(bind_addr, &bind_to6)) {
-                            if (bind(sock, (struct sockaddr *)&bind_to6, sizeof(bind_to6)) < 0) {
-                                fprintf(stderr, "%s: bind() failed: %s\n", PROG_NAME, strerror(errno));
-                                exit_val = EX_OSERR;
-                            }
-                        } else {
-                            exit_val = EX_SOFTWARE;
-                        }
+            target = argv[optind];
+
+            if (use_v4 ? resolve_name4(target, &to4) :
+                         resolve_name6(target, &to6)) {
+                ident = getpid() & 0xFFFF;
+
+                if (use_v4) {
+                    if (inet_ntop(AF_INET, &(to4.sin_addr), p_addr4, sizeof(p_addr4)) == NULL) {
+                        p_addr4[0] = '?';
+                        p_addr4[1] = 0;
+                    }
+
+                    printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
+                           target, p_addr4, kbps, pkt_size, volume);
+                } else {
+                    if (inet_ntop(AF_INET6, &(to6.sin6_addr), p_addr6, sizeof(p_addr6)) == NULL) {
+                        p_addr6[0] = '?';
+                        p_addr6[1] = 0;
+                    }
+
+                    printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
+                           target, p_addr6, kbps, pkt_size, volume);
+                }
+
+                min_rtt     = INT64_MAX;
+                max_rtt     = 0;
+                average_rtt = 0;
+
+                finish             = false;
+                transmitted_number = 0;
+                received_number    = 0;
+                transmitted_volume = 0;
+                received_volume    = 0;
+
+                interval = (int64_t)pkt_size * 8000 / kbps;
+
+                min_interval = calibrate_timer();
+
+                if (interval >= min_interval) {
+                    pkt_burst = PKT_BURST_PRECISION * 1;
+                } else if (interval == 0) {
+                    pkt_burst = PKT_BURST_PRECISION * min_interval * kbps / 8000 / pkt_size;
+                    interval  = min_interval;
+                } else {
+                    pkt_burst = PKT_BURST_PRECISION * min_interval / interval;
+                    interval  = min_interval;
+                }
+
+                if (buf_size == 0) {
+                    buf_size = pkt_size * (pkt_burst / PKT_BURST_PRECISION + 1) * BUF_SIZE_RESERVE_FACTOR;
+                }
+
+                if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(buf_size)) < 0) {
+                    fprintf(stderr, "%s: setsockopt(SO_RCVBUF, %u) failed: %s\n", PROG_NAME, buf_size, strerror(errno));
+                }
+                if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &buf_size, sizeof(buf_size)) < 0) {
+                    fprintf(stderr, "%s: setsockopt(SO_SNDBUF, %u) failed: %s\n", PROG_NAME, buf_size, strerror(errno));
+                }
+
+                if (use_v4) {
+                    if (setsockopt(sock, IPPROTO_IP, IP_TOS, &tos_or_traf_class, sizeof(tos_or_traf_class)) < 0) {
+                        fprintf(stderr, "%s: setsockopt(IP_TOS, %u) failed: %s\n", PROG_NAME, tos_or_traf_class, strerror(errno));
+                    }
+                } else {
+                    if (setsockopt(sock, IPPROTO_IPV6, IPV6_TCLASS, &tos_or_traf_class, sizeof(tos_or_traf_class)) < 0) {
+                        fprintf(stderr, "%s: setsockopt(IPV6_TCLASS, %u) failed: %s\n", PROG_NAME, tos_or_traf_class, strerror(errno));
                     }
                 }
 
-                if (exit_val == EX_OK) {
-                    target = argv[optind];
+                get_time(&begin);
+                get_time(&end);
+                get_time(&report);
 
-                    if (use_v4 ? resolve_name4(target, &to4) :
-                                 resolve_name6(target, &to6)) {
-                        ident = getpid() & 0xFFFF;
+                current_interval = interval;
+                pkt_burst_error  = 0;
+                interval_error   = 0;
 
-                        if (use_v4) {
-                            if (inet_ntop(AF_INET, &(to4.sin_addr), p_addr4, sizeof(p_addr4)) == NULL) {
-                                p_addr4[0] = '?';
-                                p_addr4[1] = 0;
-                            }
+                while (!finish) {
+                    get_time(&start);
 
-                            printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
-                                   target, p_addr4, kbps, pkt_size, volume);
-                        } else {
-                            if (inet_ntop(AF_INET6, &(to6.sin6_addr), p_addr6, sizeof(p_addr6)) == NULL) {
-                                p_addr6[0] = '?';
-                                p_addr6[1] = 0;
-                            }
-
-                            printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
-                                   target, p_addr6, kbps, pkt_size, volume);
-                        }
-
-                        min_rtt     = INT64_MAX;
-                        max_rtt     = 0;
-                        average_rtt = 0;
-
-                        finish             = false;
-                        transmitted_number = 0;
-                        received_number    = 0;
-                        transmitted_volume = 0;
-                        received_volume    = 0;
-
-                        interval = (int64_t)pkt_size * 8000 / kbps;
-
-                        min_interval = calibrate_timer();
-
-                        if (interval >= min_interval) {
-                            pkt_burst = PKT_BURST_PRECISION * 1;
-                        } else if (interval == 0) {
-                            pkt_burst = PKT_BURST_PRECISION * min_interval * kbps / 8000 / pkt_size;
-                            interval  = min_interval;
-                        } else {
-                            pkt_burst = PKT_BURST_PRECISION * min_interval / interval;
-                            interval  = min_interval;
-                        }
-
-                        if (buf_size == 0) {
-                            buf_size = pkt_size * (pkt_burst / PKT_BURST_PRECISION + 1) * BUF_SIZE_RESERVE_FACTOR;
-                        }
-
-                        if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(buf_size)) < 0) {
-                            fprintf(stderr, "%s: setsockopt(SO_RCVBUF, %u) failed: %s\n", PROG_NAME, buf_size, strerror(errno));
-                        }
-                        if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &buf_size, sizeof(buf_size)) < 0) {
-                            fprintf(stderr, "%s: setsockopt(SO_SNDBUF, %u) failed: %s\n", PROG_NAME, buf_size, strerror(errno));
-                        }
-
-                        if (use_v4) {
-                            if (setsockopt(sock, IPPROTO_IP, IP_TOS, &tos_or_traf_class, sizeof(tos_or_traf_class)) < 0) {
-                                fprintf(stderr, "%s: setsockopt(IP_TOS, %u) failed: %s\n", PROG_NAME, tos_or_traf_class, strerror(errno));
-                            }
-                        } else {
-                            if (setsockopt(sock, IPPROTO_IPV6, IPV6_TCLASS, &tos_or_traf_class, sizeof(tos_or_traf_class)) < 0) {
-                                fprintf(stderr, "%s: setsockopt(IPV6_TCLASS, %u) failed: %s\n", PROG_NAME, tos_or_traf_class, strerror(errno));
+                    for (i = 0; i < pkt_burst / PKT_BURST_PRECISION + pkt_burst_error / PKT_BURST_PRECISION; i++) {
+                        if ((uint64_t)pkt_size * transmitted_number < volume) {
+                            if (use_v4) {
+                                send_ping4(sock, &to4, pkt_size, ident, !i, &transmitted_number, &transmitted_volume);
+                            } else {
+                                send_ping6(sock, &to6, pkt_size, ident, !i, &transmitted_number, &transmitted_volume);
                             }
                         }
+                    }
 
-                        get_time(&begin);
-                        get_time(&end);
-                        get_time(&report);
+                    pkt_burst_error  = pkt_burst_error % PKT_BURST_PRECISION;
+                    pkt_burst_error += pkt_burst       % PKT_BURST_PRECISION;
 
-                        current_interval = interval;
-                        pkt_burst_error  = 0;
-                        interval_error   = 0;
+                    select_timeout = current_interval;
 
-                        while (!finish) {
-                            get_time(&start);
+                    while (1) {
+                        FD_ZERO(&fds);
+                        FD_SET(sock, &fds);
 
-                            for (i = 0; i < pkt_burst / PKT_BURST_PRECISION + pkt_burst_error / PKT_BURST_PRECISION; i++) {
-                                if ((uint64_t)pkt_size * transmitted_number < volume) {
-                                    if (use_v4) {
-                                        send_ping4(sock, &to4, pkt_size, ident, !i, &transmitted_number, &transmitted_volume);
-                                    } else {
-                                        send_ping6(sock, &to6, pkt_size, ident, !i, &transmitted_number, &transmitted_volume);
-                                    }
-                                }
-                            }
+                        timeout.tv_sec  = select_timeout / 1000000;
+                        timeout.tv_usec = select_timeout % 1000000;
 
-                            pkt_burst_error  = pkt_burst_error % PKT_BURST_PRECISION;
-                            pkt_burst_error += pkt_burst       % PKT_BURST_PRECISION;
+                        n = select(sock + 1, &fds, NULL, NULL, &timeout);
 
-                            select_timeout = current_interval;
-
-                            while (1) {
-                                FD_ZERO(&fds);
-                                FD_SET(sock, &fds);
-
-                                timeout.tv_sec  = select_timeout / 1000000;
-                                timeout.tv_usec = select_timeout % 1000000;
-
-                                n = select(sock + 1, &fds, NULL, NULL, &timeout);
-
-                                if (n > 0) {
-                                    while (use_v4 ? recv_ping4(sock, ident, &received_number, &received_volume) :
-                                                       recv_ping6(sock, ident, &received_number, &received_volume)) {
-                                        if (received_number >= transmitted_number) {
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                get_time(&now);
-
-                                if (ts_sub(&now, &start) >= current_interval) {
-                                    if ((uint64_t)pkt_size * transmitted_number >= volume) {
-                                        finish = true;
-                                    } else {
-                                        interval_error += ts_sub(&now, &start) - current_interval;
-
-                                        if (interval_error >= interval / 2) {
-                                            current_interval  = interval / 2;
-                                            interval_error   -= interval / 2;
-                                        } else {
-                                            current_interval = interval;
-                                        }
-                                    }
-
+                        if (n > 0) {
+                            while (use_v4 ? recv_ping4(sock, ident, &received_number, &received_volume) :
+                                               recv_ping6(sock, ident, &received_number, &received_volume)) {
+                                if (received_number >= transmitted_number) {
                                     break;
-                                } else {
-                                    select_timeout = current_interval - ts_sub(&now, &start);
                                 }
-                            }
-
-                            get_time(&end);
-
-                            if (reporting_period != 0 && end.tv_sec - report.tv_sec >= reporting_period) {
-                                printf("Periodic: pkts sent/rcvd: %" PRIu32 "/%" PRIu32 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRId64 "/%" PRId64 "/%" PRId64 " ms\n",
-                                       transmitted_number, received_number, transmitted_volume, received_volume, (long int)(end.tv_sec - begin.tv_sec),
-                                       end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
-                                       min_rtt == INT64_MAX ? 0 : min_rtt, max_rtt, average_rtt);
-
-                                get_time(&report);
                             }
                         }
 
-                        printf("Total: pkts sent/rcvd: %" PRIu32 "/%" PRIu32 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRId64 "/%" PRId64 "/%" PRId64 " ms\n",
+                        get_time(&now);
+
+                        if (ts_sub(&now, &start) >= current_interval) {
+                            if ((uint64_t)pkt_size * transmitted_number >= volume) {
+                                finish = true;
+                            } else {
+                                interval_error += ts_sub(&now, &start) - current_interval;
+
+                                if (interval_error >= interval / 2) {
+                                    current_interval  = interval / 2;
+                                    interval_error   -= interval / 2;
+                                } else {
+                                    current_interval = interval;
+                                }
+                            }
+
+                            break;
+                        } else {
+                            select_timeout = current_interval - ts_sub(&now, &start);
+                        }
+                    }
+
+                    get_time(&end);
+
+                    if (reporting_period != 0 && end.tv_sec - report.tv_sec >= reporting_period) {
+                        printf("Periodic: pkts sent/rcvd: %" PRIu32 "/%" PRIu32 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRId64 "/%" PRId64 "/%" PRId64 " ms\n",
                                transmitted_number, received_number, transmitted_volume, received_volume, (long int)(end.tv_sec - begin.tv_sec),
                                end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
                                min_rtt == INT64_MAX ? 0 : min_rtt, max_rtt, average_rtt);
-                    } else {
-                        exit_val = EX_SOFTWARE;
+
+                        get_time(&report);
                     }
                 }
+
+                printf("Total: pkts sent/rcvd: %" PRIu32 "/%" PRIu32 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRId64 "/%" PRId64 "/%" PRId64 " ms\n",
+                       transmitted_number, received_number, transmitted_volume, received_volume, (long int)(end.tv_sec - begin.tv_sec),
+                       end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
+                       min_rtt == INT64_MAX ? 0 : min_rtt, max_rtt, average_rtt);
+            } else {
+                exit_val = EX_SOFTWARE;
             }
-        } else {
-            fprintf(stderr, "Usage: %s [-4|-6] [-u buf_size] [-r reporting_period] [-T tos(v4)|traf_class(v6)] [-B bind_addr] -b kbps -s pkt_size -v volume target\n", PROG_NAME);
         }
     }
 
