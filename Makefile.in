@@ -103,11 +103,9 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(man8dir)"
 PROGRAMS = $(sbin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
-am_bwping_OBJECTS = src/bwping-bwping.$(OBJEXT)
+am_bwping_OBJECTS = src/bwping.$(OBJEXT)
 bwping_OBJECTS = $(am_bwping_OBJECTS)
 bwping_LDADD = $(LDADD)
-bwping_LINK = $(CCLD) $(bwping_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -123,12 +121,8 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = src/$(DEPDIR)/bwping-bwping.Po
+am__depfiles_remade = src/$(DEPDIR)/bwping.Po
 am__mv = mv -f
-AM_V_lt = $(am__v_lt_@AM_V@)
-am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
-am__v_lt_0 = --silent
-am__v_lt_1 = 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 AM_V_CC = $(am__v_CC_@AM_V@)
@@ -484,7 +478,6 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = subdir-objects
 bwping_SOURCES = include/cygwin.h include/features.h src/bwping.c
-bwping_CFLAGS = ${AM_CFLAGS}
 man_MANS = man/bwping.8
 EXTRA_DIST = man/bwping.8
 dist_check_SCRIPTS = tests/bwping tests/bwping6
@@ -591,12 +584,12 @@ src/$(am__dirstamp):
 src/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/$(DEPDIR)
 	@: > src/$(DEPDIR)/$(am__dirstamp)
-src/bwping-bwping.$(OBJEXT): src/$(am__dirstamp) \
+src/bwping.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 
 bwping$(EXEEXT): $(bwping_OBJECTS) $(bwping_DEPENDENCIES) $(EXTRA_bwping_DEPENDENCIES) 
 	@rm -f bwping$(EXEEXT)
-	$(AM_V_CCLD)$(bwping_LINK) $(bwping_OBJECTS) $(bwping_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(bwping_OBJECTS) $(bwping_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -605,7 +598,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bwping-bwping.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bwping.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -628,20 +621,6 @@ am--depfiles: $(am__depfiles_remade)
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
-
-src/bwping-bwping.o: src/bwping.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(bwping_CFLAGS) $(CFLAGS) -MT src/bwping-bwping.o -MD -MP -MF src/$(DEPDIR)/bwping-bwping.Tpo -c -o src/bwping-bwping.o `test -f 'src/bwping.c' || echo '$(srcdir)/'`src/bwping.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bwping-bwping.Tpo src/$(DEPDIR)/bwping-bwping.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/bwping.c' object='src/bwping-bwping.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(bwping_CFLAGS) $(CFLAGS) -c -o src/bwping-bwping.o `test -f 'src/bwping.c' || echo '$(srcdir)/'`src/bwping.c
-
-src/bwping-bwping.obj: src/bwping.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(bwping_CFLAGS) $(CFLAGS) -MT src/bwping-bwping.obj -MD -MP -MF src/$(DEPDIR)/bwping-bwping.Tpo -c -o src/bwping-bwping.obj `if test -f 'src/bwping.c'; then $(CYGPATH_W) 'src/bwping.c'; else $(CYGPATH_W) '$(srcdir)/src/bwping.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bwping-bwping.Tpo src/$(DEPDIR)/bwping-bwping.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/bwping.c' object='src/bwping-bwping.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(bwping_CFLAGS) $(CFLAGS) -c -o src/bwping-bwping.obj `if test -f 'src/bwping.c'; then $(CYGPATH_W) 'src/bwping.c'; else $(CYGPATH_W) '$(srcdir)/src/bwping.c'; fi`
 install-man8: $(man_MANS)
 	@$(NORMAL_INSTALL)
 	@list1=''; \
@@ -1131,7 +1110,7 @@ clean-am: clean-generic clean-sbinPROGRAMS mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-		-rm -f src/$(DEPDIR)/bwping-bwping.Po
+		-rm -f src/$(DEPDIR)/bwping.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-tags
@@ -1181,7 +1160,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-		-rm -f src/$(DEPDIR)/bwping-bwping.Po
+		-rm -f src/$(DEPDIR)/bwping.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
