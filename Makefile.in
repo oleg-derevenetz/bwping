@@ -1254,7 +1254,7 @@ uninstall-hook:
 	cd $(DESTDIR)$(mandir)/man8 && \
 	for name in $(bwping_links); do \
 		link=`echo $$name | sed '$(transform)'` && \
-		rm -f $$link.1; \
+		rm -f $$link.8; \
 	done
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

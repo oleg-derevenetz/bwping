@@ -41,5 +41,5 @@ uninstall-hook:
 	cd $(DESTDIR)$(mandir)/man8 && \
 	for name in $(bwping_links); do \
 		link=`echo $$name | sed '$(transform)'` && \
-		rm -f $$link.1; \
+		rm -f $$link.8; \
 	done
