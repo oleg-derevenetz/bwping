@@ -442,10 +442,10 @@ int main(int argc, char **argv)
 
     buf_size          = 0;
     tos_or_traf_class = 0;
-    pkt_size          = 56;
+    pkt_size          = 0;
     reporting_period  = 0;
-    kbps              = 100;
-    volume            = 10000;
+    kbps              = 0;
+    volume            = 0;
     bind_addr         = NULL;
 
     PROG_NAME         = basename(argv[0]);
@@ -541,7 +541,7 @@ int main(int argc, char **argv)
     }
 
     if (exit_val != EX_OK) {
-        fprintf(stderr, "Usage: %s [-4|-6] [-u buf_size] [-r reporting_period] [-T tos(v4)|traf_class(v6)] [-B bind_addr] [-b kbps] [-s pkt_size] [-v volume] target\n", PROG_NAME);
+        fprintf(stderr, "Usage: %s [-4|-6] [-u buf_size] [-r reporting_period] [-T tos(v4)|traf_class(v6)] [-B bind_addr] -b kbps -s pkt_size -v volume target\n", PROG_NAME);
         exit(exit_val);
     }
 
@@ -750,7 +750,7 @@ int main(int argc, char **argv)
                 }
             }
         } else {
-            fprintf(stderr, "Usage: %s [-4|-6] [-u buf_size] [-r reporting_period] [-T tos(v4)|traf_class(v6)] [-B bind_addr] [-b kbps] [-s pkt_size] [-v volume] target\n", PROG_NAME);
+            fprintf(stderr, "Usage: %s [-4|-6] [-u buf_size] [-r reporting_period] [-T tos(v4)|traf_class(v6)] [-B bind_addr] -b kbps -s pkt_size -v volume target\n", PROG_NAME);
         }
     }
 

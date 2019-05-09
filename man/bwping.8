@@ -12,9 +12,7 @@ Internet Control Message Protocol (ICMP) echo request/echo reply mechanism.
 [ \fB-r\fR \fIreporting_period\fR ]
 [ \fB-T\fR \fItos\fR ]
 [ \fB-B\fR \fIbind_addr\fR ]
-[ \fB-b\fR \fIkbps\fR ]
-[ \fB-s\fR \fIpkt_size\fR ]
-[ \fB-v\fR \fIvolume\fR \fItarget\fR ]
+\fB-b\fR \fIkbps\fR \fB-s\fR \fIpkt_size\fR \fB-v\fR \fIvolume\fR \fItarget\fR
 
 .B bwping6
 [ \fB-4\fR | \fB-6\fR ]
@@ -22,9 +20,7 @@ Internet Control Message Protocol (ICMP) echo request/echo reply mechanism.
 [ \fB-r\fR \fIreporting_period\fR ]
 [ \fB-T\fR \fItraf_class\fR ]
 [ \fB-B\fR \fIbind_addr\fR ]
-[ \fB-b\fR \fIkbps\fR ]
-[ \fB-s\fR \fIpkt_size\fR ]
-[ \fB-v\fR \fIvolume\fR \fItarget\fR ]
+\fB-b\fR \fIkbps\fR \fB-s\fR \fIpkt_size\fR \fB-v\fR \fIvolume\fR \fItarget\fR
 .SH OPTIONS
 .IP "\fB-4\fR" 5
 Forces IPv4 mode. Default mode of operation is IPv4 for
@@ -53,12 +49,11 @@ Sets the IPv6 Traffic Class value of outgoing ip packets. Default value is zero.
 Sets the source address of outgoing ip packets. By default the address
 of the outgoing interface will be used.
 .IP "\fB-b\fR \fIkbps\fR" 5
-Sets the transfer speed in kilobits per second. Default value is 100.
+Sets the transfer speed in kilobits per second.
 .IP "\fB-s\fR \fIpkt_size\fR" 5
-Sets the size of ICMP packet (excluding IPv4/IPv6 header) in bytes. Default
-value is 56.
+Sets the size of ICMP packet (excluding IPv4/IPv6 header) in bytes.
 .IP "\fB-v\fR \fIvolume\fR" 5
-Sets the volume to transfer in bytes. Default value is 10000.
+Sets the volume to transfer in bytes.
 .SH AUTHORS
 Oleg Derevenetz <oleg.derevenetz@gmail.com>
 .SH BUGS
