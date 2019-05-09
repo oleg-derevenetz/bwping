@@ -39,13 +39,13 @@
 
 #include <netdb.h>
 
-const size_t       MAX_IPV4_HDR_SIZE       = 60;
-const uint32_t     CALIBRATION_CYCLES      = 100,
-                   PKT_BURST_PRECISION     = 1000,
-                   BUF_SIZE_RESERVE_FACTOR = 10;
-char *             PROG_NAME;
+const size_t   MAX_IPV4_HDR_SIZE       = 60;
+const uint32_t CALIBRATION_CYCLES      = 100,
+               PKT_BURST_PRECISION     = 1000,
+               BUF_SIZE_RESERVE_FACTOR = 10;
 
 int64_t min_rtt, max_rtt, average_rtt;
+char   *prog_name;
 
 static void get_time(struct timespec *ts)
 {
@@ -61,7 +61,7 @@ static void get_time(struct timespec *ts)
 #endif /* CLOCK_XXX */
 
     if (clock_gettime(id, ts) < 0) {
-        fprintf(stderr, "%s: clock_gettime() failed: %s\n", PROG_NAME, strerror(errno));
+        fprintf(stderr, "%s: clock_gettime() failed: %s\n", prog_name, strerror(errno));
 
         ts->tv_sec  = 0;
         ts->tv_nsec = 0;
@@ -70,7 +70,7 @@ static void get_time(struct timespec *ts)
     struct timeval tv;
 
     if (gettimeofday(&tv, NULL) < 0) {
-        fprintf(stderr, "%s: gettimeofday() failed: %s\n", PROG_NAME, strerror(errno));
+        fprintf(stderr, "%s: gettimeofday() failed: %s\n", prog_name, strerror(errno));
 
         ts->tv_sec  = 0;
         ts->tv_nsec = 0;
@@ -172,9 +172,9 @@ static void send_ping4(int sock, struct sockaddr_in *to4, size_t pkt_size, uint1
     res = sendto(sock, packet, pkt_size, 0, (struct sockaddr *)to4, sizeof(*to4));
 
     if (res < 0) {
-        fprintf(stderr, "%s: sendto() failed: %s\n", PROG_NAME, strerror(errno));
+        fprintf(stderr, "%s: sendto() failed: %s\n", prog_name, strerror(errno));
     } else if (res != (ssize_t)pkt_size) {
-        fprintf(stderr, "%s: partial write: packet size: %zu, sent: %zd\n", PROG_NAME, pkt_size, res);
+        fprintf(stderr, "%s: partial write: packet size: %zu, sent: %zd\n", prog_name, pkt_size, res);
     }
 
     (*transmitted_number)++;
@@ -212,9 +212,9 @@ static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pkt_size, uint
     res = sendto(sock, packet, pkt_size, 0, (struct sockaddr *)to6, sizeof(*to6));
 
     if (res < 0) {
-        fprintf(stderr, "%s: sendto() failed: %s\n", PROG_NAME, strerror(errno));
+        fprintf(stderr, "%s: sendto() failed: %s\n", prog_name, strerror(errno));
     } else if (res != (ssize_t)pkt_size) {
-        fprintf(stderr, "%s: partial write: packet size: %zu, sent: %zd\n", PROG_NAME, pkt_size, res);
+        fprintf(stderr, "%s: partial write: packet size: %zu, sent: %zd\n", prog_name, pkt_size, res);
     }
 
     (*transmitted_number)++;
@@ -363,13 +363,13 @@ static bool resolve_name4(char *name, struct sockaddr_in *addr4)
     res = getaddrinfo(name, NULL, &hints, &res_info);
 
     if (res != 0) {
-        fprintf(stderr, "%s: cannot resolve %s: %s\n", PROG_NAME, name, gai_strerror(res));
+        fprintf(stderr, "%s: cannot resolve %s: %s\n", prog_name, name, gai_strerror(res));
 
         return false;
     } else if (res_info->ai_addr == NULL || res_info->ai_addrlen != sizeof(*addr4)) {
         freeaddrinfo(res_info);
 
-        fprintf(stderr, "%s: getaddrinfo() returned an illegal address\n", PROG_NAME);
+        fprintf(stderr, "%s: getaddrinfo() returned an illegal address\n", prog_name);
 
         return false;
     } else {
@@ -397,13 +397,13 @@ static bool resolve_name6(char *name, struct sockaddr_in6 *addr6)
     res = getaddrinfo(name, NULL, &hints, &res_info);
 
     if (res != 0) {
-        fprintf(stderr, "%s: cannot resolve %s: %s\n", PROG_NAME, name, gai_strerror(res));
+        fprintf(stderr, "%s: cannot resolve %s: %s\n", prog_name, name, gai_strerror(res));
 
         return false;
     } else if (res_info->ai_addr == NULL || res_info->ai_addrlen != sizeof(*addr6)) {
         freeaddrinfo(res_info);
 
-        fprintf(stderr, "%s: getaddrinfo() returned an illegal address\n", PROG_NAME);
+        fprintf(stderr, "%s: getaddrinfo() returned an illegal address\n", prog_name);
 
         return false;
     } else {
@@ -417,9 +417,8 @@ static bool resolve_name6(char *name, struct sockaddr_in6 *addr6)
 
 int main(int argc, char **argv)
 {
-    bool                finish;
-    int                 sock, exit_val, ch, n;
-    bool                use_v4;
+    bool                ipv4_mode, finish;
+    int                 exit_val, sock, ch, n;
     unsigned int        buf_size, tos_or_traf_class;
     size_t              pkt_size;
     uint16_t            ident;
@@ -427,8 +426,8 @@ int main(int argc, char **argv)
     uint32_t            kbps, transmitted_number, received_number, pkt_burst, pkt_burst_error, i;
     int64_t             min_interval, interval, current_interval, interval_error, select_timeout;
     uint64_t            volume, transmitted_volume, received_volume;
-    char               *ep,
-                       *bind_addr,
+    char               *bind_addr,
+                       *ep,
                        *target;
     char                p_addr4[INET_ADDRSTRLEN],
                         p_addr6[INET6_ADDRSTRLEN];
@@ -438,8 +437,9 @@ int main(int argc, char **argv)
     struct timeval      timeout;
     struct timespec     begin, end, report, start, now;
 
-    exit_val = EX_OK;
+    prog_name = basename(argv[0]);
 
+    ipv4_mode         = (strcmp(prog_name, "bwping") == 0);
     buf_size          = 0;
     tos_or_traf_class = 0;
     pkt_size          = 0;
@@ -448,17 +448,16 @@ int main(int argc, char **argv)
     volume            = 0;
     bind_addr         = NULL;
 
-    PROG_NAME         = basename(argv[0]);
-    use_v4            = strcmp(PROG_NAME, "bwping6");
+    exit_val = EX_OK;
 
     while ((ch = getopt(argc, argv, "46B:T:b:r:s:u:v:")) != -1) {
         switch (ch) {
             case '4':
-                use_v4 = true;
+                ipv4_mode = true;
 
                 break;
             case '6':
-                use_v4 = false;
+                ipv4_mode = false;
 
                 break;
             case 'B':
@@ -525,32 +524,32 @@ int main(int argc, char **argv)
     }
 
     if (exit_val != EX_OK) {
-        fprintf(stderr, "Usage: %s [-4|-6] [-u buf_size] [-r reporting_period] [-T tos(v4)|traf_class(v6)] [-B bind_addr] -b kbps -s pkt_size -v volume target\n", PROG_NAME);
+        fprintf(stderr, "Usage: %s [-4 | -6] [-u buf_size] [-r reporting_period] [-T tos(v4) | traf_class(v6)] [-B bind_addr] -b kbps -s pkt_size -v volume target\n", prog_name);
 
         exit(exit_val);
     }
 
-    if (use_v4) {
+    if (ipv4_mode) {
         if (pkt_size < sizeof(struct icmp) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET - MAX_IPV4_HDR_SIZE) {
-            fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", PROG_NAME,
+            fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", prog_name,
                                                                                         sizeof(struct icmp) + sizeof(struct timespec),
                                                                                         (size_t)IP_MAXPACKET - MAX_IPV4_HDR_SIZE);
             exit(EX_USAGE);
         }
     } else {
         if (pkt_size < sizeof(struct icmp6_hdr) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET) {
-            fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", PROG_NAME,
+            fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", prog_name,
                                                                                         sizeof(struct icmp6_hdr) + sizeof(struct timespec),
                                                                                         (size_t)IP_MAXPACKET);
             exit(EX_USAGE);
         }
     }
 
-    if (use_v4) {
+    if (ipv4_mode) {
         sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 
         if (sock < 0) {
-            fprintf(stderr, "%s: socket(AF_INET, SOCK_RAW, IPPROTO_ICMP) failed: %s\n", PROG_NAME, strerror(errno));
+            fprintf(stderr, "%s: socket(AF_INET, SOCK_RAW, IPPROTO_ICMP) failed: %s\n", prog_name, strerror(errno));
 
             exit(EX_OSERR);
         }
@@ -558,22 +557,22 @@ int main(int argc, char **argv)
         sock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
 
         if (sock < 0) {
-            fprintf(stderr, "%s: socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6) failed: %s\n", PROG_NAME, strerror(errno));
+            fprintf(stderr, "%s: socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6) failed: %s\n", prog_name, strerror(errno));
 
             exit(EX_OSERR);
         }
     }
 
     if (setuid(getuid()) < 0) {
-        fprintf(stderr, "%s: setuid(getuid()) failed: %s\n", PROG_NAME, strerror(errno));
+        fprintf(stderr, "%s: setuid(getuid()) failed: %s\n", prog_name, strerror(errno));
 
         exit_val = EX_OSERR;
     } else {
         if (bind_addr != NULL) {
-            if (use_v4) {
+            if (ipv4_mode) {
                 if (resolve_name4(bind_addr, &bind_to4)) {
                     if (bind(sock, (struct sockaddr *)&bind_to4, sizeof(bind_to4)) < 0) {
-                        fprintf(stderr, "%s: bind() failed: %s\n", PROG_NAME, strerror(errno));
+                        fprintf(stderr, "%s: bind() failed: %s\n", prog_name, strerror(errno));
 
                         exit_val = EX_OSERR;
                     }
@@ -583,7 +582,7 @@ int main(int argc, char **argv)
             } else {
                 if (resolve_name6(bind_addr, &bind_to6)) {
                     if (bind(sock, (struct sockaddr *)&bind_to6, sizeof(bind_to6)) < 0) {
-                        fprintf(stderr, "%s: bind() failed: %s\n", PROG_NAME, strerror(errno));
+                        fprintf(stderr, "%s: bind() failed: %s\n", prog_name, strerror(errno));
 
                         exit_val = EX_OSERR;
                     }
@@ -596,11 +595,11 @@ int main(int argc, char **argv)
         if (exit_val == EX_OK) {
             target = argv[optind];
 
-            if (use_v4 ? resolve_name4(target, &to4) :
-                         resolve_name6(target, &to6)) {
+            if (ipv4_mode ? resolve_name4(target, &to4) :
+                            resolve_name6(target, &to6)) {
                 ident = getpid() & 0xFFFF;
 
-                if (use_v4) {
+                if (ipv4_mode) {
                     if (inet_ntop(AF_INET, &(to4.sin_addr), p_addr4, sizeof(p_addr4)) == NULL) {
                         p_addr4[0] = '?';
                         p_addr4[1] = 0;
@@ -647,19 +646,19 @@ int main(int argc, char **argv)
                 }
 
                 if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(buf_size)) < 0) {
-                    fprintf(stderr, "%s: setsockopt(SO_RCVBUF, %u) failed: %s\n", PROG_NAME, buf_size, strerror(errno));
+                    fprintf(stderr, "%s: setsockopt(SO_RCVBUF, %u) failed: %s\n", prog_name, buf_size, strerror(errno));
                 }
                 if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &buf_size, sizeof(buf_size)) < 0) {
-                    fprintf(stderr, "%s: setsockopt(SO_SNDBUF, %u) failed: %s\n", PROG_NAME, buf_size, strerror(errno));
+                    fprintf(stderr, "%s: setsockopt(SO_SNDBUF, %u) failed: %s\n", prog_name, buf_size, strerror(errno));
                 }
 
-                if (use_v4) {
+                if (ipv4_mode) {
                     if (setsockopt(sock, IPPROTO_IP, IP_TOS, &tos_or_traf_class, sizeof(tos_or_traf_class)) < 0) {
-                        fprintf(stderr, "%s: setsockopt(IP_TOS, %u) failed: %s\n", PROG_NAME, tos_or_traf_class, strerror(errno));
+                        fprintf(stderr, "%s: setsockopt(IP_TOS, %u) failed: %s\n", prog_name, tos_or_traf_class, strerror(errno));
                     }
                 } else {
                     if (setsockopt(sock, IPPROTO_IPV6, IPV6_TCLASS, &tos_or_traf_class, sizeof(tos_or_traf_class)) < 0) {
-                        fprintf(stderr, "%s: setsockopt(IPV6_TCLASS, %u) failed: %s\n", PROG_NAME, tos_or_traf_class, strerror(errno));
+                        fprintf(stderr, "%s: setsockopt(IPV6_TCLASS, %u) failed: %s\n", prog_name, tos_or_traf_class, strerror(errno));
                     }
                 }
 
@@ -676,7 +675,7 @@ int main(int argc, char **argv)
 
                     for (i = 0; i < pkt_burst / PKT_BURST_PRECISION + pkt_burst_error / PKT_BURST_PRECISION; i++) {
                         if ((uint64_t)pkt_size * transmitted_number < volume) {
-                            if (use_v4) {
+                            if (ipv4_mode) {
                                 send_ping4(sock, &to4, pkt_size, ident, !i, &transmitted_number, &transmitted_volume);
                             } else {
                                 send_ping6(sock, &to6, pkt_size, ident, !i, &transmitted_number, &transmitted_volume);
@@ -699,7 +698,7 @@ int main(int argc, char **argv)
                         n = select(sock + 1, &fds, NULL, NULL, &timeout);
 
                         if (n > 0) {
-                            while (use_v4 ? recv_ping4(sock, ident, &received_number, &received_volume) :
+                            while (ipv4_mode ? recv_ping4(sock, ident, &received_number, &received_volume) :
                                                recv_ping6(sock, ident, &received_number, &received_volume)) {
                                 if (received_number >= transmitted_number) {
                                     break;

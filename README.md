@@ -8,16 +8,32 @@ bwping6 - with IPv6 networks.
 ## SYNOPSIS
 
 ```
-bwping [ -u buf_size ] [ -r reporting_period ] [ -T tos ]
-       [ -B bind_addr] -b kbps -s pkt_size -v volume target
+bwping [ -4 | -6 ] [ -u buf_size ] [ -r reporting_period ]
+       [ -T tos(v4) | traf_class(v6) ] [ -B bind_addr ]
+       -b kbps -s pkt_size -v volume target
 ```
 
 ```
-bwping6 [ -u buf_size ] [ -r reporting_period ] [ -T traf_class ]
-        [ -B bind_addr] -b kbps -s pkt_size -v volume target
+bwping6 [ -4 | -6 ] [ -u buf_size ] [ -r reporting_period ]
+        [ -T tos(v4) | traf_class(v6) ] [ -B bind_addr ]
+        -b kbps -s pkt_size -v volume target
 ```
 
 ## OPTIONS
+
+```
+-4
+```
+
+Forces IPv4 mode. Default mode of operation is IPv4 for bwping and IPv6 for
+bwping6 otherwise.
+
+```
+-6
+```
+
+Forces IPv6 mode. Default mode of operation is IPv4 for bwping and IPv6 for
+bwping6 otherwise.
 
 ```
 -u buf_size
@@ -35,17 +51,11 @@ Sets   the   interval  time in seconds between periodic bandwidth, RTT, and
 loss  reports.  If  zero,  there  will be no periodic reports (default).
 
 ```
--T tos (bwping only)
+-T tos(v4) | traf_class(v6)
 ```
 
-Sets the TOS value of outgoing ip packets. Default value is zero.
-
-```
--T traf_class (bwping6 only)
-```
-
-Sets the IPv6 Traffic Class value of outgoing ip packets.  Default value is
-zero.
+Sets  the  TOS  (in  IPv4  mode)  or  Traffic Class (in IPv6 mode) value of
+outgoing ip packets. Default value is zero.
 
 ```
 -B bind_addr
@@ -89,7 +99,7 @@ Oleg Derevenetz <oleg.derevenetz@gmail.com>
 [![SonarCloud Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=oleg-derevenetz%3Abwping&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=oleg-derevenetz%3Abwping)
 [![SonarCloud Code Smells](https://sonarcloud.io/api/project_badges/measure?project=oleg-derevenetz%3Abwping&metric=code_smells)](https://sonarcloud.io/dashboard?id=oleg-derevenetz%3Abwping)
 
-## RESTRICTIONS
+## NOTES
 
 This  utility  uses  raw  sockets  to  deal  with  ICMP  messages,  so root
 privileges are required to run it.

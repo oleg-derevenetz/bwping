@@ -10,7 +10,7 @@ Internet Control Message Protocol (ICMP) echo request/echo reply mechanism.
 [ \fB-4\fR | \fB-6\fR ]
 [ \fB-u\fR \fIbuf_size\fR ]
 [ \fB-r\fR \fIreporting_period\fR ]
-[ \fB-T\fR \fItos\fR ]
+[ \fB-T\fR \fItos(v4) | traf_class(v6)\fR ]
 [ \fB-B\fR \fIbind_addr\fR ]
 \fB-b\fR \fIkbps\fR \fB-s\fR \fIpkt_size\fR \fB-v\fR \fIvolume\fR \fItarget\fR
 
@@ -18,7 +18,7 @@ Internet Control Message Protocol (ICMP) echo request/echo reply mechanism.
 [ \fB-4\fR | \fB-6\fR ]
 [ \fB-u\fR \fIbuf_size\fR ]
 [ \fB-r\fR \fIreporting_period\fR ]
-[ \fB-T\fR \fItraf_class\fR ]
+[ \fB-T\fR \fItos(v4) | traf_class(v6)\fR ]
 [ \fB-B\fR \fIbind_addr\fR ]
 \fB-b\fR \fIkbps\fR \fB-s\fR \fIpkt_size\fR \fB-v\fR \fIvolume\fR \fItarget\fR
 .SH OPTIONS
@@ -41,10 +41,9 @@ host timer accuracy.
 .IP "\fB-r\fR \fIreporting_period\fR" 5
 Sets the interval time in seconds between periodic bandwidth, RTT,
 and loss reports. If zero, there will be no periodic reports (default).
-.IP "\fB-T\fR \fItos\fR (\fBbwping only\fR)" 5
-Sets the TOS value of outgoing ip packets. Default value is zero.
-.IP "\fB-T\fR \fItraf_class\fR (\fBbwping6 only\fR)" 5
-Sets the IPv6 Traffic Class value of outgoing ip packets. Default value is zero.
+.IP "\fB-T\fR \fItos(v4) | traf_class(v6)\fR" 5
+Sets the TOS (in IPv4 mode) or Traffic Class (in IPv6 mode) value of
+outgoing ip packets. Default value is zero.
 .IP "\fB-B\fR \fIbind_addr\fR" 5
 Sets the source address of outgoing ip packets. By default the address
 of the outgoing interface will be used.
@@ -58,7 +57,7 @@ Sets the volume to transfer in bytes.
 Oleg Derevenetz <oleg.derevenetz@gmail.com>
 .SH BUGS
 None known.
-.SH RESTRICTIONS
+.SH NOTES
 This utility uses raw sockets to deal with ICMP messages, so root
 privileges are required to run it.
 
