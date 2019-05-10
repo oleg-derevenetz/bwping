@@ -427,8 +427,8 @@ int main(int argc, char **argv)
     int64_t             min_interval, interval, current_interval, interval_error, select_timeout;
     uint64_t            volume, transmitted_volume, received_volume;
     char               *bind_addr,
-                       *ep,
-                       *target;
+                       *target,
+                       *ep;
     char                p_addr4[INET_ADDRSTRLEN],
                         p_addr6[INET6_ADDRSTRLEN];
     fd_set              fds;
@@ -447,6 +447,7 @@ int main(int argc, char **argv)
     kbps              = 0;
     volume            = 0;
     bind_addr         = NULL;
+    target            = NULL;
 
     exit_val = EX_OK;
 
@@ -517,9 +518,11 @@ int main(int argc, char **argv)
         }
     }
 
-    if (pkt_size == 0 || kbps == 0 || volume == 0) {
-        exit_val = EX_USAGE;
-    } else if (argc - optind != 1) {
+    if (argc - optind == 1) {
+        target = argv[optind];
+    }
+
+    if (pkt_size == 0 || kbps == 0 || volume == 0 || target == NULL) {
         exit_val = EX_USAGE;
     }
 
@@ -528,8 +531,6 @@ int main(int argc, char **argv)
 
         exit(exit_val);
     }
-
-    target = argv[optind];
 
     if (ipv4_mode) {
         if (pkt_size < sizeof(struct icmp) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET - MAX_IPV4_HDR_SIZE) {
