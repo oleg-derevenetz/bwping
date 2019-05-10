@@ -529,6 +529,8 @@ int main(int argc, char **argv)
         exit(exit_val);
     }
 
+    target = argv[optind];
+
     if (ipv4_mode) {
         if (pkt_size < sizeof(struct icmp) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET - MAX_IPV4_HDR_SIZE) {
             fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", prog_name,
@@ -593,8 +595,6 @@ int main(int argc, char **argv)
         }
 
         if (exit_val == EX_OK) {
-            target = argv[optind];
-
             if (ipv4_mode ? resolve_name4(target, &to4) :
                             resolve_name6(target, &to6)) {
                 ident = getpid() & 0xFFFF;
