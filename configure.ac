@@ -207,7 +207,6 @@ struct icmp6_hdr {
         exit(0);
     ])],
     [bwping_cv_sys_ipv6=yes],
-    [bwping_cv_sys_ipv6=no],
     [bwping_cv_sys_ipv6=no])
 AC_MSG_RESULT([${bwping_cv_sys_ipv6}])
 if test "${bwping_cv_sys_ipv6}" = "no"; then
