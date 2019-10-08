@@ -29,7 +29,7 @@ install:
         echo && \
         echo "----------- END OF INSTALLATION -----------" && \
         echo && \
-        CD \\ && DIR /S CYGWIN1.DLL
+        find / -iname cygwin1.dll
     fi
 
 script:
