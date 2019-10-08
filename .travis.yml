@@ -28,7 +28,8 @@ install:
         C:\\ProgramData\\chocolatey\\bin\\cyg-get.bat autoconf automake make gcc-core clang clang-analyzer git && \
         echo && \
         echo "----------- END OF INSTALLATION -----------" && \
-        echo
+        echo && \
+        CD \\ && DIR /S CYGWIN1.DLL
     fi
 
 script:
