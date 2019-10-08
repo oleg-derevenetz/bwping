@@ -21,11 +21,11 @@ install:
         echo && \
         echo "---- INSTALLATION OF CYGWIN AND CYG-GET ---" && \
         echo && \
-        choco install cygwin cyg-get && \
+        choco.exe install cygwin cyg-get && \
         echo && \
         echo "----- INSTALLATION OF CYGWIN PACKAGES -----" && \
         echo && \
-        C:\\ProgramData\\chocolatey\\bin\\cyg-get.bat autoconf automake make gcc-core clang clang-analyzer git && \
+        cyg-get.bat autoconf automake make gcc-core clang clang-analyzer git && \
         echo && \
         echo "----------- END OF INSTALLATION -----------" && \
         echo
