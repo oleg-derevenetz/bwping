@@ -131,7 +131,7 @@ static int64_t calibrate_timer(void)
     return sum / CALIBRATION_CYCLES;
 }
 
-static void send_ping4(int sock, struct sockaddr *to, socklen_t to_len, size_t pkt_size, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
+static void send_ping4(int sock, struct addrinfo *to_ai, size_t pkt_size, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
 {
     char packet[IP_MAXPACKET];
 
@@ -166,7 +166,7 @@ static void send_ping4(int sock, struct sockaddr *to, socklen_t to_len, size_t p
 
     memcpy(&packet[offsetof(struct icmp, icmp_cksum)], &icmp4.icmp_cksum, sizeof(icmp4.icmp_cksum));
 
-    ssize_t res = sendto(sock, packet, pkt_size, 0, to, to_len);
+    ssize_t res = sendto(sock, packet, pkt_size, 0, to_ai->ai_addr, to_ai->ai_addrlen);
 
     if (res < 0) {
         fprintf(stderr, "%s: sendto() failed: %s\n", prog_name, strerror(errno));
@@ -178,7 +178,7 @@ static void send_ping4(int sock, struct sockaddr *to, socklen_t to_len, size_t p
     (*transmitted_volume) += pkt_size;
 }
 
-static void send_ping6(int sock, struct sockaddr *to, socklen_t to_len, size_t pkt_size, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
+static void send_ping6(int sock, struct addrinfo *to_ai, size_t pkt_size, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
 {
     char packet[IP_MAXPACKET];
 
@@ -209,7 +209,7 @@ static void send_ping6(int sock, struct sockaddr *to, socklen_t to_len, size_t p
 
     memcpy(&packet[sizeof(icmp6)], &pkt_time, sizeof(pkt_time));
 
-    ssize_t res = sendto(sock, packet, pkt_size, 0, to, to_len);
+    ssize_t res = sendto(sock, packet, pkt_size, 0, to_ai->ai_addr, to_ai->ai_addrlen);
 
     if (res < 0) {
         fprintf(stderr, "%s: sendto() failed: %s\n", prog_name, strerror(errno));
@@ -621,9 +621,9 @@ int main(int argc, char **argv)
                     for (uint32_t i = 0; i < pkt_burst / PKT_BURST_PRECISION + pkt_burst_error / PKT_BURST_PRECISION; i++) {
                         if ((uint64_t)pkt_size * transmitted_number < volume) {
                             if (ipv4_mode) {
-                                send_ping4(sock, to_ai->ai_addr, to_ai->ai_addrlen, pkt_size, ident, !i, &transmitted_number, &transmitted_volume);
+                                send_ping4(sock, to_ai, pkt_size, ident, !i, &transmitted_number, &transmitted_volume);
                             } else {
-                                send_ping6(sock, to_ai->ai_addr, to_ai->ai_addrlen, pkt_size, ident, !i, &transmitted_number, &transmitted_volume);
+                                send_ping6(sock, to_ai, pkt_size, ident, !i, &transmitted_number, &transmitted_volume);
                             }
                         }
                     }
