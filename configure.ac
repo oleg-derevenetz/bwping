@@ -28,10 +28,10 @@ AC_SEARCH_LIBS([clock_gettime], [rt],
         [Define to 1 if you have the `clock_gettime' function.])])
 AC_SEARCH_LIBS([socket], [socket], [],
     [AC_MSG_ERROR([socket() is required for build])])
-AC_SEARCH_LIBS([inet_ntop], [resolv nsl], [],
-    [AC_MSG_ERROR([inet_ntop() is required for build])])
 AC_SEARCH_LIBS([getaddrinfo], [resolv nsl], [],
     [AC_MSG_ERROR([getaddrinfo() is required for build])])
+AC_SEARCH_LIBS([getnameinfo], [resolv nsl], [],
+    [AC_MSG_ERROR([getnameinfo() is required for build])])
 
 bwping_save_cflags=${CFLAGS}
 AC_MSG_CHECKING([whether the C compiler accepts -Wall...])

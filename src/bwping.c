@@ -22,8 +22,6 @@
 #include <string.h>
 #include <libgen.h>
 
-#include <arpa/inet.h>
-
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -88,16 +86,14 @@ static int64_t ts_sub(struct timespec *ts1, struct timespec *ts2)
 
 static uint16_t cksum(void *packet, size_t pkt_size)
 {
-    size_t   i;
-    uint32_t sum;
     uint16_t buf[IP_MAXPACKET];
 
     memset(buf, 0,      sizeof(buf));
     memcpy(buf, packet, pkt_size);
 
-    sum = 0;
+    uint32_t sum = 0;
 
-    for (i = 0; i < pkt_size / 2 + pkt_size % 2; i++) {
+    for (size_t i = 0; i < pkt_size / 2 + pkt_size % 2; i++) {
         sum += buf[i];
     }
 
@@ -109,19 +105,17 @@ static uint16_t cksum(void *packet, size_t pkt_size)
 
 static int64_t calibrate_timer(void)
 {
-    int             n;
-    uint32_t        i;
-    int64_t         sum;
-    struct timeval  timeout;
-    struct timespec begin, end;
+    int64_t sum = 0;
 
-    sum = 0;
+    for (uint32_t i = 0; i < CALIBRATION_CYCLES; i++) {
+        struct timespec begin, end;
 
-    for (i = 0; i < CALIBRATION_CYCLES; i++) {
-        n = -1;
+        int n = -1;
 
         while (n < 0) {
             get_time(&begin);
+
+            struct timeval timeout;
 
             timeout.tv_sec  = 0;
             timeout.tv_usec = 10;
@@ -137,12 +131,11 @@ static int64_t calibrate_timer(void)
     return sum / CALIBRATION_CYCLES;
 }
 
-static void send_ping4(int sock, struct sockaddr_in *to4, size_t pkt_size, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
+static void send_ping4(int sock, struct sockaddr *to, socklen_t to_len, size_t pkt_size, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
 {
-    ssize_t         res;
-    char            packet[IP_MAXPACKET];
-    struct icmp     icmp4;
-    struct timespec now, pkt_time;
+    char packet[IP_MAXPACKET];
+
+    struct icmp icmp4;
 
     memset(&icmp4, 0, sizeof(icmp4));
 
@@ -154,7 +147,11 @@ static void send_ping4(int sock, struct sockaddr_in *to4, size_t pkt_size, uint1
 
     memcpy(packet, &icmp4, sizeof(icmp4));
 
+    struct timespec pkt_time;
+
     if (first_in_burst) {
+        struct timespec now;
+
         get_time(&now);
 
         pkt_time.tv_sec  = now.tv_sec;
@@ -169,7 +166,7 @@ static void send_ping4(int sock, struct sockaddr_in *to4, size_t pkt_size, uint1
 
     memcpy(&packet[offsetof(struct icmp, icmp_cksum)], &icmp4.icmp_cksum, sizeof(icmp4.icmp_cksum));
 
-    res = sendto(sock, packet, pkt_size, 0, (struct sockaddr *)to4, sizeof(*to4));
+    ssize_t res = sendto(sock, packet, pkt_size, 0, to, to_len);
 
     if (res < 0) {
         fprintf(stderr, "%s: sendto() failed: %s\n", prog_name, strerror(errno));
@@ -181,12 +178,11 @@ static void send_ping4(int sock, struct sockaddr_in *to4, size_t pkt_size, uint1
     (*transmitted_volume) += pkt_size;
 }
 
-static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pkt_size, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
+static void send_ping6(int sock, struct sockaddr *to, socklen_t to_len, size_t pkt_size, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
 {
-    ssize_t          res;
-    char             packet[IP_MAXPACKET];
+    char packet[IP_MAXPACKET];
+
     struct icmp6_hdr icmp6;
-    struct timespec  now, pkt_time;
 
     memset(&icmp6, 0, sizeof(icmp6));
 
@@ -198,7 +194,11 @@ static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pkt_size, uint
 
     memcpy(packet, &icmp6, sizeof(icmp6));
 
+    struct timespec pkt_time;
+
     if (first_in_burst) {
+        struct timespec now;
+
         get_time(&now);
 
         pkt_time.tv_sec  = now.tv_sec;
@@ -209,7 +209,7 @@ static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pkt_size, uint
 
     memcpy(&packet[sizeof(icmp6)], &pkt_time, sizeof(pkt_time));
 
-    res = sendto(sock, packet, pkt_size, 0, (struct sockaddr *)to6, sizeof(*to6));
+    ssize_t res = sendto(sock, packet, pkt_size, 0, to, to_len);
 
     if (res < 0) {
         fprintf(stderr, "%s: sendto() failed: %s\n", prog_name, strerror(errno));
@@ -223,21 +223,17 @@ static void send_ping6(int sock, struct sockaddr_in6 *to6, size_t pkt_size, uint
 
 static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint64_t *received_volume)
 {
-    size_t             hdr_len;
-    ssize_t            res;
-    int64_t            rtt;
-    char               packet[IP_MAXPACKET];
-    struct sockaddr_in from4;
-    struct iovec       iov;
-    struct msghdr      msg;
-    struct ip          ip4;
-    struct icmp        icmp4;
-    struct timespec    now, pkt_time;
+    char packet[IP_MAXPACKET];
+
+    struct iovec iov;
 
     memset(&iov, 0, sizeof(iov));
 
     iov.iov_base = packet;
     iov.iov_len  = sizeof(packet);
+
+    struct sockaddr_in from4;
+    struct msghdr      msg;
 
     memset(&msg, 0, sizeof(msg));
 
@@ -246,12 +242,16 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
     msg.msg_iov     = &iov;
     msg.msg_iovlen  = 1;
 
-    res = recvmsg(sock, &msg, MSG_DONTWAIT);
+    ssize_t res = recvmsg(sock, &msg, MSG_DONTWAIT);
+
+    struct ip ip4;
 
     if (res >= (ssize_t)sizeof(ip4)) {
         memcpy(&ip4, packet, sizeof(ip4));
 
-        hdr_len = ip4.ip_hl << 2;
+        size_t hdr_len = ip4.ip_hl << 2;
+
+        struct icmp icmp4;
 
         if (res >= (ssize_t)(hdr_len + sizeof(icmp4))) {
             memcpy(&icmp4, &packet[hdr_len], sizeof(icmp4));
@@ -261,13 +261,17 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
                 (*received_number)++;
                 (*received_volume) += res - hdr_len;
 
+                struct timespec pkt_time;
+
                 if (res >= (ssize_t)(hdr_len + sizeof(icmp4) + sizeof(pkt_time))) {
                     memcpy(&pkt_time, &packet[hdr_len + sizeof(icmp4)], sizeof(pkt_time));
 
                     if (pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0) {
+                        struct timespec now;
+
                         get_time(&now);
 
-                        rtt = ts_sub(&now, &pkt_time) / 1000;
+                        int64_t rtt = ts_sub(&now, &pkt_time) / 1000;
 
                         if (min_rtt > rtt) {
                             min_rtt = rtt;
@@ -290,19 +294,17 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
 
 static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint64_t *received_volume)
 {
-    ssize_t             res;
-    int64_t             rtt;
-    char                packet[IP_MAXPACKET];
-    struct sockaddr_in6 from6;
-    struct iovec        iov;
-    struct msghdr       msg;
-    struct icmp6_hdr    icmp6;
-    struct timespec     now, pkt_time;
+    char packet[IP_MAXPACKET];
+
+    struct iovec iov;
 
     memset(&iov, 0, sizeof(iov));
 
     iov.iov_base = packet;
     iov.iov_len  = sizeof(packet);
+
+    struct sockaddr_in6 from6;
+    struct msghdr       msg;
 
     memset(&msg, 0, sizeof(msg));
 
@@ -311,7 +313,9 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
     msg.msg_iov     = &iov;
     msg.msg_iovlen  = 1;
 
-    res = recvmsg(sock, &msg, MSG_DONTWAIT);
+    ssize_t res = recvmsg(sock, &msg, MSG_DONTWAIT);
+
+    struct icmp6_hdr icmp6;
 
     if (res >= (ssize_t)sizeof(icmp6)) {
         memcpy(&icmp6, packet, sizeof(icmp6));
@@ -321,13 +325,17 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
             (*received_number)++;
             (*received_volume) += res;
 
+            struct timespec pkt_time;
+
             if (res >= (ssize_t)(sizeof(icmp6) + sizeof(pkt_time))) {
                 memcpy(&pkt_time, &packet[sizeof(icmp6)], sizeof(pkt_time));
 
                 if (pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0) {
+                    struct timespec now;
+
                     get_time(&now);
 
-                    rtt = ts_sub(&now, &pkt_time) / 1000;
+                    int64_t rtt = ts_sub(&now, &pkt_time) / 1000;
 
                     if (min_rtt > rtt) {
                         min_rtt = rtt;
@@ -347,111 +355,55 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
     }
 }
 
-static bool resolve_name4(char *name, struct sockaddr_in *addr4)
+static bool resolve_name(bool ipv4_mode, char *name, struct addrinfo **addr_info)
 {
-    int              res;
-    struct addrinfo  hints;
-    struct addrinfo *res_info;
+    struct addrinfo hints;
 
     memset(&hints, 0, sizeof(hints));
 
     hints.ai_flags    = AI_CANONNAME;
-    hints.ai_family   = AF_INET;
     hints.ai_socktype = SOCK_RAW;
-    hints.ai_protocol = IPPROTO_ICMP;
 
-    res = getaddrinfo(name, NULL, &hints, &res_info);
-
-    if (res != 0) {
-        fprintf(stderr, "%s: cannot resolve %s: %s\n", prog_name, name, gai_strerror(res));
-
-        return false;
-    } else if (res_info->ai_addr == NULL || res_info->ai_addrlen != sizeof(*addr4)) {
-        freeaddrinfo(res_info);
-
-        fprintf(stderr, "%s: getaddrinfo() returned an illegal address\n", prog_name);
-
-        return false;
+    if (ipv4_mode) {
+        hints.ai_family   = AF_INET;
+        hints.ai_protocol = IPPROTO_ICMP;
     } else {
-        memcpy(addr4, res_info->ai_addr, sizeof(*addr4));
-
-        freeaddrinfo(res_info);
-
-        return true;
+        hints.ai_family   = AF_INET6;
+        hints.ai_protocol = IPPROTO_ICMPV6;
     }
-}
 
-static bool resolve_name6(char *name, struct sockaddr_in6 *addr6)
-{
-    int              res;
-    struct addrinfo  hints;
-    struct addrinfo *res_info;
-
-    memset(&hints, 0, sizeof(hints));
-
-    hints.ai_flags    = AI_CANONNAME;
-    hints.ai_family   = AF_INET6;
-    hints.ai_socktype = SOCK_RAW;
-    hints.ai_protocol = IPPROTO_ICMPV6;
-
-    res = getaddrinfo(name, NULL, &hints, &res_info);
+    int res = getaddrinfo(name, NULL, &hints, addr_info);
 
     if (res != 0) {
         fprintf(stderr, "%s: cannot resolve %s: %s\n", prog_name, name, gai_strerror(res));
 
         return false;
-    } else if (res_info->ai_addr == NULL || res_info->ai_addrlen != sizeof(*addr6)) {
-        freeaddrinfo(res_info);
-
-        fprintf(stderr, "%s: getaddrinfo() returned an illegal address\n", prog_name);
-
-        return false;
     } else {
-        memcpy(addr6, res_info->ai_addr, sizeof(*addr6));
-
-        freeaddrinfo(res_info);
-
         return true;
     }
 }
 
 int main(int argc, char **argv)
 {
-    bool                ipv4_mode, finish;
-    int                 exit_val, sock, ch, n;
-    unsigned int        buf_size, tos_or_traf_class;
-    size_t              pkt_size;
-    uint16_t            ident;
-    int32_t             reporting_period;
-    uint32_t            kbps, transmitted_number, received_number, pkt_burst, pkt_burst_error, i;
-    int64_t             min_interval, interval, current_interval, interval_error, select_timeout;
-    uint64_t            volume, transmitted_volume, received_volume;
-    char               *bind_addr,
-                       *target,
-                       *ep;
-    char                p_addr4[INET_ADDRSTRLEN],
-                        p_addr6[INET6_ADDRSTRLEN];
-    fd_set              fds;
-    struct sockaddr_in  bind_to4, to4;
-    struct sockaddr_in6 bind_to6, to6;
-    struct timeval      timeout;
-    struct timespec     begin, end, report, start, now;
-
     prog_name = basename(argv[0]);
 
-    ipv4_mode         = (strcmp(prog_name, "bwping") == 0);
-    buf_size          = 0;
-    tos_or_traf_class = 0;
-    pkt_size          = 0;
-    reporting_period  = 0;
-    kbps              = 0;
-    volume            = 0;
-    bind_addr         = NULL;
-    target            = NULL;
+    bool ipv4_mode = (strcmp(prog_name, "bwping") == 0);
+    int  exit_val  = EX_OK;
 
-    exit_val = EX_OK;
+    unsigned int buf_size          = 0,
+                 tos_or_traf_class = 0;
+    size_t       pkt_size          = 0;
+    int32_t      reporting_period  = 0;
+    uint32_t     kbps              = 0;
+    uint64_t     volume            = 0;
+    char        *bind_addr         = NULL,
+                *target            = NULL;
+
+    int ch;
 
     while ((ch = getopt(argc, argv, "46B:T:b:r:s:u:v:")) != -1) {
+        char *ep;
+
         switch (ch) {
             case '4':
                 ipv4_mode = true;
@@ -548,6 +500,8 @@ int main(int argc, char **argv)
         }
     }
 
+    int sock;
+
     if (ipv4_mode) {
         sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 
@@ -572,65 +526,51 @@ int main(int argc, char **argv)
         exit_val = EX_OSERR;
     } else {
         if (bind_addr != NULL) {
-            if (ipv4_mode) {
-                if (resolve_name4(bind_addr, &bind_to4)) {
-                    if (bind(sock, (struct sockaddr *)&bind_to4, sizeof(bind_to4)) < 0) {
-                        fprintf(stderr, "%s: bind() failed: %s\n", prog_name, strerror(errno));
+            struct addrinfo *bind_ai;
 
-                        exit_val = EX_OSERR;
-                    }
-                } else {
-                    exit_val = EX_SOFTWARE;
+            if (resolve_name(ipv4_mode, bind_addr, &bind_ai)) {
+                if (bind(sock, bind_ai->ai_addr, bind_ai->ai_addrlen) < 0) {
+                    fprintf(stderr, "%s: bind() failed: %s\n", prog_name, strerror(errno));
+
+                    exit_val = EX_OSERR;
                 }
+
+                freeaddrinfo(bind_ai);
             } else {
-                if (resolve_name6(bind_addr, &bind_to6)) {
-                    if (bind(sock, (struct sockaddr *)&bind_to6, sizeof(bind_to6)) < 0) {
-                        fprintf(stderr, "%s: bind() failed: %s\n", prog_name, strerror(errno));
-
-                        exit_val = EX_OSERR;
-                    }
-                } else {
-                    exit_val = EX_SOFTWARE;
-                }
+                exit_val = EX_SOFTWARE;
             }
         }
 
         if (exit_val == EX_OK) {
-            if (ipv4_mode ? resolve_name4(target, &to4) :
-                            resolve_name6(target, &to6)) {
-                ident = getpid() & 0xFFFF;
+            struct addrinfo *to_ai;
 
-                if (ipv4_mode) {
-                    if (inet_ntop(AF_INET, &(to4.sin_addr), p_addr4, sizeof(p_addr4)) == NULL) {
-                        p_addr4[0] = '?';
-                        p_addr4[1] = 0;
-                    }
+            if (resolve_name(ipv4_mode, target, &to_ai)) {
+                uint16_t ident = getpid() & 0xFFFF;
 
-                    printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
-                           target, p_addr4, kbps, pkt_size, volume);
-                } else {
-                    if (inet_ntop(AF_INET6, &(to6.sin6_addr), p_addr6, sizeof(p_addr6)) == NULL) {
-                        p_addr6[0] = '?';
-                        p_addr6[1] = 0;
-                    }
+                char addr_buf[ipv4_mode ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN];
 
-                    printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
-                           target, p_addr6, kbps, pkt_size, volume);
+                if (getnameinfo(to_ai->ai_addr, to_ai->ai_addrlen, addr_buf, sizeof(addr_buf), NULL, 0, NI_NUMERICHOST) != 0) {
+                    addr_buf[0] = '?';
+                    addr_buf[1] = 0;
                 }
+
+                printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
+                       target, addr_buf, kbps, pkt_size, volume);
 
                 min_rtt     = INT64_MAX;
                 max_rtt     = 0;
                 average_rtt = 0;
 
-                finish             = false;
-                transmitted_number = 0;
-                received_number    = 0;
-                transmitted_volume = 0;
-                received_volume    = 0;
+                bool     finish             = false;
+                uint32_t transmitted_number = 0,
+                         received_number    = 0;
+                uint64_t transmitted_volume = 0,
+                         received_volume    = 0;
 
-                interval = (int64_t)pkt_size * 8000 / kbps;
+                int64_t interval     = (int64_t)pkt_size * 8000 / kbps,
+                        min_interval = calibrate_timer();
 
-                min_interval = calibrate_timer();
+                uint32_t pkt_burst;
 
                 if (interval >= min_interval) {
                     pkt_burst = PKT_BURST_PRECISION * 1;
@@ -663,23 +603,27 @@ int main(int argc, char **argv)
                     }
                 }
 
+                struct timespec begin, end, report;
+
                 get_time(&begin);
                 get_time(&end);
                 get_time(&report);
 
-                current_interval = interval;
-                pkt_burst_error  = 0;
-                interval_error   = 0;
+                uint32_t pkt_burst_error  = 0;
+                int64_t  current_interval = interval,
+                         interval_error   = 0;
 
                 while (!finish) {
+                    struct timespec start;
+
                     get_time(&start);
 
-                    for (i = 0; i < pkt_burst / PKT_BURST_PRECISION + pkt_burst_error / PKT_BURST_PRECISION; i++) {
+                    for (uint32_t i = 0; i < pkt_burst / PKT_BURST_PRECISION + pkt_burst_error / PKT_BURST_PRECISION; i++) {
                         if ((uint64_t)pkt_size * transmitted_number < volume) {
                             if (ipv4_mode) {
-                                send_ping4(sock, &to4, pkt_size, ident, !i, &transmitted_number, &transmitted_volume);
+                                send_ping4(sock, to_ai->ai_addr, to_ai->ai_addrlen, pkt_size, ident, !i, &transmitted_number, &transmitted_volume);
                             } else {
-                                send_ping6(sock, &to6, pkt_size, ident, !i, &transmitted_number, &transmitted_volume);
+                                send_ping6(sock, to_ai->ai_addr, to_ai->ai_addrlen, pkt_size, ident, !i, &transmitted_number, &transmitted_volume);
                             }
                         }
                     }
@@ -687,16 +631,20 @@ int main(int argc, char **argv)
                     pkt_burst_error  = pkt_burst_error % PKT_BURST_PRECISION;
                     pkt_burst_error += pkt_burst       % PKT_BURST_PRECISION;
 
-                    select_timeout = current_interval;
+                    int64_t select_timeout = current_interval;
 
                     while (1) {
+                        fd_set fds;
+
                         FD_ZERO(&fds);
                         FD_SET(sock, &fds);
+
+                        struct timeval timeout;
 
                         timeout.tv_sec  = select_timeout / 1000000;
                         timeout.tv_usec = select_timeout % 1000000;
 
-                        n = select(sock + 1, &fds, NULL, NULL, &timeout);
+                        int n = select(sock + 1, &fds, NULL, NULL, &timeout);
 
                         if (n > 0) {
                             while (ipv4_mode ? recv_ping4(sock, ident, &received_number, &received_volume) :
@@ -706,6 +654,8 @@ int main(int argc, char **argv)
                                 }
                             }
                         }
+
+                        struct timespec now;
 
                         get_time(&now);
 
@@ -745,6 +695,8 @@ int main(int argc, char **argv)
                        transmitted_number, received_number, transmitted_volume, received_volume, (long int)(end.tv_sec - begin.tv_sec),
                        end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
                        min_rtt == INT64_MAX ? 0 : min_rtt, max_rtt, average_rtt);
+
+                freeaddrinfo(to_ai);
             } else {
                 exit_val = EX_SOFTWARE;
             }
