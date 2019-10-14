@@ -232,15 +232,12 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
     iov.iov_base = packet;
     iov.iov_len  = sizeof(packet);
 
-    struct sockaddr_in from4;
-    struct msghdr      msg;
+    struct msghdr msg;
 
     memset(&msg, 0, sizeof(msg));
 
-    msg.msg_name    = (caddr_t)&from4;
-    msg.msg_namelen = sizeof(from4);
-    msg.msg_iov     = &iov;
-    msg.msg_iovlen  = 1;
+    msg.msg_iov    = &iov;
+    msg.msg_iovlen = 1;
 
     ssize_t res = recvmsg(sock, &msg, MSG_DONTWAIT);
 
@@ -303,15 +300,12 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
     iov.iov_base = packet;
     iov.iov_len  = sizeof(packet);
 
-    struct sockaddr_in6 from6;
-    struct msghdr       msg;
+    struct msghdr msg;
 
     memset(&msg, 0, sizeof(msg));
 
-    msg.msg_name    = (caddr_t)&from6;
-    msg.msg_namelen = sizeof(from6);
-    msg.msg_iov     = &iov;
-    msg.msg_iovlen  = 1;
+    msg.msg_iov    = &iov;
+    msg.msg_iovlen = 1;
 
     ssize_t res = recvmsg(sock, &msg, MSG_DONTWAIT);
 
