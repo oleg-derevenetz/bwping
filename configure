@@ -3870,7 +3870,7 @@ return getaddrinfo ();
   return 0;
 }
 _ACEOF
-for ac_lib in '' resolv nsl; do
+for ac_lib in '' resolv nsl xnet; do
   if test -z "$ac_lib"; then
     ac_res="none required"
   else
@@ -3928,7 +3928,7 @@ return getnameinfo ();
   return 0;
 }
 _ACEOF
-for ac_lib in '' resolv nsl; do
+for ac_lib in '' resolv nsl xnet; do
   if test -z "$ac_lib"; then
     ac_res="none required"
   else
