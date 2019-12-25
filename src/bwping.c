@@ -37,13 +37,13 @@
 
 #include <netdb.h>
 
-const size_t   MAX_IPV4_HDR_SIZE       = 60;
-const uint32_t CALIBRATION_CYCLES      = 100,
-               PKT_BURST_PRECISION     = 1000,
-               BUF_SIZE_RESERVE_FACTOR = 10;
+static const size_t   MAX_IPV4_HDR_SIZE       = 60;
+static const uint32_t CALIBRATION_CYCLES      = 100,
+                      PKT_BURST_PRECISION     = 1000,
+                      BUF_SIZE_RESERVE_FACTOR = 10;
 
-int64_t min_rtt, max_rtt, average_rtt;
-char   *prog_name;
+static int64_t min_rtt, max_rtt, average_rtt;
+static char   *prog_name;
 
 static void get_time(struct timespec *ts)
 {
@@ -79,12 +79,12 @@ static void get_time(struct timespec *ts)
 #endif /* HAVE_CLOCK_GETTIME */
 }
 
-static int64_t ts_sub(struct timespec *ts1, struct timespec *ts2)
+static int64_t ts_sub(const struct timespec *ts1, const struct timespec *ts2)
 {
     return ((int64_t)ts1->tv_sec - (int64_t)ts2->tv_sec) * 1000000 + (ts1->tv_nsec - ts2->tv_nsec) / 1000;
 }
 
-static uint16_t cksum(void *packet, size_t pkt_size)
+static uint16_t cksum(const void *packet, size_t pkt_size)
 {
     uint16_t buf[IP_MAXPACKET];
 
@@ -131,7 +131,7 @@ static int64_t calibrate_timer(void)
     return sum / CALIBRATION_CYCLES;
 }
 
-static void send_ping4(int sock, struct addrinfo *to_ai, size_t pkt_size, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
+static void send_ping4(int sock, const struct addrinfo *to_ai, size_t pkt_size, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
 {
     char packet[IP_MAXPACKET];
 
@@ -178,7 +178,7 @@ static void send_ping4(int sock, struct addrinfo *to_ai, size_t pkt_size, uint16
     (*transmitted_volume) += pkt_size;
 }
 
-static void send_ping6(int sock, struct addrinfo *to_ai, size_t pkt_size, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
+static void send_ping6(int sock, const struct addrinfo *to_ai, size_t pkt_size, uint16_t ident, bool first_in_burst, uint32_t *transmitted_number, uint64_t *transmitted_volume)
 {
     char packet[IP_MAXPACKET];
 
@@ -349,7 +349,7 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
     }
 }
 
-static bool resolve_name(bool ipv4_mode, char *name, struct addrinfo **addr_info)
+static bool resolve_name(bool ipv4_mode, const char *name, struct addrinfo **addr_info)
 {
     struct addrinfo hints;
 
