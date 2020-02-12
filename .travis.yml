@@ -172,7 +172,7 @@ script:
 
         STATUS=1
 
-        echo $TRAVIS_BUILD_DIR
+        echo "/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_"
 
         if [[ "$CC" == "clang" ]]; then
             mkdir -p "$TRAVIS_BUILD_DIR/_CYGWIN_" && \
@@ -181,6 +181,7 @@ script:
                 echo \"------------------ SETUP ------------------\" && \
                 echo && \
                 export CC=\"$CC\" && \
+                echo \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
                 cd \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
                 echo && \
                 echo \"---------------- GIT CLONE ----------------\" && \
@@ -227,6 +228,7 @@ script:
                 echo \"------------------ SETUP ------------------\" && \
                 echo && \
                 export CC=\"$CC\" && \
+                echo \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
                 cd \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
                 echo && \
                 echo \"---------------- GIT CLONE ----------------\" && \
