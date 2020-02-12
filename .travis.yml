@@ -174,82 +174,82 @@ script:
 
         if [[ "$CC" == "clang" ]]; then
             mkdir -p "$TRAVIS_BUILD_DIR/_CYGWIN_" && \
-            cmd.exe /c "C:\\tools\\cygwin\\bin\\bash.exe -l -c \" \
+            cmd.exe /c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
                 echo && \
-                echo \\\"------------------ SETUP ------------------\\\" && \
+                echo \"------------------ SETUP ------------------\" && \
                 echo && \
-                export CC=\\\"$CC\\\" && \
-                cd \\\"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\\\" && \
+                export CC=\"$CC\" && \
+                cd \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
                 echo && \
-                echo \\\"---------------- GIT CLONE ----------------\\\" && \
+                echo \"---------------- GIT CLONE ----------------\" && \
                 echo && \
-                git clone --depth=50 --branch=\\\"$GIT_REPO_BRANCH\\\" \\\"$GIT_REPO_URL\\\" . && \
+                git clone --depth=50 --branch=\"$GIT_REPO_BRANCH\" \"$GIT_REPO_URL\" . && \
                 echo && \
-                echo \\\"----------- AUTORECONF --FORCE ------------\\\" && \
+                echo \"----------- AUTORECONF --FORCE ------------\" && \
                 echo && \
                 autoreconf --force && \
                 echo && \
-                echo \\\"---------------- CONFIGURE ----------------\\\" && \
+                echo \"---------------- CONFIGURE ----------------\" && \
                 echo && \
                 ./configure && \
                 echo && \
-                echo \\\"------------------ MAKE -------------------\\\" && \
+                echo \"------------------ MAKE -------------------\" && \
                 echo && \
-                make \\\"CFLAGS=-Werror\\\" && \
+                make \"CFLAGS=-Werror\" && \
                 echo && \
-                echo \\\"--------------- MAKE CHECK ----------------\\\" && \
+                echo \"--------------- MAKE CHECK ----------------\" && \
                 echo && \
                 make check && \
                 echo && \
-                echo \\\"------------- MAKE DISTCHECK --------------\\\" && \
+                echo \"------------- MAKE DISTCHECK --------------\" && \
                 echo && \
                 make distcheck && \
                 echo && \
-                echo \\\"------------- MAKE DISTCLEAN --------------\\\" && \
+                echo \"------------- MAKE DISTCLEAN --------------\" && \
                 echo && \
                 make distclean && \
                 echo && \
-                echo \\\"---------- SCAN-BUILD CONFIGURE -----------\\\" && \
+                echo \"---------- SCAN-BUILD CONFIGURE -----------\" && \
                 echo && \
                 scan-build ./configure && \
                 echo && \
-                echo \\\"------------- SCAN-BUILD MAKE -------------\\\" && \
+                echo \"------------- SCAN-BUILD MAKE -------------\" && \
                 echo && \
-                scan-build --status-bugs make \\\"CFLAGS=-std=gnu99 -Werror\\\"\""
+                scan-build --status-bugs make \"CFLAGS=-std=gnu99 -Werror\""
 
             STATUS=$?
         else
             mkdir -p "$TRAVIS_BUILD_DIR/_CYGWIN_" && \
-            cmd.exe /c "C:\\tools\\cygwin\\bin\\bash.exe -l -c \" \
+            cmd.exe /c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
                 echo && \
-                echo \\\"------------------ SETUP ------------------\\\" && \
+                echo \"------------------ SETUP ------------------\" && \
                 echo && \
-                export CC=\\\"$CC\\\" && \
-                cd \\\"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\\\" && \
+                export CC=\"$CC\" && \
+                cd \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
                 echo && \
-                echo \\\"---------------- GIT CLONE ----------------\\\" && \
+                echo \"---------------- GIT CLONE ----------------\" && \
                 echo && \
-                git clone --depth=50 --branch=\\\"$GIT_REPO_BRANCH\\\" \\\"$GIT_REPO_URL\\\" . && \
+                git clone --depth=50 --branch=\"$GIT_REPO_BRANCH\" \"$GIT_REPO_URL\" . && \
                 echo && \
-                echo \\\"----------- AUTORECONF --FORCE ------------\\\" && \
+                echo \"----------- AUTORECONF --FORCE ------------\" && \
                 echo && \
                 autoreconf --force && \
                 echo && \
-                echo \\\"---------------- CONFIGURE ----------------\\\" && \
+                echo \"---------------- CONFIGURE ----------------\" && \
                 echo && \
                 ./configure && \
                 echo && \
-                echo \\\"------------------ MAKE -------------------\\\" && \
+                echo \"------------------ MAKE -------------------\" && \
                 echo && \
-                make \\\"CFLAGS=-Werror\\\" && \
+                make \"CFLAGS=-Werror\" && \
                 echo && \
-                echo \\\"--------------- MAKE CHECK ----------------\\\" && \
+                echo \"--------------- MAKE CHECK ----------------\" && \
                 echo && \
                 make check && \
                 echo && \
-                echo \\\"------------- MAKE DISTCHECK --------------\\\" && \
+                echo \"------------- MAKE DISTCHECK --------------\" && \
                 echo && \
-                make distcheck\""
+                make distcheck"
 
             STATUS=$?
         fi
