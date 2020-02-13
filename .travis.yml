@@ -172,6 +172,9 @@ script:
 
         STATUS=1
 
+        cmd.exe /c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
+            echo OK"
+
         if [[ "$CC" == "clang" ]]; then
             mkdir -p "$TRAVIS_BUILD_DIR/_CYGWIN_" && \
             cmd.exe /c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
