@@ -174,7 +174,7 @@ script:
 
         if [[ "$CC" == "clang" ]]; then
             mkdir -p "$TRAVIS_BUILD_DIR/_CYGWIN_" && \
-            cmd.exe /c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
+            cmd.exe //c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
                 echo && \
                 echo \"------------------ SETUP ------------------\" && \
                 echo && \
@@ -220,7 +220,7 @@ script:
             STATUS=$?
         else
             mkdir -p "$TRAVIS_BUILD_DIR/_CYGWIN_" && \
-            cmd.exe /c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
+            cmd.exe //c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
                 echo && \
                 echo \"------------------ SETUP ------------------\" && \
                 echo && \
