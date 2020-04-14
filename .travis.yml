@@ -100,7 +100,8 @@ script:
                               -Dsonar.projectName=BWPing \
                               -Dsonar.sources=. \
                               -Dsonar.sourceEncoding=UTF-8 \
-                              -Dsonar.cfamily.build-wrapper-output=bw-output; \
+                              -Dsonar.cfamily.build-wrapper-output=bw-output \
+                              -Dsonar.cfamily.cache.enabled=false; \
             fi
 
             STATUS=$?
