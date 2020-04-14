@@ -134,28 +134,19 @@ static void send_ping4(int sock, const struct addrinfo *to_ai, size_t pkt_size, 
 {
     char packet[IP_MAXPACKET] = {0};
 
-    struct icmp icmp4 = {0};
-
-    icmp4.icmp_type  = ICMP_ECHO;
-    icmp4.icmp_code  = 0;
-    icmp4.icmp_cksum = 0;
-    icmp4.icmp_id    = ident;
-    icmp4.icmp_seq   = htons(*transmitted_number);
+    struct icmp icmp4 = {.icmp_type = ICMP_ECHO, .icmp_code = 0, .icmp_cksum = 0, .icmp_id = ident, .icmp_seq = htons(*transmitted_number)};
 
     memcpy(packet, &icmp4, sizeof(icmp4));
-
-    struct timespec pkt_time = {0};
 
     if (first_in_burst) {
         struct timespec now;
 
         get_time(&now);
 
-        pkt_time.tv_sec  = now.tv_sec;
-        pkt_time.tv_nsec = now.tv_nsec;
-    }
+        struct timespec pkt_time = {.tv_sec = now.tv_sec, .tv_nsec = now.tv_nsec};
 
-    memcpy(&packet[sizeof(icmp4)], &pkt_time, sizeof(pkt_time));
+        memcpy(&packet[sizeof(icmp4)], &pkt_time, sizeof(pkt_time));
+    }
 
     icmp4.icmp_cksum = cksum(packet, pkt_size);
 
@@ -177,28 +168,19 @@ static void send_ping6(int sock, const struct addrinfo *to_ai, size_t pkt_size, 
 {
     char packet[IP_MAXPACKET] = {0};
 
-    struct icmp6_hdr icmp6 = {0};
-
-    icmp6.icmp6_type  = ICMP6_ECHO_REQUEST;
-    icmp6.icmp6_code  = 0;
-    icmp6.icmp6_cksum = 0;
-    icmp6.icmp6_id    = ident;
-    icmp6.icmp6_seq   = htons(*transmitted_number);
+    struct icmp6_hdr icmp6 = {.icmp6_type = ICMP6_ECHO_REQUEST, .icmp6_code = 0, .icmp6_cksum = 0, .icmp6_id = ident, .icmp6_seq = htons(*transmitted_number)};
 
     memcpy(packet, &icmp6, sizeof(icmp6));
-
-    struct timespec pkt_time = {0};
 
     if (first_in_burst) {
         struct timespec now;
 
         get_time(&now);
 
-        pkt_time.tv_sec  = now.tv_sec;
-        pkt_time.tv_nsec = now.tv_nsec;
-    }
+        struct timespec pkt_time = {.tv_sec = now.tv_sec, .tv_nsec = now.tv_nsec};
 
-    memcpy(&packet[sizeof(icmp6)], &pkt_time, sizeof(pkt_time));
+        memcpy(&packet[sizeof(icmp6)], &pkt_time, sizeof(pkt_time));
+    }
 
     ssize_t res = sendto(sock, packet, pkt_size, 0, to_ai->ai_addr, to_ai->ai_addrlen);
 
@@ -216,15 +198,8 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
 {
     char packet[IP_MAXPACKET];
 
-    struct iovec iov = {0};
-
-    iov.iov_base = packet;
-    iov.iov_len  = sizeof(packet);
-
-    struct msghdr msg = {0};
-
-    msg.msg_iov    = &iov;
-    msg.msg_iovlen = 1;
+    struct iovec  iov = {.iov_base = packet, .iov_len    = sizeof(packet)};
+    struct msghdr msg = {.msg_iov  = &iov,   .msg_iovlen = 1};
 
     ssize_t res = recvmsg(sock, &msg, MSG_DONTWAIT);
 
@@ -280,15 +255,8 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
 {
     char packet[IP_MAXPACKET];
 
-    struct iovec iov = {0};
-
-    iov.iov_base = packet;
-    iov.iov_len  = sizeof(packet);
-
-    struct msghdr msg = {0};
-
-    msg.msg_iov    = &iov;
-    msg.msg_iovlen = 1;
+    struct iovec  iov = {.iov_base = packet, .iov_len    = sizeof(packet)};
+    struct msghdr msg = {.msg_iov  = &iov,   .msg_iovlen = 1};
 
     ssize_t res = recvmsg(sock, &msg, MSG_DONTWAIT);
 
@@ -334,10 +302,7 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
 
 static bool resolve_name(bool ipv4_mode, const char *name, struct addrinfo **addr_info)
 {
-    struct addrinfo hints = {0};
-
-    hints.ai_flags    = AI_CANONNAME;
-    hints.ai_socktype = SOCK_RAW;
+    struct addrinfo hints = {.ai_flags = AI_CANONNAME, .ai_socktype = SOCK_RAW};
 
     if (ipv4_mode) {
         hints.ai_family   = AF_INET;
