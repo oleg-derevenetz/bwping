@@ -139,11 +139,9 @@ static void send_ping4(int sock, const struct addrinfo *to_ai, size_t pkt_size, 
     memcpy(packet, &icmp4, sizeof(icmp4));
 
     if (first_in_burst) {
-        struct timespec now;
+        struct timespec pkt_time;
 
-        get_time(&now);
-
-        struct timespec pkt_time = {.tv_sec = now.tv_sec, .tv_nsec = now.tv_nsec};
+        get_time(&pkt_time);
 
         memcpy(&packet[sizeof(icmp4)], &pkt_time, sizeof(pkt_time));
     }
@@ -173,11 +171,9 @@ static void send_ping6(int sock, const struct addrinfo *to_ai, size_t pkt_size, 
     memcpy(packet, &icmp6, sizeof(icmp6));
 
     if (first_in_burst) {
-        struct timespec now;
+        struct timespec pkt_time;
 
-        get_time(&now);
-
-        struct timespec pkt_time = {.tv_sec = now.tv_sec, .tv_nsec = now.tv_nsec};
+        get_time(&pkt_time);
 
         memcpy(&packet[sizeof(icmp6)], &pkt_time, sizeof(pkt_time));
     }
