@@ -139,7 +139,7 @@ script:
         echo && \
         echo "------------------ MAKE -------------------" && \
         echo && \
-        make "CFLAGS=-Werror -Wno-missing-field-initializers" && \
+        make "CFLAGS=-Werror" && \
         echo && \
         echo "--------------- MAKE CHECK ----------------" && \
         echo && \

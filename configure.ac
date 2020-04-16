@@ -64,6 +64,16 @@ AC_MSG_RESULT([${bwping_cv_c_wpedantic}])
 if test "${bwping_cv_c_wpedantic}" = "yes"; then
     AM_CFLAGS="${AM_CFLAGS} -Wpedantic"
 fi
+AC_MSG_CHECKING([whether the C compiler accepts -Wno-missing-field-initializers...])
+CFLAGS="${CFLAGS} -Wno-missing-field-initializers"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
+                  [bwping_cv_c_wnomissingfieldinitializers=yes],
+                  [bwping_cv_c_wnomissingfieldinitializers=no])
+CFLAGS=${bwping_save_cflags}
+AC_MSG_RESULT([${bwping_cv_c_wnomissingfieldinitializers}])
+if test "${bwping_cv_c_wnomissingfieldinitializers}" = "yes"; then
+    AM_CFLAGS="${AM_CFLAGS} -Wno-missing-field-initializers"
+fi
 AC_SUBST([AM_CFLAGS])
 
 AC_MSG_CHECKING([for IPv6 support])
