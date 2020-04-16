@@ -42,8 +42,7 @@ static const uint32_t CALIBRATION_CYCLES      = 100,
                       PKT_BURST_PRECISION     = 1000,
                       BUF_SIZE_RESERVE_FACTOR = 10;
 
-static int64_t min_rtt, max_rtt, average_rtt;
-static char   *prog_name;
+static char *prog_name;
 
 static void get_time(struct timespec *ts)
 {
@@ -190,7 +189,7 @@ static void send_ping6(int sock, const struct addrinfo *to_ai, size_t pkt_size, 
     (*transmitted_volume) += pkt_size;
 }
 
-static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint64_t *received_volume)
+static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint64_t *received_volume, int64_t *min_rtt, int64_t *max_rtt, int64_t *average_rtt)
 {
     char packet[IP_MAXPACKET];
 
@@ -228,14 +227,14 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
 
                         int64_t rtt = ts_sub(&now, &pkt_time) / 1000;
 
-                        if (min_rtt > rtt) {
-                            min_rtt = rtt;
+                        if (*min_rtt > rtt) {
+                            *min_rtt = rtt;
                         }
-                        if (max_rtt < rtt) {
-                            max_rtt = rtt;
+                        if (*max_rtt < rtt) {
+                            *max_rtt = rtt;
                         }
 
-                        average_rtt = *received_number ? ((average_rtt * (*received_number - 1)) + rtt) / *received_number : average_rtt;
+                        *average_rtt = *received_number ? ((*average_rtt * (*received_number - 1)) + rtt) / *received_number : *average_rtt;
                     }
                 }
             }
@@ -247,7 +246,7 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
     }
 }
 
-static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint64_t *received_volume)
+static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint64_t *received_volume, int64_t *min_rtt, int64_t *max_rtt, int64_t *average_rtt)
 {
     char packet[IP_MAXPACKET];
 
@@ -278,14 +277,14 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
 
                     int64_t rtt = ts_sub(&now, &pkt_time) / 1000;
 
-                    if (min_rtt > rtt) {
-                        min_rtt = rtt;
+                    if (*min_rtt > rtt) {
+                        *min_rtt = rtt;
                     }
-                    if (max_rtt < rtt) {
-                        max_rtt = rtt;
+                    if (*max_rtt < rtt) {
+                        *max_rtt = rtt;
                     }
 
-                    average_rtt = *received_number ? ((average_rtt * (*received_number - 1)) + rtt) / *received_number : average_rtt;
+                    *average_rtt = *received_number ? ((*average_rtt * (*received_number - 1)) + rtt) / *received_number : *average_rtt;
                 }
             }
         }
@@ -493,13 +492,12 @@ int main(int argc, char **argv)
                 printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
                        target, addr_buf, kbps, pkt_size, volume);
 
-                min_rtt     = INT64_MAX;
-                max_rtt     = 0;
-                average_rtt = 0;
-
                 bool     finish             = false;
                 uint32_t transmitted_number = 0,
                          received_number    = 0;
+                int64_t  min_rtt            = INT64_MAX,
+                         max_rtt            = 0,
+                         average_rtt        = 0;
                 uint64_t transmitted_volume = 0,
                          received_volume    = 0;
 
@@ -583,8 +581,8 @@ int main(int argc, char **argv)
                         int n = select(sock + 1, &fds, NULL, NULL, &timeout);
 
                         if (n > 0) {
-                            while (ipv4_mode ? recv_ping4(sock, ident, &received_number, &received_volume) :
-                                               recv_ping6(sock, ident, &received_number, &received_volume)) {
+                            while (ipv4_mode ? recv_ping4(sock, ident, &received_number, &received_volume, &min_rtt, &max_rtt, &average_rtt) :
+                                               recv_ping6(sock, ident, &received_number, &received_volume, &min_rtt, &max_rtt, &average_rtt)) {
                                 if (received_number >= transmitted_number) {
                                     break;
                                 }
