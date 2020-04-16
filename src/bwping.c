@@ -42,7 +42,9 @@ static const uint32_t CALIBRATION_CYCLES      = 100,
                       PKT_BURST_PRECISION     = 1000,
                       BUF_SIZE_RESERVE_FACTOR = 10;
 
-static int64_t min_rtt, max_rtt, average_rtt;
+static int64_t min_rtt     = INT64_MAX,
+               max_rtt     = 0,
+               average_rtt = 0;
 static char   *prog_name;
 
 static void get_time(struct timespec *ts)
@@ -492,10 +494,6 @@ int main(int argc, char **argv)
 
                 printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
                        target, addr_buf, kbps, pkt_size, volume);
-
-                min_rtt     = INT64_MAX;
-                max_rtt     = 0;
-                average_rtt = 0;
 
                 bool     finish             = false;
                 uint32_t transmitted_number = 0,
