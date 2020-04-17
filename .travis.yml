@@ -9,143 +9,34 @@ os:
   - osx
   - windows
 
-env:
-  global:
-    secure: "tVIjKAlnI8z/4u6UccZ4iBH7bjZQRadF4qjqJopUAOfqyFfoSukXPMiGL9zRcGsxQTdhtNqHEsjW1EbWPbsIkexo+JyeE/T//7gzSjq5HJCzzl4K6kouvXbcdrCIJHsJUVOmtC5m8TYs2gg62ZDz4/wOcROvjKvNjfPMTPdVVV6q8fdrDUbJZyG1N3IFLReE0k3dnfIQPa9AbUe7vMSlOHEEZhAQnciR8WML6ET9pQ8i73vBpIpfe9FUnxT/eaJSY4fUeGRLL1mDa+KtqdypHbMVH93dnOi+5pL284GgvDiPvQvD6PNvWukKUZUbcSPmHO1tDh5WBSvRGwUFygH8hJnrbmtfWWJ9Lud8mU7UiY1x3cL0E8q7B1UQFo/6Fd01/ZbVMZs+ubpZxY0AjO7RwFfSf90Ogx9IVmU+61RujuM0BWmgzEGYu24C0QC/A9T0ULMuEjUA7G/j20QHfq1XcB/6FHrnfs7Zy1G/cFTdO+I2s3lj/HDe37pkW/0JKtv3NX/mlnJAVkLVlIz3vM40isPHxeE+6+ydfkVp3GwhT6PEB83tbqqYlNe3i6HIOLRgm3rHY8ys31QnD+XRbK0UcDBMrYpMTowM8cgxhgufjZaobZW1w7tIaz/kuBgTqC0te6k20CyckyZ9KLXU8vT7gicd84je6dRBuhsmj2OYzG4="
-
 addons:
   sonarcloud:
     organization: "oleg-derevenetz-github"
     token:
       secure: "WjJXzm6W1bKx3wSLh1K2t8fByxh8j7NNrHTmjC7NtN522BRZnGYOnPjabozRnZ8qR1CNhBFG+X/4pzvrvccBCi1hs8MjihHwH2gUMcLpq9upWhZiRVmt7IKSSMHswOv6rTL0mvPLefdaTh0JI5PVBqWwkmKQvxqHDdWlO9GiA1jAV4DrIc4DqgekXooEDrJ6BNrF80x0O0pJSdXQPnNo4bkD5i/tQQPeTY7KHtojKVXxZCLUMu5GySTj6rWk4wMtte56yJqzflwU6BIC93sIxc1gD0IVq1lsUGxbaaUqNMZbpu4xnhbfRzzSLaTcS/fB/kgEY1afEGiNVE47IqhUpCYPCesgLBcx5kFqoi//+Py0zAsk2EM/elrY+jUU4QpA13+pT73TRBVMPh/DHk8mQax25y8QHXxJDWigv19ci80JVKPfRJHRd9t8p1qrrPbmIdgC6AjYswvlimUrYY+8ZiuGKt1OZ3EHSrv6LewBxoVAw/CVsXZMsV1Cp/NV8wkcyPNiTlug5oah6T6EcUPmsNemun8bEoWrQ7FLZXMp1mcBlp91GWf+hFdmGd3onyr+WCo9qEtPz8cC/P30wlW4AVX4bSRHFt0GiHyl8Un1kLfPCoc1SwXZ7r5Afc97fbX1nEgvnxCwIMzmkWDEjXlQkIv48Il5wEe032WY/n/8+jU="
-  coverity_scan:
-    project:
-      name: "oleg-derevenetz/bwping"
-      description: "ICMP-based network bandwidth measurement tool"
-    notification_email: oleg.derevenetz@gmail.com
-    build_command_prepend: "./configure"
-    build_command: "make"
-    branch_pattern: coverity_scan
-
-before_install:
-  - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 
 install:
   - |
-    if [[ "$COVERITY_SCAN_BRANCH" != "1" ]]; then
-        if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
-            echo && \
-            echo "---- INSTALLATION OF CYGWIN AND CYG-GET ---" && \
-            echo && \
-            choco.exe install cygwin cyg-get && \
-            echo && \
-            echo "----- INSTALLATION OF CYGWIN PACKAGES -----" && \
-            echo && \
-            cyg-get.bat autoconf automake make gcc-core clang clang-analyzer git && \
-            echo && \
-            echo "----------- END OF INSTALLATION -----------" && \
-            echo
-        fi
+    if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
+        echo && \
+        echo "---- INSTALLATION OF CYGWIN AND CYG-GET ---" && \
+        echo && \
+        choco.exe install cygwin cyg-get && \
+        echo && \
+        echo "----- INSTALLATION OF CYGWIN PACKAGES -----" && \
+        echo && \
+        cyg-get.bat autoconf automake make gcc-core clang clang-analyzer git && \
+        echo && \
+        echo "----------- END OF INSTALLATION -----------" && \
+        echo
     fi
 
 script:
   - |
-    if [[ "$COVERITY_SCAN_BRANCH" != "1" ]]; then
-        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-            STATUS=1
+    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        STATUS=1
 
-            if [[ "$CC" == "clang" ]]; then
-                echo && \
-                echo "----------- AUTORECONF --FORCE ------------" && \
-                echo && \
-                autoreconf --force && \
-                echo && \
-                echo "---------------- CONFIGURE ----------------" && \
-                echo && \
-                ./configure && \
-                echo && \
-                echo "------------------ MAKE -------------------" && \
-                echo && \
-                make "CFLAGS=-Werror" && \
-                echo && \
-                echo "--------------- MAKE CHECK ----------------" && \
-                echo && \
-                sudo make check "TESTS=tests/bwping" && \
-                echo && \
-                echo "------------- MAKE DISTCLEAN --------------" && \
-                echo && \
-                make distclean && \
-                echo && \
-                echo "---------- SCAN-BUILD CONFIGURE -----------" && \
-                echo && \
-                scan-build ./configure && \
-                echo && \
-                echo "------------- SCAN-BUILD MAKE -------------" && \
-                echo && \
-                scan-build --status-bugs make "CFLAGS=-std=gnu99 -Werror"
-
-                STATUS=$?
-            else
-                echo && \
-                echo "--------- UNSHALLOW GIT FOR SONAR ---------" && \
-                echo && \
-                git fetch --unshallow && \
-                echo && \
-                echo "----------- AUTORECONF --FORCE ------------" && \
-                echo && \
-                autoreconf --force && \
-                echo && \
-                echo "---------------- CONFIGURE ----------------" && \
-                echo && \
-                ./configure && \
-                echo && \
-                echo "------------------ MAKE -------------------" && \
-                echo && \
-                make "CFLAGS=-Werror" && \
-                echo && \
-                echo "--------------- MAKE CHECK ----------------" && \
-                echo && \
-                sudo make check "TESTS=tests/bwping" && \
-                if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then \
-                    echo && \
-                    echo "-------------- SONAR WRAPPER --------------" && \
-                    echo && \
-                    build-wrapper-linux-x86-64 --out-dir bw-output make clean all && \
-                    echo && \
-                    echo "-------------- SONAR SCANNER --------------" && \
-                    echo && \
-                    sonar-scanner -Dsonar.projectKey=oleg-derevenetz:bwping \
-                                  -Dsonar.projectName=BWPing \
-                                  -Dsonar.sources=. \
-                                  -Dsonar.sourceEncoding=UTF-8 \
-                                  -Dsonar.cfamily.build-wrapper-output=bw-output \
-                                  -Dsonar.cfamily.cache.enabled=false; \
-                fi
-
-                STATUS=$?
-            fi
-
-            if [[ -f config.log ]]; then
-                echo
-                echo "----------- BEGIN OF CONFIG.LOG -----------"
-                echo
-                cat config.log
-                echo
-                echo "------------ END OF CONFIG.LOG ------------"
-                echo
-            fi
-            if [[ -f test-suite.log ]]; then
-                echo
-                echo "--------- BEGIN OF TEST-SUITE.LOG ---------"
-                echo
-                cat test-suite.log
-                echo
-                echo "---------- END OF TEST-SUITE.LOG ----------"
-                echo
-            fi
-
-            exit $STATUS
-        elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+        if [[ "$CC" == "clang" ]]; then
             echo && \
             echo "----------- AUTORECONF --FORCE ------------" && \
             echo && \
@@ -161,137 +52,227 @@ script:
             echo && \
             echo "--------------- MAKE CHECK ----------------" && \
             echo && \
-            sudo make check
+            sudo make check "TESTS=tests/bwping" && \
+            echo && \
+            echo "------------- MAKE DISTCLEAN --------------" && \
+            echo && \
+            make distclean && \
+            echo && \
+            echo "---------- SCAN-BUILD CONFIGURE -----------" && \
+            echo && \
+            scan-build ./configure && \
+            echo && \
+            echo "------------- SCAN-BUILD MAKE -------------" && \
+            echo && \
+            scan-build --status-bugs make "CFLAGS=-std=gnu99 -Werror"
 
             STATUS=$?
-
-            if [[ -f config.log ]]; then
-                echo
-                echo "----------- BEGIN OF CONFIG.LOG -----------"
-                echo
-                cat config.log
-                echo
-                echo "------------ END OF CONFIG.LOG ------------"
-                echo
-            fi
-            if [[ -f test-suite.log ]]; then
-                echo
-                echo "--------- BEGIN OF TEST-SUITE.LOG ---------"
-                echo
-                cat test-suite.log
-                echo
-                echo "---------- END OF TEST-SUITE.LOG ----------"
-                echo
-            fi
-
-            exit $STATUS
-        elif [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
-            GIT_REPO_URL="https://github.com/oleg-derevenetz/bwping.git"
-            GIT_REPO_BRANCH="master"
-
-            STATUS=1
-
-            if [[ "$CC" == "clang" ]]; then
-                mkdir -p "$TRAVIS_BUILD_DIR/_CYGWIN_" && \
-                cmd.exe //c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
-                    echo && \
-                    echo \"------------------ SETUP ------------------\" && \
-                    echo && \
-                    export CC=\"$CC\" && \
-                    cd \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
-                    echo && \
-                    echo \"---------------- GIT CLONE ----------------\" && \
-                    echo && \
-                    git clone --depth=50 --branch=\"$GIT_REPO_BRANCH\" \"$GIT_REPO_URL\" . && \
-                    echo && \
-                    echo \"----------- AUTORECONF --FORCE ------------\" && \
-                    echo && \
-                    autoreconf --force && \
-                    echo && \
-                    echo \"---------------- CONFIGURE ----------------\" && \
-                    echo && \
-                    ./configure && \
-                    echo && \
-                    echo \"------------------ MAKE -------------------\" && \
-                    echo && \
-                    make \"CFLAGS=-Werror\" && \
-                    echo && \
-                    echo \"--------------- MAKE CHECK ----------------\" && \
-                    echo && \
-                    make check && \
-                    echo && \
-                    echo \"------------- MAKE DISTCHECK --------------\" && \
-                    echo && \
-                    make distcheck && \
-                    echo && \
-                    echo \"------------- MAKE DISTCLEAN --------------\" && \
-                    echo && \
-                    make distclean && \
-                    echo && \
-                    echo \"---------- SCAN-BUILD CONFIGURE -----------\" && \
-                    echo && \
-                    scan-build ./configure && \
-                    echo && \
-                    echo \"------------- SCAN-BUILD MAKE -------------\" && \
-                    echo && \
-                    scan-build --status-bugs make \"CFLAGS=-std=gnu99 -Werror\""
-
-                STATUS=$?
-            else
-                mkdir -p "$TRAVIS_BUILD_DIR/_CYGWIN_" && \
-                cmd.exe //c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
-                    echo && \
-                    echo \"------------------ SETUP ------------------\" && \
-                    echo && \
-                    export CC=\"$CC\" && \
-                    cd \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
-                    echo && \
-                    echo \"---------------- GIT CLONE ----------------\" && \
-                    echo && \
-                    git clone --depth=50 --branch=\"$GIT_REPO_BRANCH\" \"$GIT_REPO_URL\" . && \
-                    echo && \
-                    echo \"----------- AUTORECONF --FORCE ------------\" && \
-                    echo && \
-                    autoreconf --force && \
-                    echo && \
-                    echo \"---------------- CONFIGURE ----------------\" && \
-                    echo && \
-                    ./configure && \
-                    echo && \
-                    echo \"------------------ MAKE -------------------\" && \
-                    echo && \
-                    make \"CFLAGS=-Werror\" && \
-                    echo && \
-                    echo \"--------------- MAKE CHECK ----------------\" && \
-                    echo && \
-                    make check && \
-                    echo && \
-                    echo \"------------- MAKE DISTCHECK --------------\" && \
-                    echo && \
-                    make distcheck"
-
-                STATUS=$?
+        else
+            echo && \
+            echo "--------- UNSHALLOW GIT FOR SONAR ---------" && \
+            echo && \
+            git fetch --unshallow && \
+            echo && \
+            echo "----------- AUTORECONF --FORCE ------------" && \
+            echo && \
+            autoreconf --force && \
+            echo && \
+            echo "---------------- CONFIGURE ----------------" && \
+            echo && \
+            ./configure && \
+            echo && \
+            echo "------------------ MAKE -------------------" && \
+            echo && \
+            make "CFLAGS=-Werror" && \
+            echo && \
+            echo "--------------- MAKE CHECK ----------------" && \
+            echo && \
+            sudo make check "TESTS=tests/bwping" && \
+            if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then \
+                echo && \
+                echo "-------------- SONAR WRAPPER --------------" && \
+                echo && \
+                build-wrapper-linux-x86-64 --out-dir bw-output make clean all && \
+                echo && \
+                echo "-------------- SONAR SCANNER --------------" && \
+                echo && \
+                sonar-scanner -Dsonar.projectKey=oleg-derevenetz:bwping \
+                              -Dsonar.projectName=BWPing \
+                              -Dsonar.sources=. \
+                              -Dsonar.sourceEncoding=UTF-8 \
+                              -Dsonar.cfamily.build-wrapper-output=bw-output \
+                              -Dsonar.cfamily.cache.enabled=false; \
             fi
 
-            if [[ -f "$TRAVIS_BUILD_DIR/_CYGWIN_/config.log" ]]; then
-                echo
-                echo "----------- BEGIN OF CONFIG.LOG -----------"
-                echo
-                cat "$TRAVIS_BUILD_DIR/_CYGWIN_/config.log"
-                echo
-                echo "------------ END OF CONFIG.LOG ------------"
-                echo
-            fi
-            if [[ -f "$TRAVIS_BUILD_DIR/_CYGWIN_/test-suite.log" ]]; then
-                echo
-                echo "--------- BEGIN OF TEST-SUITE.LOG ---------"
-                echo
-                cat "$TRAVIS_BUILD_DIR/_CYGWIN_/test-suite.log"
-                echo
-                echo "---------- END OF TEST-SUITE.LOG ----------"
-                echo
-            fi
-
-            exit $STATUS
+            STATUS=$?
         fi
+
+        if [[ -f config.log ]]; then
+            echo
+            echo "----------- BEGIN OF CONFIG.LOG -----------"
+            echo
+            cat config.log
+            echo
+            echo "------------ END OF CONFIG.LOG ------------"
+            echo
+        fi
+        if [[ -f test-suite.log ]]; then
+            echo
+            echo "--------- BEGIN OF TEST-SUITE.LOG ---------"
+            echo
+            cat test-suite.log
+            echo
+            echo "---------- END OF TEST-SUITE.LOG ----------"
+            echo
+        fi
+
+        exit $STATUS
+    elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+        echo && \
+        echo "----------- AUTORECONF --FORCE ------------" && \
+        echo && \
+        autoreconf --force && \
+        echo && \
+        echo "---------------- CONFIGURE ----------------" && \
+        echo && \
+        ./configure && \
+        echo && \
+        echo "------------------ MAKE -------------------" && \
+        echo && \
+        make "CFLAGS=-Werror" && \
+        echo && \
+        echo "--------------- MAKE CHECK ----------------" && \
+        echo && \
+        sudo make check
+
+        STATUS=$?
+
+        if [[ -f config.log ]]; then
+            echo
+            echo "----------- BEGIN OF CONFIG.LOG -----------"
+            echo
+            cat config.log
+            echo
+            echo "------------ END OF CONFIG.LOG ------------"
+            echo
+        fi
+        if [[ -f test-suite.log ]]; then
+            echo
+            echo "--------- BEGIN OF TEST-SUITE.LOG ---------"
+            echo
+            cat test-suite.log
+            echo
+            echo "---------- END OF TEST-SUITE.LOG ----------"
+            echo
+        fi
+
+        exit $STATUS
+    elif [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
+        GIT_REPO_URL="https://github.com/oleg-derevenetz/bwping.git"
+        GIT_REPO_BRANCH="master"
+
+        STATUS=1
+
+        if [[ "$CC" == "clang" ]]; then
+            mkdir -p "$TRAVIS_BUILD_DIR/_CYGWIN_" && \
+            cmd.exe //c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
+                echo && \
+                echo \"------------------ SETUP ------------------\" && \
+                echo && \
+                export CC=\"$CC\" && \
+                cd \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
+                echo && \
+                echo \"---------------- GIT CLONE ----------------\" && \
+                echo && \
+                git clone --depth=50 --branch=\"$GIT_REPO_BRANCH\" \"$GIT_REPO_URL\" . && \
+                echo && \
+                echo \"----------- AUTORECONF --FORCE ------------\" && \
+                echo && \
+                autoreconf --force && \
+                echo && \
+                echo \"---------------- CONFIGURE ----------------\" && \
+                echo && \
+                ./configure && \
+                echo && \
+                echo \"------------------ MAKE -------------------\" && \
+                echo && \
+                make \"CFLAGS=-Werror\" && \
+                echo && \
+                echo \"--------------- MAKE CHECK ----------------\" && \
+                echo && \
+                make check && \
+                echo && \
+                echo \"------------- MAKE DISTCHECK --------------\" && \
+                echo && \
+                make distcheck && \
+                echo && \
+                echo \"------------- MAKE DISTCLEAN --------------\" && \
+                echo && \
+                make distclean && \
+                echo && \
+                echo \"---------- SCAN-BUILD CONFIGURE -----------\" && \
+                echo && \
+                scan-build ./configure && \
+                echo && \
+                echo \"------------- SCAN-BUILD MAKE -------------\" && \
+                echo && \
+                scan-build --status-bugs make \"CFLAGS=-std=gnu99 -Werror\""
+
+            STATUS=$?
+        else
+            mkdir -p "$TRAVIS_BUILD_DIR/_CYGWIN_" && \
+            cmd.exe //c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
+                echo && \
+                echo \"------------------ SETUP ------------------\" && \
+                echo && \
+                export CC=\"$CC\" && \
+                cd \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
+                echo && \
+                echo \"---------------- GIT CLONE ----------------\" && \
+                echo && \
+                git clone --depth=50 --branch=\"$GIT_REPO_BRANCH\" \"$GIT_REPO_URL\" . && \
+                echo && \
+                echo \"----------- AUTORECONF --FORCE ------------\" && \
+                echo && \
+                autoreconf --force && \
+                echo && \
+                echo \"---------------- CONFIGURE ----------------\" && \
+                echo && \
+                ./configure && \
+                echo && \
+                echo \"------------------ MAKE -------------------\" && \
+                echo && \
+                make \"CFLAGS=-Werror\" && \
+                echo && \
+                echo \"--------------- MAKE CHECK ----------------\" && \
+                echo && \
+                make check && \
+                echo && \
+                echo \"------------- MAKE DISTCHECK --------------\" && \
+                echo && \
+                make distcheck"
+
+            STATUS=$?
+        fi
+
+        if [[ -f "$TRAVIS_BUILD_DIR/_CYGWIN_/config.log" ]]; then
+            echo
+            echo "----------- BEGIN OF CONFIG.LOG -----------"
+            echo
+            cat "$TRAVIS_BUILD_DIR/_CYGWIN_/config.log"
+            echo
+            echo "------------ END OF CONFIG.LOG ------------"
+            echo
+        fi
+        if [[ -f "$TRAVIS_BUILD_DIR/_CYGWIN_/test-suite.log" ]]; then
+            echo
+            echo "--------- BEGIN OF TEST-SUITE.LOG ---------"
+            echo
+            cat "$TRAVIS_BUILD_DIR/_CYGWIN_/test-suite.log"
+            echo
+            echo "---------- END OF TEST-SUITE.LOG ----------"
+            echo
+        fi
+
+        exit $STATUS
     fi
