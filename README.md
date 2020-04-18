@@ -102,8 +102,9 @@ Oleg Derevenetz <oleg.derevenetz@gmail.com>
 
 ## NOTES
 
-This  utility  uses  raw  sockets  to  deal  with  ICMP  messages,  so root
-privileges are required to run it.
+This utility uses raw sockets to deal with ICMP messages, so it may require
+root privileges or extended  capabilities (such as CAP_NET_RAW on Linux) to
+run. It can also be run as setuid root.
 
 Although  bwping  and  bwping6 does not require any special software on the
 remote  host  (only the ability to respond on ICMP echo request  messages),
@@ -119,7 +120,7 @@ request   messages   with   given   rate,  and  remote  host should quickly
 respond  on  these  messages  and should have no  ICMP  bandwidth  limiting
 turned on.
 
-If   some   of   these   requirements  are  not satisfied, then measurement
-results  will  be  inadequate  or fail completely. In general, for  testing
-bandwidth   where   QoS   is   implemented,  always  test with traffic that
-matches the QoS class to be tested.
+If  some  of  these  requirements  are  not  satisfied then the measurement
+results  will  be  inadequate  or  fail completely. In general, for testing
+bandwidth  where  QoS is implemented, always test with traffic that matches
+the QoS class to be tested.
