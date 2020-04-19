@@ -2,7 +2,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
+#endif /* HAVE_CONFIG_H */
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -29,11 +29,11 @@
 #include <netinet/ip_icmp.h>
 #ifdef HAVE_NETINET_ICMP6_H
 #include <netinet/icmp6.h>
-#endif
+#endif /* HAVE_NETINET_ICMP6_H */
 
 #ifdef __CYGWIN__
 #include "../include/cygwin.h"
-#endif
+#endif /* __CYGWIN__ */
 
 #include <netdb.h>
 

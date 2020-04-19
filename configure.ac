@@ -89,7 +89,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 #include <netinet/ip6.h>
 #ifdef HAVE_NETINET_ICMP6_H
 #include <netinet/icmp6.h>
-#endif
+#endif /* HAVE_NETINET_ICMP6_H */
 
 #ifdef __CYGWIN__
 
@@ -100,13 +100,13 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 
 #ifndef ICMP_MINLEN
 #define ICMP_MINLEN 8
-#endif
+#endif /* ICMP_MINLEN */
 #ifndef ICMP_ECHO
 #define ICMP_ECHO 8
-#endif
+#endif /* ICMP_ECHO */
 #ifndef ICMP_ECHOREPLY
 #define ICMP_ECHOREPLY 0
-#endif
+#endif /* ICMP_ECHOREPLY */
 
 struct icmp_ra_addr
 {
@@ -207,7 +207,7 @@ struct icmp6_hdr {
 
 /* END OF INCLUDE/CYGWIN.H */
 
-#endif
+#endif /* __CYGWIN__ */
     ], [
         struct sockaddr_in6 foo;
         struct icmp6_hdr bar;

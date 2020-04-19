@@ -3,13 +3,13 @@
 
 #ifndef ICMP_MINLEN
 #define ICMP_MINLEN 8
-#endif
+#endif /* ICMP_MINLEN */
 #ifndef ICMP_ECHO
 #define ICMP_ECHO 8
-#endif
+#endif /* ICMP_ECHO */
 #ifndef ICMP_ECHOREPLY
 #define ICMP_ECHOREPLY 0
-#endif
+#endif /* ICMP_ECHOREPLY */
 
 struct icmp_ra_addr
 {
