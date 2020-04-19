@@ -318,7 +318,7 @@ static bool resolve_name(bool ipv4_mode, const char *name, struct addrinfo **add
     }
 }
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
     prog_name = basename(argv[0]);
 
