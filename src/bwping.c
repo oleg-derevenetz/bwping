@@ -2,7 +2,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif /* HAVE_CONFIG_H */
+#endif
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -29,11 +29,11 @@
 #include <netinet/ip_icmp.h>
 #ifdef HAVE_NETINET_ICMP6_H
 #include <netinet/icmp6.h>
-#endif /* HAVE_NETINET_ICMP6_H */
+#endif
 
 #ifdef __CYGWIN__
 #include "../include/cygwin.h"
-#endif /* __CYGWIN__ */
+#endif
 
 #include <netdb.h>
 
@@ -55,7 +55,7 @@ static void get_time(struct timespec *ts)
     const clockid_t id = CLOCK_MONOTONIC;
 #else
     const clockid_t id = CLOCK_REALTIME;
-#endif /* CLOCK_XXX */
+#endif
 
     if (clock_gettime(id, ts) < 0) {
         fprintf(stderr, "%s: clock_gettime() failed: %s\n", prog_name, strerror(errno));
@@ -63,7 +63,7 @@ static void get_time(struct timespec *ts)
         ts->tv_sec  = 0;
         ts->tv_nsec = 0;
     }
-#else
+#else /* HAVE_CLOCK_GETTIME */
     struct timeval tv;
 
     if (gettimeofday(&tv, NULL) < 0) {
