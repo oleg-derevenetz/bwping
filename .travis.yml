@@ -96,7 +96,7 @@ script:
                 echo && \
                 echo "-------------- SONAR SCANNER --------------" && \
                 echo && \
-                sonar-scanner -Dsonar.projectKey=oleg-derevenetz:bwping \
+                sonar-scanner -Dsonar.projectKey=oleg-derevenetz_bwping \
                               -Dsonar.projectName=BWPing \
                               -Dsonar.sources=. \
                               -Dsonar.sourceEncoding=UTF-8 \
