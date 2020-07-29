@@ -39,9 +39,8 @@ bwping6 otherwise.
 -u buf_size
 ```
 
-Sets  the  send/receive  buffer  size  in  bytes.  Default  value  will  be
-automatically   calculated  based  on  transfer speed, packet size and host
-timer accuracy.
+Sets  the  send/receive  buffer size in bytes. If not specified, the system
+default will be used.
 
 ```
 -r reporting_period

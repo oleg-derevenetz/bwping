@@ -37,10 +37,9 @@
 
 #include <netdb.h>
 
-static const size_t   MAX_IPV4_HDR_SIZE       = 60;
-static const uint32_t CALIBRATION_CYCLES      = 100,
-                      PKT_BURST_PRECISION     = 1000,
-                      BUF_SIZE_RESERVE_FACTOR = 10;
+static const size_t   MAX_IPV4_HDR_SIZE   = 60;
+static const uint32_t CALIBRATION_CYCLES  = 100,
+                      PKT_BURST_PRECISION = 1000;
 
 static char *prog_name;
 
@@ -526,15 +525,13 @@ int main(int argc, char *argv[])
                     interval  = min_interval;
                 }
 
-                if (buf_size == 0) {
-                    buf_size = pkt_size * (pkt_burst / PKT_BURST_PRECISION + 1) * BUF_SIZE_RESERVE_FACTOR;
-                }
-
-                if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(buf_size)) < 0) {
-                    fprintf(stderr, "%s: setsockopt(SO_RCVBUF, %u) failed: %s\n", prog_name, buf_size, strerror(errno));
-                }
-                if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &buf_size, sizeof(buf_size)) < 0) {
-                    fprintf(stderr, "%s: setsockopt(SO_SNDBUF, %u) failed: %s\n", prog_name, buf_size, strerror(errno));
+                if (buf_size != 0) {
+                    if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(buf_size)) < 0) {
+                        fprintf(stderr, "%s: setsockopt(SO_RCVBUF, %u) failed: %s\n", prog_name, buf_size, strerror(errno));
+                    }
+                    if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &buf_size, sizeof(buf_size)) < 0) {
+                        fprintf(stderr, "%s: setsockopt(SO_SNDBUF, %u) failed: %s\n", prog_name, buf_size, strerror(errno));
+                    }
                 }
 
                 if (ipv4_mode) {

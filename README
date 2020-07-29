@@ -22,28 +22,27 @@ OPTIONS
             IPv6 for bwping6 otherwise.
 
        -u buf_size
-            Sets  the send/receive buffer size in bytes. Default value will be
-            automatically calculated based on transfer speed, packet size  and
-            host timer accuracy.
+            Sets  the send/receive buffer size in bytes. If not specified, the
+            system default will be used.
 
        -r reporting_period
             Sets the interval time in seconds between periodic bandwidth, RTT,
-            and loss reports. If zero,  there  will  be  no  periodic  reports
+            and  loss  reports.  If  zero,  there  will be no periodic reports
             (default).
 
        -T tos(v4) | traf_class(v6)
-            Sets  the TOS (in IPv4 mode) or Traffic Class (in IPv6 mode) value
+            Sets the TOS (in IPv4 mode) or Traffic Class (in IPv6 mode)  value
             of outgoing ip packets. Default value is zero.
 
        -B bind_addr
-            Sets the source address of outgoing ip  packets.  By  default  the
+            Sets  the  source  address  of outgoing ip packets. By default the
             address of the outgoing interface will be used.
 
        -b kbps
             Sets the transfer speed in kilobits per second.
 
        -s pkt_size
-            Sets  the  size  of  ICMP  packet  (excluding IPv4/IPv6 header) in
+            Sets the size of  ICMP  packet  (excluding  IPv4/IPv6  header)  in
             bytes.
 
        -v volume
@@ -56,12 +55,12 @@ BUGS
        None known.
 
 NOTES
-       This utility uses raw sockets to deal with ICMP  messages,  so  it  may
-       require  root  privileges or extended capabilities (such as CAP_NET_RAW
+       This  utility  uses  raw  sockets to deal with ICMP messages, so it may
+       require root privileges or extended capabilities (such  as  CAP_NET_RAW
        on Linux) to run. It can also be run as setuid root.
 
-       Although bwping and bwping6 does not require any  special  software  on
-       the  remote  host  (only  the  ability  to respond on ICMP echo request
+       Although  bwping  and  bwping6 does not require any special software on
+       the remote host (only the ability  to  respond  on  ICMP  echo  request
        messages),   there   are   some   special   requirements   to   network
        infrastructure, local and remote host performance:
 
@@ -69,14 +68,14 @@ NOTES
        This includes QoS mechanisms (which often affects ICMP) at any point in
        the testing path;
 
-       2.  Local  host  should  have  enough  CPU  resources to send ICMP echo
-       request messages with  given  rate,  and  remote  host  should  quickly
-       respond  on  these  messages and should have no ICMP bandwidth limiting
+       2. Local host should have  enough  CPU  resources  to  send  ICMP  echo
+       request  messages  with  given  rate,  and  remote  host should quickly
+       respond on these messages and should have no  ICMP  bandwidth  limiting
        turned on.
 
-       If some of these requirements are not satisfied  then  the  measurement
-       results  will be inadequate or fail completely. In general, for testing
-       bandwidth where QoS is  implemented,  always  test  with  traffic  that
+       If  some  of  these requirements are not satisfied then the measurement
+       results will be inadequate or fail completely. In general, for  testing
+       bandwidth  where  QoS  is  implemented,  always  test with traffic that
        matches the QoS class to be tested.
 
 SEE ALSO
