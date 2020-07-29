@@ -220,7 +220,8 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
                 if (res >= (ssize_t)(hdr_len + sizeof(icmp4) + sizeof(pkt_time))) {
                     memcpy(&pkt_time, &packet[hdr_len + sizeof(icmp4)], sizeof(pkt_time));
 
-                    if (pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0) {
+                    if ((pkt_time.tv_sec >  0 && pkt_time.tv_nsec >= 0) ||
+                        (pkt_time.tv_sec == 0 && pkt_time.tv_nsec >  0)) {
                         struct timespec now;
 
                         get_time(&now);
@@ -270,7 +271,8 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
             if (res >= (ssize_t)(sizeof(icmp6) + sizeof(pkt_time))) {
                 memcpy(&pkt_time, &packet[sizeof(icmp6)], sizeof(pkt_time));
 
-                if (pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0) {
+                if ((pkt_time.tv_sec >  0 && pkt_time.tv_nsec >= 0) ||
+                    (pkt_time.tv_sec == 0 && pkt_time.tv_nsec >  0)) {
                     struct timespec now;
 
                     get_time(&now);
