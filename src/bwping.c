@@ -220,22 +220,26 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
                 if (res >= (ssize_t)(hdr_len + sizeof(icmp4) + sizeof(pkt_time))) {
                     memcpy(&pkt_time, &packet[hdr_len + sizeof(icmp4)], sizeof(pkt_time));
 
-                    if ((pkt_time.tv_sec >  0 && pkt_time.tv_nsec >= 0) ||
-                        (pkt_time.tv_sec == 0 && pkt_time.tv_nsec >  0)) {
-                        struct timespec now;
+                    if (pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0) {
+                        if (pkt_time.tv_sec  >= 0 && (int64_t)pkt_time.tv_sec + 0 < 8589934590 &&
+                            pkt_time.tv_nsec >= 0 &&          pkt_time.tv_nsec    < 1000000000) {
+                            struct timespec now;
 
-                        get_time(&now);
+                            get_time(&now);
 
-                        int64_t rtt = ts_sub(&now, &pkt_time) / 1000;
+                            int64_t rtt = ts_sub(&now, &pkt_time) / 1000;
 
-                        if (*min_rtt > rtt) {
-                            *min_rtt = rtt;
+                            if (*min_rtt > rtt) {
+                                *min_rtt = rtt;
+                            }
+                            if (*max_rtt < rtt) {
+                                *max_rtt = rtt;
+                            }
+
+                            *average_rtt = *received_number ? ((*average_rtt * (*received_number - 1)) + rtt) / *received_number : *average_rtt;
+                        } else {
+                            fprintf(stderr, "%s: packet has an invalid timestamp\n", prog_name);
                         }
-                        if (*max_rtt < rtt) {
-                            *max_rtt = rtt;
-                        }
-
-                        *average_rtt = *received_number ? ((*average_rtt * (*received_number - 1)) + rtt) / *received_number : *average_rtt;
                     }
                 }
             }
@@ -271,22 +275,26 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
             if (res >= (ssize_t)(sizeof(icmp6) + sizeof(pkt_time))) {
                 memcpy(&pkt_time, &packet[sizeof(icmp6)], sizeof(pkt_time));
 
-                if ((pkt_time.tv_sec >  0 && pkt_time.tv_nsec >= 0) ||
-                    (pkt_time.tv_sec == 0 && pkt_time.tv_nsec >  0)) {
-                    struct timespec now;
+                if (pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0) {
+                    if (pkt_time.tv_sec  >= 0 && (int64_t)pkt_time.tv_sec + 0 < 8589934590 &&
+                        pkt_time.tv_nsec >= 0 &&          pkt_time.tv_nsec    < 1000000000) {
+                        struct timespec now;
 
-                    get_time(&now);
+                        get_time(&now);
 
-                    int64_t rtt = ts_sub(&now, &pkt_time) / 1000;
+                        int64_t rtt = ts_sub(&now, &pkt_time) / 1000;
 
-                    if (*min_rtt > rtt) {
-                        *min_rtt = rtt;
+                        if (*min_rtt > rtt) {
+                            *min_rtt = rtt;
+                        }
+                        if (*max_rtt < rtt) {
+                            *max_rtt = rtt;
+                        }
+
+                        *average_rtt = *received_number ? ((*average_rtt * (*received_number - 1)) + rtt) / *received_number : *average_rtt;
+                    } else {
+                        fprintf(stderr, "%s: packet has an invalid timestamp\n", prog_name);
                     }
-                    if (*max_rtt < rtt) {
-                        *max_rtt = rtt;
-                    }
-
-                    *average_rtt = *received_number ? ((*average_rtt * (*received_number - 1)) + rtt) / *received_number : *average_rtt;
                 }
             }
         }
