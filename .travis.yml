@@ -174,13 +174,13 @@ script:
         STATUS=1
 
         if [[ "$CC" == "clang" ]]; then
-            mkdir -p "$TRAVIS_BUILD_DIR/_CYGWIN_" && \
+            mkdir -p "$HOME/_CYGWIN_" && \
             cmd.exe //c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
                 echo && \
                 echo \"------------------ SETUP ------------------\" && \
                 echo && \
                 export CC=\"$CC\" && \
-                cd \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
+                cd \"/cygdrive/$HOME/_CYGWIN_\" && \
                 echo && \
                 echo \"---------------- GIT CLONE ----------------\" && \
                 echo && \
@@ -220,13 +220,13 @@ script:
 
             STATUS=$?
         else
-            mkdir -p "$TRAVIS_BUILD_DIR/_CYGWIN_" && \
+            mkdir -p "$HOME/_CYGWIN_" && \
             cmd.exe //c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
                 echo && \
                 echo \"------------------ SETUP ------------------\" && \
                 echo && \
                 export CC=\"$CC\" && \
-                cd \"/cygdrive/$TRAVIS_BUILD_DIR/_CYGWIN_\" && \
+                cd \"/cygdrive/$HOME/_CYGWIN_\" && \
                 echo && \
                 echo \"---------------- GIT CLONE ----------------\" && \
                 echo && \
@@ -255,20 +255,20 @@ script:
             STATUS=$?
         fi
 
-        if [[ -f "$TRAVIS_BUILD_DIR/_CYGWIN_/config.log" ]]; then
+        if [[ -f "$HOME/_CYGWIN_/config.log" ]]; then
             echo
             echo "----------- BEGIN OF CONFIG.LOG -----------"
             echo
-            cat "$TRAVIS_BUILD_DIR/_CYGWIN_/config.log"
+            cat "$HOME/_CYGWIN_/config.log"
             echo
             echo "------------ END OF CONFIG.LOG ------------"
             echo
         fi
-        if [[ -f "$TRAVIS_BUILD_DIR/_CYGWIN_/test-suite.log" ]]; then
+        if [[ -f "$HOME/_CYGWIN_/test-suite.log" ]]; then
             echo
             echo "--------- BEGIN OF TEST-SUITE.LOG ---------"
             echo
-            cat "$TRAVIS_BUILD_DIR/_CYGWIN_/test-suite.log"
+            cat "$HOME/_CYGWIN_/test-suite.log"
             echo
             echo "---------- END OF TEST-SUITE.LOG ----------"
             echo
