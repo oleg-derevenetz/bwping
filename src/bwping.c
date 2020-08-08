@@ -40,6 +40,8 @@
 static const size_t   MAX_IPV4_HDR_SIZE   = 60;
 static const uint32_t CALIBRATION_CYCLES  = 100,
                       PKT_BURST_PRECISION = 1000;
+static const int64_t  MAX_PKT_TIME_SEC    = 8589934592,
+                      MAX_PKT_TIME_NSEC   = 999999999;
 
 static char *prog_name;
 
@@ -220,8 +222,8 @@ static bool recv_ping4(int sock, uint16_t ident, uint32_t *received_number, uint
                     memcpy(&pkt_time, &packet[hdr_len + sizeof(icmp4)], sizeof(pkt_time));
 
                     if (pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0) {
-                        if (pkt_time.tv_sec  >= 0 && (int64_t)pkt_time.tv_sec + 0 < 8589934590 &&
-                            pkt_time.tv_nsec >= 0 &&          pkt_time.tv_nsec    < 1000000000) {
+                        if (pkt_time.tv_sec  >= 0 && (int64_t)pkt_time.tv_sec + 0 <= MAX_PKT_TIME_SEC &&
+                            pkt_time.tv_nsec >= 0 &&          pkt_time.tv_nsec    <= MAX_PKT_TIME_NSEC) {
                             struct timespec now;
 
                             get_time(&now);
@@ -275,8 +277,8 @@ static bool recv_ping6(int sock, uint16_t ident, uint32_t *received_number, uint
                 memcpy(&pkt_time, &packet[sizeof(icmp6)], sizeof(pkt_time));
 
                 if (pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0) {
-                    if (pkt_time.tv_sec  >= 0 && (int64_t)pkt_time.tv_sec + 0 < 8589934590 &&
-                        pkt_time.tv_nsec >= 0 &&          pkt_time.tv_nsec    < 1000000000) {
+                    if (pkt_time.tv_sec  >= 0 && (int64_t)pkt_time.tv_sec + 0 <= MAX_PKT_TIME_SEC &&
+                        pkt_time.tv_nsec >= 0 &&          pkt_time.tv_nsec    <= MAX_PKT_TIME_NSEC) {
                         struct timespec now;
 
                         get_time(&now);
