@@ -101,7 +101,8 @@ script:
                               -Dsonar.sources=. \
                               -Dsonar.sourceEncoding=UTF-8 \
                               -Dsonar.cfamily.build-wrapper-output=bw-output \
-                              -Dsonar.cfamily.cache.enabled=false; \
+                              -Dsonar.cfamily.cache.enabled=false \
+                              -Dsonar.cfamily.threads=1; \
             fi
 
             STATUS=$?
