@@ -114,10 +114,7 @@ static int64_t calibrate_timer(void)
         while (n < 0) {
             get_time(&begin);
 
-            struct timeval timeout;
-
-            timeout.tv_sec  = 0;
-            timeout.tv_usec = 10;
+            struct timeval timeout = {.tv_sec = 0, .tv_usec = 10};
 
             n = select(0, NULL, NULL, NULL, &timeout);
         }
@@ -582,10 +579,7 @@ int main(int argc, char *argv[])
                         FD_ZERO(&fds);
                         FD_SET(sock, &fds);
 
-                        struct timeval timeout;
-
-                        timeout.tv_sec  = select_timeout / 1000000;
-                        timeout.tv_usec = select_timeout % 1000000;
+                        struct timeval timeout = {.tv_sec = select_timeout / 1000000, .tv_usec = select_timeout % 1000000};
 
                         int n = select(sock + 1, &fds, NULL, NULL, &timeout);
 
