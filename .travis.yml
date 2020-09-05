@@ -170,7 +170,6 @@ script:
         exit $STATUS
     elif [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
         GIT_REPO_URL="https://github.com/oleg-derevenetz/bwping.git"
-        GIT_REPO_BRANCH="master"
 
         STATUS=1
 
@@ -185,7 +184,7 @@ script:
                 echo && \
                 echo \"---------------- GIT CLONE ----------------\" && \
                 echo && \
-                git clone --depth=50 --branch=\"$GIT_REPO_BRANCH\" \"$GIT_REPO_URL\" . && \
+                git clone --depth=50 --branch=\"$TRAVIS_BRANCH\" \"$GIT_REPO_URL\" . && \
                 echo && \
                 echo \"----------- AUTORECONF --FORCE ------------\" && \
                 echo && \
@@ -231,7 +230,7 @@ script:
                 echo && \
                 echo \"---------------- GIT CLONE ----------------\" && \
                 echo && \
-                git clone --depth=50 --branch=\"$GIT_REPO_BRANCH\" \"$GIT_REPO_URL\" . && \
+                git clone --depth=50 --branch=\"$TRAVIS_BRANCH\" \"$GIT_REPO_URL\" . && \
                 echo && \
                 echo \"----------- AUTORECONF --FORCE ------------\" && \
                 echo && \
