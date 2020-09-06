@@ -15,15 +15,21 @@ fi
 AC_PROG_LN_S
 AC_PROG_INSTALL
 
-AC_SEARCH_LIBS([clock_gettime], [rt],
-    [AC_DEFINE([HAVE_CLOCK_GETTIME], [1],
-        [Define to 1 if you have the `clock_gettime' function.])])
 AC_SEARCH_LIBS([socket], [socket], [],
     [AC_MSG_ERROR([socket() is required for build])])
 AC_SEARCH_LIBS([getaddrinfo], [resolv nsl xnet], [],
     [AC_MSG_ERROR([getaddrinfo() is required for build])])
 AC_SEARCH_LIBS([getnameinfo], [resolv nsl xnet], [],
     [AC_MSG_ERROR([getnameinfo() is required for build])])
+AC_SEARCH_LIBS([clock_gettime], [rt],
+    [AC_DEFINE([HAVE_CLOCK_GETTIME], [1],
+        [Define to 1 if you have the `clock_gettime' function.])])
+AC_SEARCH_LIBS([sendmmsg], [socket],
+    [AC_DEFINE([HAVE_SENDMMSG], [1],
+        [Define to 1 if you have the `sendmmsg' function.])])
+AC_SEARCH_LIBS([recvmmsg], [socket],
+    [AC_DEFINE([HAVE_RECVMMSG], [1],
+        [Define to 1 if you have the `recvmmsg' function.])])
 
 AC_CHECK_HEADERS([netinet/icmp6.h], [], [], [
 #include <sys/types.h>
@@ -75,13 +81,6 @@ if test "${bwping_cv_c_wnomissingfieldinitializers}" = "yes"; then
     AM_CFLAGS="${AM_CFLAGS} -Wno-missing-field-initializers"
 fi
 AC_SUBST([AM_CFLAGS])
-
-AC_CHECK_FUNCS([sendmmsg],
-    [AC_DEFINE([HAVE_SENDMMSG], [1],
-        [Define to 1 if you have the `sendmmsg' function.])])
-AC_CHECK_FUNCS([recvmmsg],
-    [AC_DEFINE([HAVE_RECVMMSG], [1],
-        [Define to 1 if you have the `recvmmsg' function.])])
 
 AC_MSG_CHECKING([for IPv6 support])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
