@@ -6,6 +6,13 @@ AC_CONFIG_FILES([Makefile])
 
 AM_INIT_AUTOMAKE
 
+AC_ARG_ENABLE([mmsg],
+    AS_HELP_STRING([--disable-mmsg], [Disable the use of sendmmsg()/recvmmsg()]))
+AS_IF([test "${enable_mmsg}" != "no"], [
+    AC_DEFINE([ENABLE_MMSG], [1],
+        [Define to 1 if you want to use the `sendmmsg' and `recvmmsg' functions.])
+])
+
 AC_PROG_CC
 AC_PROG_CC_C99
 AS_IF([test "${ac_cv_prog_cc_c99}" = "no"], [

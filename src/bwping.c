@@ -37,9 +37,11 @@
 
 #include <netdb.h>
 
+#if defined(ENABLE_MMSG)
 #if defined(HAVE_SENDMMSG) || defined(HAVE_RECVMMSG)
 #define MAX_MMSG_VLEN 64
-#endif
+#endif /* HAVE_SENDMMSG || HAVE_RECVMMSG */
+#endif /* ENABLE_MMSG */
 
 static const size_t   MAX_IPV4_HDR_SIZE   = 60;
 static const uint32_t CALIBRATION_CYCLES  = 100,
@@ -68,7 +70,7 @@ static void get_time(struct timespec *ts)
         ts->tv_sec  = 0;
         ts->tv_nsec = 0;
     }
-#else /* HAVE_CLOCK_GETTIME */
+#else /* HAVE_CLOCK_GETTIME && CLOCK_REALTIME */
     struct timeval tv;
 
     if (gettimeofday(&tv, NULL) < 0) {
@@ -80,7 +82,7 @@ static void get_time(struct timespec *ts)
         ts->tv_sec  = tv.tv_sec;
         ts->tv_nsec = tv.tv_usec * 1000;
     }
-#endif /* HAVE_CLOCK_GETTIME */
+#endif /* HAVE_CLOCK_GETTIME && CLOCK_REALTIME */
 }
 
 static int64_t ts_sub(const struct timespec *ts1, const struct timespec *ts2)
@@ -179,7 +181,7 @@ static void prepare_ping6(char *packet, size_t pkt_size, uint16_t ident, bool in
     (*transmitted_volume) += pkt_size;
 }
 
-#ifdef HAVE_SENDMMSG
+#if defined(ENABLE_MMSG) && defined(HAVE_SENDMMSG)
 
 static void sendmmsg_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai, size_t pkt_size, uint16_t ident, uint64_t pkt_count, uint64_t *transmitted_count, uint64_t *transmitted_volume)
 {
@@ -223,7 +225,7 @@ static void sendmmsg_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai
     }
 }
 
-#else /* HAVE_SENDMMSG */
+#else /* ENABLE_MMSG && HAVE_SENDMMSG */
 
 static void send_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai, size_t pkt_size, uint16_t ident, bool first_in_burst, uint64_t *transmitted_count, uint64_t *transmitted_volume)
 {
@@ -246,7 +248,7 @@ static void send_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai, si
     }
 }
 
-#endif /* HAVE_SENDMMSG */
+#endif /* ENABLE_MMSG && HAVE_SENDMMSG */
 
 static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, uint64_t *received_count, uint64_t *received_volume, uint64_t *min_rtt, uint64_t *max_rtt, uint64_t *average_rtt)
 {
@@ -350,7 +352,7 @@ static void process_ping6(const char *packet, ssize_t pkt_size, uint16_t ident, 
     }
 }
 
-#ifdef HAVE_RECVMMSG
+#if defined(ENABLE_MMSG) && defined(HAVE_RECVMMSG)
 
 static bool recvmmsg_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *received_count, uint64_t *received_volume, uint64_t *min_rtt, uint64_t *max_rtt, uint64_t *average_rtt)
 {
@@ -386,7 +388,7 @@ static bool recvmmsg_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *re
     }
 }
 
-#else /* HAVE_RECVMMSG */
+#else /* ENABLE_MMSG && HAVE_RECVMMSG */
 
 static bool recv_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *received_count, uint64_t *received_volume, uint64_t *min_rtt, uint64_t *max_rtt, uint64_t *average_rtt)
 {
@@ -410,7 +412,7 @@ static bool recv_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *receiv
     }
 }
 
-#endif /* HAVE_RECVMMSG */
+#endif /* ENABLE_MMSG && HAVE_RECVMMSG */
 
 static bool resolve_name(bool ipv4_mode, const char *name, struct addrinfo **addr_info)
 {
@@ -673,7 +675,7 @@ int main(int argc, char *argv[])
                                                                            pkt_burst / PKT_BURST_PRECISION + pkt_burst_error / PKT_BURST_PRECISION :
                                                                            total_count - transmitted_count;
 
-#ifdef HAVE_SENDMMSG
+#if defined(ENABLE_MMSG) && defined(HAVE_SENDMMSG)
                     sendmmsg_ping(ipv4_mode, sock, to_ai, pkt_size, ident, pkt_count, &transmitted_count, &transmitted_volume);
 #else
                     for (uint64_t i = 0; i < pkt_count; i++) {
@@ -697,7 +699,7 @@ int main(int argc, char *argv[])
                         int n = select(sock + 1, &fds, NULL, NULL, &timeout);
 
                         if (n > 0) {
-#ifdef HAVE_RECVMMSG
+#if defined(ENABLE_MMSG) && defined(HAVE_RECVMMSG)
                             while (recvmmsg_ping(ipv4_mode, sock, ident, &received_count, &received_volume, &min_rtt, &max_rtt, &average_rtt)) {
 #else
                             while (recv_ping(ipv4_mode, sock, ident, &received_count, &received_volume, &min_rtt, &max_rtt, &average_rtt)) {
