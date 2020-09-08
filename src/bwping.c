@@ -88,14 +88,14 @@ static int64_t ts_sub(const struct timespec *ts1, const struct timespec *ts2)
     return ((int64_t)ts1->tv_sec - (int64_t)ts2->tv_sec) * 1000000 + (ts1->tv_nsec - ts2->tv_nsec) / 1000;
 }
 
-static uint16_t cksum(const char *packet, size_t pkt_size)
+static uint16_t cksum(const char *packet, size_t size)
 {
     uint32_t sum = 0;
 
-    for (size_t i = 0; i < pkt_size; i = i + 2) {
+    for (size_t i = 0; i < size; i = i + 2) {
         uint16_t u16 = 0;
 
-        if (i < pkt_size - 1) {
+        if (i < size - 1) {
             memcpy(&u16, &packet[i], 2);
         } else {
             memcpy(&u16, &packet[i], 1);
@@ -147,9 +147,13 @@ static void prepare_ping4(char *packet, size_t pkt_size, uint16_t ident, bool in
         get_time(&pkt_time);
 
         memcpy(&packet[sizeof(icmp4)], &pkt_time, sizeof(pkt_time));
-    }
 
-    icmp4.icmp_cksum = cksum(packet, pkt_size);
+        /* Optimization: it is assumed that packet was zeroed before calling this function */
+        icmp4.icmp_cksum = cksum(packet, sizeof(icmp4) + sizeof(pkt_time));
+    } else {
+        /* Optimization: it is assumed that packet was zeroed before calling this function */
+        icmp4.icmp_cksum = cksum(packet, sizeof(icmp4));
+    }
 
     memcpy(&packet[offsetof(struct icmp, icmp_cksum)], &icmp4.icmp_cksum, sizeof(icmp4.icmp_cksum));
 
