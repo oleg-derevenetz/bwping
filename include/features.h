@@ -2,7 +2,7 @@
 #define FEATURES_H
 
 /* GNU libc */
-#define _DEFAULT_SOURCE
+#define _GNU_SOURCE
 
 /* Solaris */
 #define __EXTENSIONS__

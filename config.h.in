@@ -6,6 +6,12 @@
 /* Define to 1 if you have the <netinet/icmp6.h> header file. */
 #undef HAVE_NETINET_ICMP6_H
 
+/* Define to 1 if you have the `recvmmsg' function. */
+#undef HAVE_RECVMMSG
+
+/* Define to 1 if you have the `sendmmsg' function. */
+#undef HAVE_SENDMMSG
+
 /* Name of package */
 #undef PACKAGE
 

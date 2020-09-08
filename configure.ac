@@ -23,6 +23,13 @@ AC_CHECK_HEADERS([netinet/icmp6.h], [], [], [
 #include <netinet/ip6.h>
     ])
 
+AC_CHECK_FUNCS([sendmmsg],
+    [AC_DEFINE([HAVE_SENDMMSG], [1],
+        [Define to 1 if you have the `sendmmsg' function.])])
+AC_CHECK_FUNCS([recvmmsg],
+    [AC_DEFINE([HAVE_RECVMMSG], [1],
+        [Define to 1 if you have the `recvmmsg' function.])])
+
 AC_SEARCH_LIBS([clock_gettime], [rt],
     [AC_DEFINE([HAVE_CLOCK_GETTIME], [1],
         [Define to 1 if you have the `clock_gettime' function.])])
