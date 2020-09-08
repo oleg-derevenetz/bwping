@@ -371,7 +371,11 @@ static bool recvmmsg_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *re
 
     int res = recvmmsg(sock, msg, MAX_MMSG_VLEN, MSG_DONTWAIT, NULL);
 
-    if (res > 0) {
+    if (res < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+        fprintf(stderr, "%s: recvmmsg() failed: %s\n", prog_name, strerror(errno));
+
+        return false;
+    } else if (res > 0) {
         if (ipv4_mode) {
             for (int i = 0; i < res; i++) {
                 process_ping4(packets[i], msg[i].msg_len, ident, received_count, received_volume, min_rtt, max_rtt, average_rtt);
@@ -399,7 +403,11 @@ static bool recv_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *receiv
 
     ssize_t res = recvmsg(sock, &msg, MSG_DONTWAIT);
 
-    if (res > 0) {
+    if (res < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+        fprintf(stderr, "%s: recvmsg() failed: %s\n", prog_name, strerror(errno));
+
+        return false;
+    } else if (res > 0) {
         if (ipv4_mode) {
             process_ping4(packet, res, ident, received_count, received_volume, min_rtt, max_rtt, average_rtt);
         } else {
