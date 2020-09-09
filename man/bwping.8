@@ -35,8 +35,10 @@ and IPv6 for
 .B bwping6
 otherwise.
 .IP "\fB-u\fR \fIbuf_size\fR" 5
-Sets the send/receive buffer size in bytes. If not specified, the
-system default will be used.
+Sets the size of the socket send/receive buffer in bytes. If not
+specified, the system default will be used. Tune this parameter
+if the speed measurement results are unexpectedly low or packet
+loss occurs.
 .IP "\fB-r\fR \fIreporting_period\fR" 5
 Sets the interval time in seconds between periodic bandwidth, RTT,
 and loss reports. If zero, there will be no periodic reports (default).

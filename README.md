@@ -39,8 +39,9 @@ bwping6 otherwise.
 -u buf_size
 ```
 
-Sets  the  send/receive  buffer size in bytes. If not specified, the system
-default will be used.
+Sets the size of the socket send/receive buffer in bytes. If not specified,
+the  system  default  will  be  used.  Tune  this  parameter  if  the speed
+measurement results are unexpectedly low or packet loss occurs.
 
 ```
 -r reporting_period
