@@ -90,6 +90,7 @@ Oleg Derevenetz <oleg.derevenetz@gmail.com>
 
 [![Travis Build Status](https://travis-ci.org/oleg-derevenetz/bwping.svg?branch=master)](https://travis-ci.org/oleg-derevenetz/bwping)
 [![Coverity Scan Status](https://scan.coverity.com/projects/20880/badge.svg)](https://scan.coverity.com/projects/oleg-derevenetz-bwping)
+[![CodeQL Analysis Status](https://github.com/oleg-derevenetz/bwping/workflows/CodeQL%20Analysis/badge.svg)](https://github.com/oleg-derevenetz/bwping/actions?query=workflow%3A%22CodeQL%20Analysis%22)
 [![SonarCloud Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=oleg-derevenetz_bwping&metric=alert_status)](https://sonarcloud.io/dashboard?id=oleg-derevenetz_bwping)
 
 [![SonarCloud Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=oleg-derevenetz_bwping&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=oleg-derevenetz_bwping)
