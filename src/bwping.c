@@ -119,19 +119,19 @@ static int64_t calibrate_timer(void)
     for (uint32_t i = 0; i < CALIBRATION_CYCLES; i++) {
         struct timespec begin, end;
 
-        int n = -1;
+        get_time(&begin);
 
-        while (n < 0) {
-            get_time(&begin);
+        struct timeval timeout = {.tv_sec = 0, .tv_usec = 10};
 
-            struct timeval timeout = {.tv_sec = 0, .tv_usec = 10};
+        int n = select(0, NULL, NULL, NULL, &timeout);
 
-            n = select(0, NULL, NULL, NULL, &timeout);
+        if (n < 0) {
+            fprintf(stderr, "%s: select() failed: %s\n", prog_name, strerror(errno));
+        } else {
+            get_time(&end);
+
+            sum += ts_sub(&end, &begin);
         }
-
-        get_time(&end);
-
-        sum += ts_sub(&end, &begin);
     }
 
     return sum / CALIBRATION_CYCLES;
@@ -706,7 +706,9 @@ int main(int argc, char *argv[])
 
                         int n = select(sock + 1, &fds, NULL, NULL, &timeout);
 
-                        if (n > 0) {
+                        if (n < 0) {
+                            fprintf(stderr, "%s: select() failed: %s\n", prog_name, strerror(errno));
+                        } else if (n > 0) {
 #if defined(ENABLE_MMSG) && defined(HAVE_RECVMMSG)
                             while (recvmmsg_ping(ipv4_mode, sock, ident, &received_count, &received_volume, &min_rtt, &max_rtt, &average_rtt)) {
 #else
