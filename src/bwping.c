@@ -261,46 +261,48 @@ static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, 
     if (pkt_size >= (ssize_t)sizeof(ip4)) {
         memcpy(&ip4, packet, sizeof(ip4));
 
-        size_t hdr_len = ip4.ip_hl << 2;
+        if (ip4.ip_off == 0) {
+            size_t hdr_len = ip4.ip_hl << 2;
 
-        struct icmp icmp4;
+            struct icmp icmp4;
 
-        if (pkt_size >= (ssize_t)(hdr_len + sizeof(icmp4))) {
-            memcpy(&icmp4, &packet[hdr_len], sizeof(icmp4));
+            if (pkt_size >= (ssize_t)(hdr_len + sizeof(icmp4))) {
+                memcpy(&icmp4, &packet[hdr_len], sizeof(icmp4));
 
-            if (icmp4.icmp_type == ICMP_ECHOREPLY &&
-                icmp4.icmp_id   == htons(ident)) {
-                (*received_count)++;
-                (*received_volume) += pkt_size - hdr_len;
+                if (icmp4.icmp_type == ICMP_ECHOREPLY &&
+                    icmp4.icmp_id   == htons(ident)) {
+                    (*received_count)++;
+                    (*received_volume) += pkt_size - hdr_len;
 
-                struct timespec pkt_time;
+                    struct timespec pkt_time;
 
-                if (pkt_size >= (ssize_t)(hdr_len + sizeof(icmp4) + sizeof(pkt_time))) {
-                    memcpy(&pkt_time, &packet[hdr_len + sizeof(icmp4)], sizeof(pkt_time));
+                    if (pkt_size >= (ssize_t)(hdr_len + sizeof(icmp4) + sizeof(pkt_time))) {
+                        memcpy(&pkt_time, &packet[hdr_len + sizeof(icmp4)], sizeof(pkt_time));
 
-                    if (pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0) {
-                        if (pkt_time.tv_sec  >= 0 && (int64_t)pkt_time.tv_sec + 0 <= MAX_PKT_TIME_SEC &&
-                            pkt_time.tv_nsec >= 0 &&          pkt_time.tv_nsec    <= MAX_PKT_TIME_NSEC) {
-                            struct timespec now;
+                        if (pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0) {
+                            if (pkt_time.tv_sec  >= 0 && (int64_t)pkt_time.tv_sec + 0 <= MAX_PKT_TIME_SEC &&
+                                pkt_time.tv_nsec >= 0 &&          pkt_time.tv_nsec    <= MAX_PKT_TIME_NSEC) {
+                                struct timespec now;
 
-                            get_time(&now);
+                                get_time(&now);
 
-                            int64_t rtt = ts_sub(&now, &pkt_time) / 1000;
+                                int64_t rtt = ts_sub(&now, &pkt_time) / 1000;
 
-                            if (rtt >= 0) {
-                                if (*min_rtt > (uint64_t)rtt) {
-                                    *min_rtt = rtt;
+                                if (rtt >= 0) {
+                                    if (*min_rtt > (uint64_t)rtt) {
+                                        *min_rtt = rtt;
+                                    }
+                                    if (*max_rtt < (uint64_t)rtt) {
+                                        *max_rtt = rtt;
+                                    }
+
+                                    *average_rtt = *received_count ? ((*average_rtt * (*received_count - 1)) + rtt) / *received_count : *average_rtt;
+                                } else {
+                                    fprintf(stderr, "%s: packet has an invalid timestamp\n", prog_name);
                                 }
-                                if (*max_rtt < (uint64_t)rtt) {
-                                    *max_rtt = rtt;
-                                }
-
-                                *average_rtt = *received_count ? ((*average_rtt * (*received_count - 1)) + rtt) / *received_count : *average_rtt;
                             } else {
                                 fprintf(stderr, "%s: packet has an invalid timestamp\n", prog_name);
                             }
-                        } else {
-                            fprintf(stderr, "%s: packet has an invalid timestamp\n", prog_name);
                         }
                     }
                 }
