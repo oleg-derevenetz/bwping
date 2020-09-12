@@ -716,6 +716,7 @@ ac_user_opts='
 enable_option_checking
 enable_silent_rules
 enable_mmsg
+enable_bpf
 enable_dependency_tracking
 '
       ac_precious_vars='build_alias
@@ -1355,6 +1356,8 @@ Optional Features:
   --enable-silent-rules   less verbose build output (undo: "make V=1")
   --disable-silent-rules  verbose build output (undo: "make V=0")
   --disable-mmsg          Disable the use of sendmmsg()/recvmmsg()
+  --disable-bpf           Disable the use of BPF for filtering incoming
+                          packets
   --enable-dependency-tracking
                           do not reject slow dependency extractors
   --disable-dependency-tracking
@@ -2707,6 +2710,18 @@ if test "${enable_mmsg}" != "no"; then :
 
 
 $as_echo "#define ENABLE_MMSG 1" >>confdefs.h
+
+
+fi
+# Check whether --enable-bpf was given.
+if test "${enable_bpf+set}" = set; then :
+  enableval=$enable_bpf;
+fi
+
+if test "${enable_bpf}" != "no"; then :
+
+
+$as_echo "#define ENABLE_BPF 1" >>confdefs.h
 
 
 fi

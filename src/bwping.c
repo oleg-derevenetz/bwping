@@ -658,7 +658,7 @@ int main(int argc, char *argv[])
                     }
                 }
 
-#if defined(HAVE_LINUX_FILTER_H) && defined(SO_ATTACH_FILTER)
+#if defined(ENABLE_BPF) && defined(HAVE_LINUX_FILTER_H) && defined(SO_ATTACH_FILTER)
                 struct sock_filter filter4[] = {
                     /* (00) */ {0x30, 0, 0, 0x00000009}, /* ldb  [9]                     - IP Protocol */
                     /* (01) */ {0x15, 0, 8, 0x00000001}, /* jeq  #0x1        jt 2  jf 10 - IP Protocol is ICMP */
@@ -694,7 +694,7 @@ int main(int argc, char *argv[])
                 if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof(bpf)) < 0) {
                     fprintf(stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror(errno));
                 }
-#endif /* HAVE_LINUX_FILTER_H && SO_ATTACH_FILTER */
+#endif /* ENABLE_BPF && HAVE_LINUX_FILTER_H && SO_ATTACH_FILTER */
 
                 if (ipv4_mode) {
                     if (setsockopt(sock, IPPROTO_IP, IP_TOS, &tos_or_traf_class, sizeof(tos_or_traf_class)) < 0) {

@@ -1,5 +1,8 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define to 1 if you want to use BPF to filter incoming packets. */
+#undef ENABLE_BPF
+
 /* Define to 1 if you want to use the `sendmmsg' and `recvmmsg' functions. */
 #undef ENABLE_MMSG
 

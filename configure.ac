@@ -12,6 +12,12 @@ AS_IF([test "${enable_mmsg}" != "no"], [
     AC_DEFINE([ENABLE_MMSG], [1],
         [Define to 1 if you want to use the `sendmmsg' and `recvmmsg' functions.])
 ])
+AC_ARG_ENABLE([bpf],
+    AS_HELP_STRING([--disable-bpf], [Disable the use of BPF for filtering incoming packets]))
+AS_IF([test "${enable_bpf}" != "no"], [
+    AC_DEFINE([ENABLE_BPF], [1],
+        [Define to 1 if you want to use BPF to filter incoming packets.])
+])
 
 AC_PROG_CC
 AC_PROG_CC_C99
