@@ -31,6 +31,10 @@
 #include <netinet/icmp6.h>
 #endif
 
+#ifdef HAVE_LINUX_FILTER_H
+#include <linux/filter.h>
+#endif
+
 #ifdef __CYGWIN__
 #include "../include/cygwin.h"
 #endif
@@ -139,7 +143,7 @@ static int64_t calibrate_timer(void)
 
 static void prepare_ping4(char *packet, size_t pkt_size, uint16_t ident, bool insert_timestamp, uint64_t *transmitted_count, uint64_t *transmitted_volume)
 {
-    struct icmp icmp4 = {.icmp_type = ICMP_ECHO, .icmp_code = 0, .icmp_cksum = 0, .icmp_id = ident, .icmp_seq = htons(*transmitted_count)};
+    struct icmp icmp4 = {.icmp_type = ICMP_ECHO, .icmp_code = 0, .icmp_cksum = 0, .icmp_id = htons(ident), .icmp_seq = htons(*transmitted_count)};
 
     memcpy(packet, &icmp4, sizeof(icmp4));
 
@@ -165,7 +169,7 @@ static void prepare_ping4(char *packet, size_t pkt_size, uint16_t ident, bool in
 
 static void prepare_ping6(char *packet, size_t pkt_size, uint16_t ident, bool insert_timestamp, uint64_t *transmitted_count, uint64_t *transmitted_volume)
 {
-    struct icmp6_hdr icmp6 = {.icmp6_type = ICMP6_ECHO_REQUEST, .icmp6_code = 0, .icmp6_cksum = 0, .icmp6_id = ident, .icmp6_seq = htons(*transmitted_count)};
+    struct icmp6_hdr icmp6 = {.icmp6_type = ICMP6_ECHO_REQUEST, .icmp6_code = 0, .icmp6_cksum = 0, .icmp6_id = htons(ident), .icmp6_seq = htons(*transmitted_count)};
 
     memcpy(packet, &icmp6, sizeof(icmp6));
 
@@ -265,7 +269,7 @@ static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, 
             memcpy(&icmp4, &packet[hdr_len], sizeof(icmp4));
 
             if (icmp4.icmp_type == ICMP_ECHOREPLY &&
-                icmp4.icmp_id   == ident) {
+                icmp4.icmp_id   == htons(ident)) {
                 (*received_count)++;
                 (*received_volume) += pkt_size - hdr_len;
 
@@ -313,7 +317,7 @@ static void process_ping6(const char *packet, ssize_t pkt_size, uint16_t ident, 
         memcpy(&icmp6, packet, sizeof(icmp6));
 
         if (icmp6.icmp6_type == ICMP6_ECHO_REPLY &&
-            icmp6.icmp6_id   == ident) {
+            icmp6.icmp6_id   == htons(ident)) {
             (*received_count)++;
             (*received_volume) += pkt_size;
 
@@ -651,6 +655,44 @@ int main(int argc, char *argv[])
                         fprintf(stderr, "%s: setsockopt(SO_SNDBUF, %u) failed: %s\n", prog_name, buf_size, strerror(errno));
                     }
                 }
+
+#if defined(HAVE_LINUX_FILTER_H) && defined(SO_ATTACH_FILTER)
+                struct sock_filter filter4[] = {
+                    /* (00) */ {0x30, 0, 0, 0x00000009}, /* ldb  [9]                     - IP Protocol */
+                    /* (01) */ {0x15, 0, 8, 0x00000001}, /* jeq  #0x1        jt 2  jf 10 - IP Protocol is ICMP */
+                    /* (02) */ {0x28, 0, 0, 0x00000006}, /* ldh  [6]                     - IP Fragment Offset */
+                    /* (03) */ {0x45, 6, 0, 0x00001fff}, /* jset #0x1fff     jt 10 jf 4  - IP Fragment Offset is zero */
+                    /* (04) */ {0xb1, 0, 0, 0x00000000}, /* ldxb 4*([0]&0xf)             - Load IHL*4 to X */
+                    /* (05) */ {0x50, 0, 0, 0x00000000}, /* ldb  [x]                     - ICMP Type */
+                    /* (06) */ {0x15, 0, 3, 0x00000000}, /* jeq  #0x0        jt 7  jf 10 - ICMP Type is Echo Reply */
+                    /* (07) */ {0x48, 0, 0, 0x00000004}, /* ldh  [x + 4]                 - ICMP Id */
+                    /* (08) */ {0x15, 0, 1, ident},      /* jeq  $ident      jt 9  jf 10 - ICMP Id is equal to ident */
+                    /* (09) */ {0x6,  0, 0, 0x00040000}, /* ret  #0x40000                - Accept packet */
+                    /* (10) */ {0x6,  0, 0, 0x00000000}  /* ret  #0x0                    - Discard packet */
+                };
+                struct sock_filter filter6[] = {
+                    /* (00) */ {0x30, 0, 0, 0x00000000}, /* ldb  [0]                     - ICMPv6 Type */
+                    /* (01) */ {0x15, 0, 3, 0x00000081}, /* jeq  #0x81       jt 2  jf 5  - ICMPv6 Type is Echo Reply */
+                    /* (02) */ {0x28, 0, 0, 0x00000004}, /* ldh  [4]                     - ICMPv6 Id */
+                    /* (03) */ {0x15, 0, 1, ident},      /* jeq  $ident      jt 4  jf 5  - ICMPv6 Id is equal to ident */
+                    /* (04) */ {0x6,  0, 0, 0x00040000}, /* ret  #0x40000                - Accept packet */
+                    /* (05) */ {0x6,  0, 0, 0x00000000}  /* ret  #0x0                    - Discard packet */
+                };
+
+                struct sock_fprog bpf;
+
+                if (ipv4_mode) {
+                    bpf.len    = sizeof(filter4) / sizeof(filter4[0]);
+                    bpf.filter = filter4;
+                } else {
+                    bpf.len    = sizeof(filter6) / sizeof(filter6[0]);
+                    bpf.filter = filter6;
+                }
+
+                if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof(bpf)) < 0) {
+                    fprintf(stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror(errno));
+                }
+#endif /* HAVE_LINUX_FILTER_H && SO_ATTACH_FILTER */
 
                 if (ipv4_mode) {
                     if (setsockopt(sock, IPPROTO_IP, IP_TOS, &tos_or_traf_class, sizeof(tos_or_traf_class)) < 0) {

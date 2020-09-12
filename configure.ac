@@ -45,6 +45,7 @@ AC_CHECK_HEADERS([netinet/icmp6.h], [], [], [
 #include <netinet/in_systm.h>
 #include <netinet/ip6.h>
     ])
+AC_CHECK_HEADERS([linux/filter.h])
 
 bwping_save_cflags=${CFLAGS}
 AC_MSG_CHECKING([whether the C compiler accepts -Wall...])
