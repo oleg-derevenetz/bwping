@@ -96,7 +96,7 @@ static int64_t ts_sub(const struct timespec *ts1, const struct timespec *ts2)
     return ((int64_t)ts1->tv_sec - (int64_t)ts2->tv_sec) * 1000000 + (ts1->tv_nsec - ts2->tv_nsec) / 1000;
 }
 
-static uint16_t cksum(const char *packet, size_t size)
+static uint16_t cksum(const char *data, size_t size)
 {
     uint32_t sum = 0;
 
@@ -104,9 +104,9 @@ static uint16_t cksum(const char *packet, size_t size)
         uint16_t u16 = 0;
 
         if (i < size - 1) {
-            memcpy(&u16, &packet[i], 2);
+            memcpy(&u16, &data[i], 2);
         } else {
-            memcpy(&u16, &packet[i], 1);
+            memcpy(&u16, &data[i], 1);
         }
 
         sum += u16;
