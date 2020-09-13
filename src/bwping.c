@@ -663,8 +663,8 @@ int main(int argc, char *argv[])
                     /* (00) */ {0x30, 0, 0, 0x00000009}, /* ldb  [9]                     - IP Protocol */
                     /* (01) */ {0x15, 0, 8, 0x00000001}, /* jeq  #0x1        jt 2  jf 10 - IP Protocol is ICMP */
                     /* (02) */ {0x28, 0, 0, 0x00000006}, /* ldh  [6]                     - IP Fragment Offset */
-                    /* (03) */ {0x45, 6, 0, 0x00001fff}, /* jset #0x1fff     jt 10 jf 4  - IP Fragment Offset is zero */
-                    /* (04) */ {0xb1, 0, 0, 0x00000000}, /* ldxb 4*([0]&0xf)             - Load IHL*4 to X */
+                    /* (03) */ {0x45, 6, 0, 0x00001FFF}, /* jset #0x1FFF     jt 10 jf 4  - IP Fragment Offset is zero */
+                    /* (04) */ {0xB1, 0, 0, 0x00000000}, /* ldxb 4*([0]&0xF)             - Load IHL*4 to X */
                     /* (05) */ {0x50, 0, 0, 0x00000000}, /* ldb  [x]                     - ICMP Type */
                     /* (06) */ {0x15, 0, 3, 0x00000000}, /* jeq  #0x0        jt 7  jf 10 - ICMP Type is Echo Reply */
                     /* (07) */ {0x48, 0, 0, 0x00000004}, /* ldh  [x + 4]                 - ICMP Id */
