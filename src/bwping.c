@@ -22,6 +22,8 @@
 #include <string.h>
 #include <libgen.h>
 
+#include <arpa/inet.h>
+
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -261,7 +263,7 @@ static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, 
     if (pkt_size >= (ssize_t)sizeof(ip4)) {
         memcpy(&ip4, packet, sizeof(ip4));
 
-        if (ip4.ip_off == 0) {
+        if ((ntohs(ip4.ip_off) & 0x1FFF) == 0) {
             size_t hdr_len = ip4.ip_hl << 2;
 
             struct icmp icmp4;
