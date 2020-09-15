@@ -615,8 +615,6 @@ int main(int argc, char *argv[])
             struct addrinfo *to_ai;
 
             if (resolve_name(ipv4_mode, target, &to_ai)) {
-                uint16_t ident = getpid() & 0xFFFF;
-
                 char addr_buf[ipv4_mode ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN];
 
                 if (getnameinfo(to_ai->ai_addr, to_ai->ai_addrlen, addr_buf, sizeof(addr_buf), NULL, 0, NI_NUMERICHOST) != 0) {
@@ -627,30 +625,6 @@ int main(int argc, char *argv[])
                 printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
                        target, addr_buf, kbps, pkt_size, volume);
 
-                bool     finish             = false;
-                uint64_t min_rtt            = UINT64_MAX,
-                         max_rtt            = 0,
-                         average_rtt        = 0,
-                         transmitted_count  = 0,
-                         received_count     = 0,
-                         transmitted_volume = 0,
-                         received_volume    = 0;
-
-                int64_t interval     = (int64_t)pkt_size * 8000 / kbps,
-                        min_interval = calibrate_timer() * 2; /* Leave space for interval_error adjustments */
-
-                uint64_t pkt_burst;
-
-                if (interval >= min_interval) {
-                    pkt_burst = PKT_BURST_PRECISION * 1;
-                } else if (interval == 0) {
-                    pkt_burst = PKT_BURST_PRECISION * min_interval * kbps / 8000 / pkt_size;
-                    interval  = min_interval;
-                } else {
-                    pkt_burst = PKT_BURST_PRECISION * min_interval / interval;
-                    interval  = min_interval;
-                }
-
                 if (buf_size != 0) {
                     if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(buf_size)) < 0) {
                         fprintf(stderr, "%s: setsockopt(SO_RCVBUF, %u) failed: %s\n", prog_name, buf_size, strerror(errno));
@@ -659,6 +633,8 @@ int main(int argc, char *argv[])
                         fprintf(stderr, "%s: setsockopt(SO_SNDBUF, %u) failed: %s\n", prog_name, buf_size, strerror(errno));
                     }
                 }
+
+                uint16_t ident = getpid() & 0xFFFF;
 
 #if defined(ENABLE_BPF) && defined(HAVE_LINUX_FILTER_H) && defined(SO_ATTACH_FILTER)
                 struct sock_filter filter4[] = {
@@ -708,17 +684,40 @@ int main(int argc, char *argv[])
                     }
                 }
 
+                int64_t interval     = (int64_t)pkt_size * 8000 / kbps,
+                        min_interval = calibrate_timer() * 2; /* Leave space for interval_error adjustments */
+
+                uint64_t pkt_burst;
+
+                if (interval >= min_interval) {
+                    pkt_burst = PKT_BURST_PRECISION * 1;
+                } else if (interval == 0) {
+                    pkt_burst = PKT_BURST_PRECISION * min_interval * kbps / 8000 / pkt_size;
+                    interval  = min_interval;
+                } else {
+                    pkt_burst = PKT_BURST_PRECISION * min_interval / interval;
+                    interval  = min_interval;
+                }
+
+                bool     finish             = false;
+                int64_t  current_interval   = interval,
+                         interval_error     = 0;
+                uint64_t min_rtt            = UINT64_MAX,
+                         max_rtt            = 0,
+                         average_rtt        = 0,
+                         transmitted_count  = 0,
+                         received_count     = 0,
+                         transmitted_volume = 0,
+                         received_volume    = 0,
+                         total_count        = volume % pkt_size == 0 ? volume / pkt_size :
+                                                                       volume / pkt_size + 1,
+                         pkt_burst_error    = 0;
+
                 struct timespec begin, end, report;
 
                 get_time(&begin);
                 get_time(&end);
                 get_time(&report);
-
-                int64_t  current_interval = interval,
-                         interval_error   = 0;
-                uint64_t total_count      = volume % pkt_size == 0 ? volume / pkt_size :
-                                                                     volume / pkt_size + 1,
-                         pkt_burst_error  = 0;
 
                 while (!finish) {
                     struct timespec start;
