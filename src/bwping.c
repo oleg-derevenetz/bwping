@@ -123,9 +123,9 @@ static int64_t calibrate_timer(void)
     int64_t sum = 0;
 
     for (uint32_t i = 0; i < CALIBRATION_CYCLES; i++) {
-        struct timespec begin, end;
+        struct timespec before;
 
-        get_time(&begin);
+        get_time(&before);
 
         struct timeval timeout = {.tv_sec = 0, .tv_usec = 10};
 
@@ -134,9 +134,11 @@ static int64_t calibrate_timer(void)
         if (n < 0) {
             fprintf(stderr, "%s: select() failed: %s\n", prog_name, strerror(errno));
         } else {
-            get_time(&end);
+            struct timespec after;
 
-            sum += ts_sub(&end, &begin);
+            get_time(&after);
+
+            sum += ts_sub(&after, &before);
         }
     }
 
@@ -713,16 +715,16 @@ int main(int argc, char *argv[])
                                                                        volume / pkt_size + 1,
                          pkt_burst_error    = 0;
 
-                struct timespec begin, end, report;
+                struct timespec start, end, report;
 
-                get_time(&begin);
+                get_time(&start);
                 get_time(&end);
                 get_time(&report);
 
                 while (!finish) {
-                    struct timespec start;
+                    struct timespec interval_start;
 
-                    get_time(&start);
+                    get_time(&interval_start);
 
                     uint64_t pkt_count = total_count - transmitted_count > pkt_burst / PKT_BURST_SCALE + pkt_burst_error / PKT_BURST_SCALE ?
                                                                            pkt_burst / PKT_BURST_SCALE + pkt_burst_error / PKT_BURST_SCALE :
@@ -769,11 +771,11 @@ int main(int argc, char *argv[])
 
                         get_time(&now);
 
-                        if (ts_sub(&now, &start) >= current_interval) {
+                        if (ts_sub(&now, &interval_start) >= current_interval) {
                             if (transmitted_volume >= volume) {
                                 finish = true;
                             } else {
-                                interval_error += ts_sub(&now, &start) - current_interval;
+                                interval_error += ts_sub(&now, &interval_start) - current_interval;
 
                                 if (interval_error >= interval / 2) {
                                     current_interval  = interval / 2;
@@ -785,7 +787,7 @@ int main(int argc, char *argv[])
 
                             break;
                         } else {
-                            select_timeout = current_interval - ts_sub(&now, &start);
+                            select_timeout = current_interval - ts_sub(&now, &interval_start);
                         }
                     }
 
@@ -793,8 +795,8 @@ int main(int argc, char *argv[])
 
                     if (reporting_period != 0 && end.tv_sec - report.tv_sec >= reporting_period) {
                         printf("Periodic: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
-                               transmitted_count, received_count, transmitted_volume, received_volume, (long int)(end.tv_sec - begin.tv_sec),
-                               end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
+                               transmitted_count, received_count, transmitted_volume, received_volume, (long int)(end.tv_sec - start.tv_sec),
+                               end.tv_sec - start.tv_sec ? ((received_volume / (end.tv_sec - start.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
                                min_rtt == UINT64_MAX ? 0 : min_rtt, max_rtt, average_rtt);
 
                         get_time(&report);
@@ -802,8 +804,8 @@ int main(int argc, char *argv[])
                 }
 
                 printf("Total: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes, time: %ld sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
-                       transmitted_count, received_count, transmitted_volume, received_volume, (long int)(end.tv_sec - begin.tv_sec),
-                       end.tv_sec - begin.tv_sec ? ((received_volume / (end.tv_sec - begin.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
+                       transmitted_count, received_count, transmitted_volume, received_volume, (long int)(end.tv_sec - start.tv_sec),
+                       end.tv_sec - start.tv_sec ? ((received_volume / (end.tv_sec - start.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
                        min_rtt == UINT64_MAX ? 0 : min_rtt, max_rtt, average_rtt);
 
                 freeaddrinfo(to_ai);
