@@ -49,11 +49,11 @@
 #endif /* HAVE_SENDMMSG || HAVE_RECVMMSG */
 #endif /* ENABLE_MMSG */
 
-static const size_t   MAX_IPV4_HDR_SIZE   = 60;
-static const uint32_t CALIBRATION_CYCLES  = 100,
-                      PKT_BURST_PRECISION = 1000;
-static const int64_t  MAX_PKT_TIME_SEC    = 8589934592,
-                      MAX_PKT_TIME_NSEC   = 999999999;
+static const size_t   MAX_IPV4_HDR_SIZE  = 60;
+static const uint32_t CALIBRATION_CYCLES = 100,
+                      PKT_BURST_SCALE    = 1000;
+static const int64_t  MAX_PKT_TIME_SEC   = 8589934592,
+                      MAX_PKT_TIME_NSEC  = 999999999;
 
 static char *prog_name;
 
@@ -690,12 +690,12 @@ int main(int argc, char *argv[])
                 uint64_t pkt_burst;
 
                 if (interval >= min_interval) {
-                    pkt_burst = PKT_BURST_PRECISION * 1;
+                    pkt_burst = PKT_BURST_SCALE * 1;
                 } else if (interval == 0) {
-                    pkt_burst = PKT_BURST_PRECISION * min_interval * kbps / 8000 / pkt_size;
+                    pkt_burst = PKT_BURST_SCALE * min_interval * kbps / 8000 / pkt_size;
                     interval  = min_interval;
                 } else {
-                    pkt_burst = PKT_BURST_PRECISION * min_interval / interval;
+                    pkt_burst = PKT_BURST_SCALE * min_interval / interval;
                     interval  = min_interval;
                 }
 
@@ -724,8 +724,8 @@ int main(int argc, char *argv[])
 
                     get_time(&start);
 
-                    uint64_t pkt_count = total_count - transmitted_count > pkt_burst / PKT_BURST_PRECISION + pkt_burst_error / PKT_BURST_PRECISION ?
-                                                                           pkt_burst / PKT_BURST_PRECISION + pkt_burst_error / PKT_BURST_PRECISION :
+                    uint64_t pkt_count = total_count - transmitted_count > pkt_burst / PKT_BURST_SCALE + pkt_burst_error / PKT_BURST_SCALE ?
+                                                                           pkt_burst / PKT_BURST_SCALE + pkt_burst_error / PKT_BURST_SCALE :
                                                                            total_count - transmitted_count;
 
 #if defined(ENABLE_MMSG) && defined(HAVE_SENDMMSG)
@@ -736,8 +736,8 @@ int main(int argc, char *argv[])
                     }
 #endif
 
-                    pkt_burst_error  = pkt_burst_error % PKT_BURST_PRECISION;
-                    pkt_burst_error += pkt_burst       % PKT_BURST_PRECISION;
+                    pkt_burst_error  = pkt_burst_error % PKT_BURST_SCALE;
+                    pkt_burst_error += pkt_burst       % PKT_BURST_SCALE;
 
                     int64_t select_timeout = current_interval;
 
