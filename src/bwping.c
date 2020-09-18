@@ -120,8 +120,8 @@ static uint16_t cksum(const char *data, size_t size)
 
 static int64_t calibrate_timer(void)
 {
-    uint32_t succesful_cycles = 0;
-    int64_t  sum              = 0;
+    uint32_t successful_cycles = 0;
+    int64_t  sum               = 0;
 
     for (uint32_t i = 0; i < CALIBRATION_CYCLES; i++) {
         struct timespec before;
@@ -137,12 +137,12 @@ static int64_t calibrate_timer(void)
 
             get_time(&after);
 
-            succesful_cycles++;
+            successful_cycles++;
             sum += ts_sub(&after, &before);
         }
     }
 
-    return succesful_cycles ? sum / succesful_cycles : 0;
+    return successful_cycles ? sum / successful_cycles : 0;
 }
 
 static void prepare_ping4(char *packet, size_t pkt_size, uint16_t ident, bool insert_timestamp,
