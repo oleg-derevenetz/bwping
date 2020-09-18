@@ -129,9 +129,7 @@ static int64_t calibrate_timer(void)
 
         struct timeval timeout = {.tv_sec = 0, .tv_usec = 10};
 
-        int n = select(0, NULL, NULL, NULL, &timeout);
-
-        if (n < 0) {
+        if (select(0, NULL, NULL, NULL, &timeout) < 0) {
             fprintf(stderr, "%s: select() failed: %s\n", prog_name, strerror(errno));
         } else {
             struct timespec after;
