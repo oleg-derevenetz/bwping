@@ -316,9 +316,9 @@ static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, 
                                     if (*max_rtt < (uint64_t)rtt) {
                                         *max_rtt = rtt;
                                     }
-
-                                    *average_rtt = *received_count ? ((*average_rtt * (*received_count - 1)) + rtt) / *received_count :
-                                                                     *average_rtt;
+                                    if (*received_count > 0) {
+                                        *average_rtt = ((*average_rtt * (*received_count - 1)) + rtt) / *received_count;
+                                    }
                                 } else {
                                     fprintf(stderr, "%s: packet has an invalid timestamp\n", prog_name);
                                 }
@@ -367,9 +367,9 @@ static void process_ping6(const char *packet, ssize_t pkt_size, uint16_t ident, 
                             if (*max_rtt < (uint64_t)rtt) {
                                 *max_rtt = rtt;
                             }
-
-                            *average_rtt = *received_count ? ((*average_rtt * (*received_count - 1)) + rtt) / *received_count :
-                                                             *average_rtt;
+                            if (*received_count > 0) {
+                                *average_rtt = ((*average_rtt * (*received_count - 1)) + rtt) / *received_count;
+                            }
                         } else {
                             fprintf(stderr, "%s: packet has an invalid timestamp\n", prog_name);
                         }
