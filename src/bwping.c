@@ -142,7 +142,7 @@ static int64_t calibrate_timer(void)
         }
     }
 
-    return successful_cycles ? sum / successful_cycles : 0;
+    return successful_cycles > 0 ? sum / successful_cycles : 0;
 }
 
 static void prepare_ping4(char *packet, size_t pkt_size, uint16_t ident, bool insert_timestamp,
@@ -820,7 +820,7 @@ int main(int argc, char *argv[])
                         printf("Periodic: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes, time: %ld sec,"
                                " speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
                                transmitted_count, received_count, transmitted_volume, received_volume, (long int)(end.tv_sec - start.tv_sec),
-                               end.tv_sec - start.tv_sec ? ((received_volume / (end.tv_sec - start.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
+                               end.tv_sec - start.tv_sec > 0 ? ((received_volume / (end.tv_sec - start.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
                                min_rtt == UINT64_MAX ? 0 : min_rtt, max_rtt, average_rtt);
 
                         get_time(&report);
@@ -830,7 +830,7 @@ int main(int argc, char *argv[])
                 printf("Total: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes, time: %ld sec,"
                        " speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
                        transmitted_count, received_count, transmitted_volume, received_volume, (long int)(end.tv_sec - start.tv_sec),
-                       end.tv_sec - start.tv_sec ? ((received_volume / (end.tv_sec - start.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
+                       end.tv_sec - start.tv_sec > 0 ? ((received_volume / (end.tv_sec - start.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
                        min_rtt == UINT64_MAX ? 0 : min_rtt, max_rtt, average_rtt);
 
                 freeaddrinfo(to_ai);
