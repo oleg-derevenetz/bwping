@@ -137,8 +137,8 @@ static int64_t calibrate_timer(void)
 
             get_time(&after);
 
-            successful_cycles++;
-            sum += ts_sub(&after, &before);
+            successful_cycles += 1;
+            sum               += ts_sub(&after, &before);
         }
     }
 
@@ -174,8 +174,8 @@ static void prepare_ping4(char *packet, size_t pkt_size, uint16_t ident, bool in
 
     memcpy(&packet[offsetof(struct icmp, icmp_cksum)], &icmp4.icmp_cksum, sizeof(icmp4.icmp_cksum));
 
-    (*transmitted_count)++;
-    (*transmitted_volume) += pkt_size;
+    *transmitted_count  += 1;
+    *transmitted_volume += pkt_size;
 }
 
 static void prepare_ping6(char *packet, size_t pkt_size, uint16_t ident, bool insert_timestamp,
@@ -199,8 +199,8 @@ static void prepare_ping6(char *packet, size_t pkt_size, uint16_t ident, bool in
         memcpy(&packet[sizeof(icmp6)], &pkt_time, sizeof(pkt_time));
     }
 
-    (*transmitted_count)++;
-    (*transmitted_volume) += pkt_size;
+    *transmitted_count  += 1;
+    *transmitted_volume += pkt_size;
 }
 
 #if defined(ENABLE_MMSG) && defined(HAVE_SENDMMSG)
@@ -292,8 +292,8 @@ static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, 
 
                 if (icmp4.icmp_type == ICMP_ECHOREPLY &&
                     icmp4.icmp_id   == htons(ident)) {
-                    (*received_count)++;
-                    (*received_volume) += pkt_size - hdr_len;
+                    *received_count  += 1;
+                    *received_volume += pkt_size - hdr_len;
 
                     struct timespec pkt_time;
 
@@ -343,8 +343,8 @@ static void process_ping6(const char *packet, ssize_t pkt_size, uint16_t ident, 
 
         if (icmp6.icmp6_type == ICMP6_ECHO_REPLY &&
             icmp6.icmp6_id   == htons(ident)) {
-            (*received_count)++;
-            (*received_volume) += pkt_size;
+            *received_count  += 1;
+            *received_volume += pkt_size;
 
             struct timespec pkt_time;
 
