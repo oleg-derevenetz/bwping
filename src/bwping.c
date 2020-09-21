@@ -317,7 +317,7 @@ static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, 
                                         *max_rtt = rtt;
                                     }
                                     if (*received_count > 0) {
-                                        *average_rtt = ((*average_rtt * (*received_count - 1)) + rtt) / *received_count;
+                                        *average_rtt = (*average_rtt * (*received_count - 1) + rtt) / *received_count;
                                     }
                                 } else {
                                     fprintf(stderr, "%s: packet has an invalid timestamp\n", prog_name);
@@ -368,7 +368,7 @@ static void process_ping6(const char *packet, ssize_t pkt_size, uint16_t ident, 
                                 *max_rtt = rtt;
                             }
                             if (*received_count > 0) {
-                                *average_rtt = ((*average_rtt * (*received_count - 1)) + rtt) / *received_count;
+                                *average_rtt = (*average_rtt * (*received_count - 1) + rtt) / *received_count;
                             }
                         } else {
                             fprintf(stderr, "%s: packet has an invalid timestamp\n", prog_name);
@@ -820,7 +820,7 @@ int main(int argc, char *argv[])
                         printf("Periodic: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes, time: %ld sec,"
                                " speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
                                transmitted_count, received_count, transmitted_volume, received_volume, (long int)(end.tv_sec - start.tv_sec),
-                               end.tv_sec - start.tv_sec > 0 ? ((received_volume / (end.tv_sec - start.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
+                               end.tv_sec - start.tv_sec > 0 ? received_volume / (end.tv_sec - start.tv_sec) * 8 / 1000 : received_volume * 8 / 1000,
                                min_rtt == UINT64_MAX ? 0 : min_rtt, max_rtt, average_rtt);
 
                         get_time(&report);
@@ -830,7 +830,7 @@ int main(int argc, char *argv[])
                 printf("Total: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes, time: %ld sec,"
                        " speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
                        transmitted_count, received_count, transmitted_volume, received_volume, (long int)(end.tv_sec - start.tv_sec),
-                       end.tv_sec - start.tv_sec > 0 ? ((received_volume / (end.tv_sec - start.tv_sec)) * 8) / 1000 : (received_volume * 8) / 1000,
+                       end.tv_sec - start.tv_sec > 0 ? received_volume / (end.tv_sec - start.tv_sec) * 8 / 1000 : received_volume * 8 / 1000,
                        min_rtt == UINT64_MAX ? 0 : min_rtt, max_rtt, average_rtt);
 
                 freeaddrinfo(to_ai);
