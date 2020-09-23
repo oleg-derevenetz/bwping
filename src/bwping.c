@@ -579,11 +579,6 @@ int main(int argc, char *argv[])
         exit(exit_val);
     }
 
-    if (reporting_period < 0) {
-        fprintf(stderr, "%s: invalid reporting period, should be non-negative\n", prog_name);
-
-        exit(EX_USAGE);
-    }
     if (ipv4_mode) {
         if (pkt_size < sizeof(struct icmp) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET - MAX_IPV4_HDR_SIZE) {
             fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", prog_name,
@@ -600,6 +595,12 @@ int main(int argc, char *argv[])
 
             exit(EX_USAGE);
         }
+    }
+
+    if (reporting_period < 0) {
+        fprintf(stderr, "%s: invalid reporting period, should be non-negative\n", prog_name);
+
+        exit(EX_USAGE);
     }
 
     int sock;
