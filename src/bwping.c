@@ -639,7 +639,7 @@ int main(int argc, char *argv[])
 
                 freeaddrinfo(bind_ai);
             } else {
-                exit_val = EX_SOFTWARE;
+                exit_val = EX_NOHOST;
             }
         }
 
@@ -842,7 +842,7 @@ int main(int argc, char *argv[])
 
                 freeaddrinfo(to_ai);
             } else {
-                exit_val = EX_SOFTWARE;
+                exit_val = EX_NOHOST;
             }
         }
     }
