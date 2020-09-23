@@ -658,7 +658,7 @@ int main(int argc, char *argv[])
                 printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
                        target, addr_buf, kbps, pkt_size, volume);
 
-                if (buf_size != 0) {
+                if (buf_size > 0) {
                     if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(buf_size)) < 0) {
                         fprintf(stderr, "%s: setsockopt(SO_RCVBUF, %u) failed: %s\n", prog_name, buf_size, strerror(errno));
                     }
@@ -824,7 +824,7 @@ int main(int argc, char *argv[])
 
                     get_time(&end);
 
-                    if (reporting_period != 0 && end.tv_sec - report.tv_sec >= reporting_period) {
+                    if (reporting_period > 0 && end.tv_sec - report.tv_sec >= reporting_period) {
                         printf("Periodic: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes, time: %ld sec,"
                                " speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
                                transmitted_count, received_count, transmitted_volume, received_volume, (long int)(end.tv_sec - start.tv_sec),
