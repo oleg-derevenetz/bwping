@@ -530,7 +530,7 @@ int main(int argc, char *argv[])
             case 'r':
                 reporting_period = strtol(optarg, &ep, 0);
 
-                if (*ep || ep == optarg || reporting_period < 0) {
+                if (*ep || ep == optarg) {
                     exit_val = EX_USAGE;
                 }
 
@@ -579,11 +579,17 @@ int main(int argc, char *argv[])
         exit(exit_val);
     }
 
+    if (reporting_period < 0) {
+        fprintf(stderr, "%s: invalid reporting period, should be non-negative\n", prog_name);
+
+        exit(EX_USAGE);
+    }
     if (ipv4_mode) {
         if (pkt_size < sizeof(struct icmp) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET - MAX_IPV4_HDR_SIZE) {
             fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", prog_name,
                                                                                         sizeof(struct icmp) + sizeof(struct timespec),
                                                                                         (size_t)IP_MAXPACKET - MAX_IPV4_HDR_SIZE);
+
             exit(EX_USAGE);
         }
     } else {
@@ -591,6 +597,7 @@ int main(int argc, char *argv[])
             fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", prog_name,
                                                                                         sizeof(struct icmp6_hdr) + sizeof(struct timespec),
                                                                                         (size_t)IP_MAXPACKET);
+
             exit(EX_USAGE);
         }
     }
