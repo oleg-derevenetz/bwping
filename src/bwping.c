@@ -667,6 +667,16 @@ int main(int argc, char *argv[])
                     }
                 }
 
+                if (ipv4_mode) {
+                    if (setsockopt(sock, IPPROTO_IP, IP_TOS, &tos_or_traf_class, sizeof(tos_or_traf_class)) < 0) {
+                        fprintf(stderr, "%s: setsockopt(IP_TOS, %u) failed: %s\n", prog_name, tos_or_traf_class, strerror(errno));
+                    }
+                } else {
+                    if (setsockopt(sock, IPPROTO_IPV6, IPV6_TCLASS, &tos_or_traf_class, sizeof(tos_or_traf_class)) < 0) {
+                        fprintf(stderr, "%s: setsockopt(IPV6_TCLASS, %u) failed: %s\n", prog_name, tos_or_traf_class, strerror(errno));
+                    }
+                }
+
                 uint16_t ident = getpid() & 0xFFFF;
 
 #if defined(ENABLE_BPF) && defined(HAVE_LINUX_FILTER_H) && defined(SO_ATTACH_FILTER)
@@ -706,16 +716,6 @@ int main(int argc, char *argv[])
                     fprintf(stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror(errno));
                 }
 #endif /* ENABLE_BPF && HAVE_LINUX_FILTER_H && SO_ATTACH_FILTER */
-
-                if (ipv4_mode) {
-                    if (setsockopt(sock, IPPROTO_IP, IP_TOS, &tos_or_traf_class, sizeof(tos_or_traf_class)) < 0) {
-                        fprintf(stderr, "%s: setsockopt(IP_TOS, %u) failed: %s\n", prog_name, tos_or_traf_class, strerror(errno));
-                    }
-                } else {
-                    if (setsockopt(sock, IPPROTO_IPV6, IPV6_TCLASS, &tos_or_traf_class, sizeof(tos_or_traf_class)) < 0) {
-                        fprintf(stderr, "%s: setsockopt(IPV6_TCLASS, %u) failed: %s\n", prog_name, tos_or_traf_class, strerror(errno));
-                    }
-                }
 
                 int64_t interval     = (int64_t)pkt_size * 8000 / kbps,
                         min_interval = calibrate_timer() * 2; /* Leave space for interval_error adjustments */
