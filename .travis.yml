@@ -33,9 +33,9 @@ install:
 
 script:
   - |
-    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-        STATUS=1
+    STATUS=1
 
+    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
         if [[ "$CC" == "clang" ]]; then
             echo && \
             echo "----------- AUTORECONF --FORCE ------------" && \
@@ -126,8 +126,24 @@ script:
             echo "---------- END OF TEST-SUITE.LOG ----------"
             echo
         fi
-
-        exit $STATUS
+        if [[ -f tests/bwping.log ]]; then
+            echo
+            echo "-------- BEGIN OF TESTS/BWPING.LOG --------"
+            echo
+            cat tests/bwping.log
+            echo
+            echo "--------- END OF TESTS/BWPING.LOG ---------"
+            echo
+        fi
+        if [[ -f tests/bwping6.log ]]; then
+            echo
+            echo "------- BEGIN OF TESTS/BWPING6.LOG --------"
+            echo
+            cat tests/bwping6.log
+            echo
+            echo "-------- END OF TESTS/BWPING6.LOG ---------"
+            echo
+        fi
     elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
         echo && \
         echo "----------- AUTORECONF --FORCE ------------" && \
@@ -166,21 +182,36 @@ script:
             echo "---------- END OF TEST-SUITE.LOG ----------"
             echo
         fi
-
-        exit $STATUS
+        if [[ -f tests/bwping.log ]]; then
+            echo
+            echo "-------- BEGIN OF TESTS/BWPING.LOG --------"
+            echo
+            cat tests/bwping.log
+            echo
+            echo "--------- END OF TESTS/BWPING.LOG ---------"
+            echo
+        fi
+        if [[ -f tests/bwping6.log ]]; then
+            echo
+            echo "------- BEGIN OF TESTS/BWPING6.LOG --------"
+            echo
+            cat tests/bwping6.log
+            echo
+            echo "-------- END OF TESTS/BWPING6.LOG ---------"
+            echo
+        fi
     elif [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
         GIT_REPO_URL="https://github.com/oleg-derevenetz/bwping.git"
-
-        STATUS=1
+        BUILD_DIR="$HOME/_CYGWIN_"
 
         if [[ "$CC" == "clang" ]]; then
-            mkdir -p "$HOME/_CYGWIN_" && \
+            mkdir -p "$BUILD_DIR" && \
             cmd.exe //c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
                 echo && \
                 echo \"------------------ SETUP ------------------\" && \
                 echo && \
                 export CC=\"$CC\" && \
-                cd \"/cygdrive/$HOME/_CYGWIN_\" && \
+                cd \"/cygdrive/$BUILD_DIR\" && \
                 echo && \
                 echo \"---------------- GIT CLONE ----------------\" && \
                 echo && \
@@ -220,13 +251,13 @@ script:
 
             STATUS=$?
         else
-            mkdir -p "$HOME/_CYGWIN_" && \
+            mkdir -p "$BUILD_DIR" && \
             cmd.exe //c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
                 echo && \
                 echo \"------------------ SETUP ------------------\" && \
                 echo && \
                 export CC=\"$CC\" && \
-                cd \"/cygdrive/$HOME/_CYGWIN_\" && \
+                cd \"/cygdrive/$BUILD_DIR\" && \
                 echo && \
                 echo \"---------------- GIT CLONE ----------------\" && \
                 echo && \
@@ -255,24 +286,44 @@ script:
             STATUS=$?
         fi
 
-        if [[ -f "$HOME/_CYGWIN_/config.log" ]]; then
+        if [[ -f "$BUILD_DIR/config.log" ]]; then
             echo
             echo "----------- BEGIN OF CONFIG.LOG -----------"
             echo
-            cat "$HOME/_CYGWIN_/config.log"
+            cat "$BUILD_DIR/config.log"
             echo
             echo "------------ END OF CONFIG.LOG ------------"
             echo
         fi
-        if [[ -f "$HOME/_CYGWIN_/test-suite.log" ]]; then
+        if [[ -f "$BUILD_DIR/test-suite.log" ]]; then
             echo
             echo "--------- BEGIN OF TEST-SUITE.LOG ---------"
             echo
-            cat "$HOME/_CYGWIN_/test-suite.log"
+            cat "$BUILD_DIR/test-suite.log"
             echo
             echo "---------- END OF TEST-SUITE.LOG ----------"
             echo
         fi
-
-        exit $STATUS
+        if [[ -f "$BUILD_DIR/tests/bwping.log" ]]; then
+            echo
+            echo "-------- BEGIN OF TESTS/BWPING.LOG --------"
+            echo
+            cat "$BUILD_DIR/tests/bwping.log"
+            echo
+            echo "--------- END OF TESTS/BWPING.LOG ---------"
+            echo
+        fi
+        if [[ -f "$BUILD_DIR/tests/bwping6.log" ]]; then
+            echo
+            echo "------- BEGIN OF TESTS/BWPING6.LOG --------"
+            echo
+            cat "$BUILD_DIR/tests/bwping6.log"
+            echo
+            echo "-------- END OF TESTS/BWPING6.LOG ---------"
+            echo
+        fi
     fi
+
+    sleep 5
+
+    exit $STATUS
