@@ -282,7 +282,8 @@ static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, 
     if (pkt_size >= (ssize_t)sizeof(ip4)) {
         memcpy(&ip4, packet, sizeof(ip4));
 
-        if ((ntohs(ip4.ip_off) & 0x1FFF) == 0) {
+        if (       ip4.ip_p              == IPPROTO_ICMP &&
+            (ntohs(ip4.ip_off) & 0x1FFF) == 0) {
             size_t hdr_len = ip4.ip_hl << 2;
 
             struct icmp icmp4;
@@ -681,25 +682,25 @@ int main(int argc, char *argv[])
 
 #if defined(ENABLE_BPF) && defined(HAVE_LINUX_FILTER_H) && defined(SO_ATTACH_FILTER)
                 struct sock_filter filter4[] = {
-                    /* (00) */ {0x30, 0, 0, 0x00000009}, /* ldb  [9]                     - IP Protocol */
-                    /* (01) */ {0x15, 0, 8, 0x00000001}, /* jeq  #0x1        jt 2  jf 10 - IP Protocol is ICMP */
-                    /* (02) */ {0x28, 0, 0, 0x00000006}, /* ldh  [6]                     - IP Fragment Offset */
-                    /* (03) */ {0x45, 6, 0, 0x00001FFF}, /* jset #0x1FFF     jt 10 jf 4  - IP Fragment Offset is zero */
-                    /* (04) */ {0xB1, 0, 0, 0x00000000}, /* ldxb 4*([0]&0xF)             - Load IHL*4 to X */
-                    /* (05) */ {0x50, 0, 0, 0x00000000}, /* ldb  [x]                     - ICMP Type */
-                    /* (06) */ {0x15, 0, 3, 0x00000000}, /* jeq  #0x0        jt 7  jf 10 - ICMP Type is Echo Reply */
-                    /* (07) */ {0x48, 0, 0, 0x00000004}, /* ldh  [x + 4]                 - ICMP Id */
-                    /* (08) */ {0x15, 0, 1, ident},      /* jeq  $ident      jt 9  jf 10 - ICMP Id is equal to ident */
-                    /* (09) */ {0x6,  0, 0, 0x00040000}, /* ret  #0x40000                - Accept packet */
-                    /* (10) */ {0x6,  0, 0, 0x00000000}  /* ret  #0x0                    - Discard packet */
+                    /* (00) */ {0x30, 0, 0, 0x00000009},     /* ldb  [9]                         - IP Protocol */
+                    /* (01) */ {0x15, 0, 8, IPPROTO_ICMP},   /* jeq  $IPPROTO_ICMP   jt 2  jf 10 - IP Protocol is ICMP */
+                    /* (02) */ {0x28, 0, 0, 0x00000006},     /* ldh  [6]                         - IP Fragment Offset */
+                    /* (03) */ {0x45, 6, 0, 0x00001FFF},     /* jset #0x1FFF         jt 10 jf 4  - IP Fragment Offset is zero */
+                    /* (04) */ {0xB1, 0, 0, 0x00000000},     /* ldxb 4*([0]&0xF)                 - Load IHL*4 to X */
+                    /* (05) */ {0x50, 0, 0, 0x00000000},     /* ldb  [x]                         - ICMP Type */
+                    /* (06) */ {0x15, 0, 3, ICMP_ECHOREPLY}, /* jeq  $ICMP_ECHOREPLY jt 7  jf 10 - ICMP Type is Echo Reply */
+                    /* (07) */ {0x48, 0, 0, 0x00000004},     /* ldh  [x + 4]                     - ICMP Id */
+                    /* (08) */ {0x15, 0, 1, ident},          /* jeq  $ident          jt 9  jf 10 - ICMP Id is equal to ident */
+                    /* (09) */ {0x6,  0, 0, 0x00040000},     /* ret  #0x40000                    - Accept packet */
+                    /* (10) */ {0x6,  0, 0, 0x00000000}      /* ret  #0x0                        - Discard packet */
                 };
                 struct sock_filter filter6[] = {
-                    /* (00) */ {0x30, 0, 0, 0x00000000}, /* ldb  [0]                     - ICMPv6 Type */
-                    /* (01) */ {0x15, 0, 3, 0x00000081}, /* jeq  #0x81       jt 2  jf 5  - ICMPv6 Type is Echo Reply */
-                    /* (02) */ {0x28, 0, 0, 0x00000004}, /* ldh  [4]                     - ICMPv6 Id */
-                    /* (03) */ {0x15, 0, 1, ident},      /* jeq  $ident      jt 4  jf 5  - ICMPv6 Id is equal to ident */
-                    /* (04) */ {0x6,  0, 0, 0x00040000}, /* ret  #0x40000                - Accept packet */
-                    /* (05) */ {0x6,  0, 0, 0x00000000}  /* ret  #0x0                    - Discard packet */
+                    /* (00) */ {0x30, 0, 0, 0x00000000},       /* ldb [0]                         - ICMPv6 Type */
+                    /* (01) */ {0x15, 0, 3, ICMP6_ECHO_REPLY}, /* jeq $ICMP6_ECHO_REPLY jt 2 jf 5 - ICMPv6 Type is Echo Reply */
+                    /* (02) */ {0x28, 0, 0, 0x00000004},       /* ldh [4]                         - ICMPv6 Id */
+                    /* (03) */ {0x15, 0, 1, ident},            /* jeq $ident            jt 4 jf 5 - ICMPv6 Id is equal to ident */
+                    /* (04) */ {0x6,  0, 0, 0x00040000},       /* ret #0x40000                    - Accept packet */
+                    /* (05) */ {0x6,  0, 0, 0x00000000}        /* ret #0x0                        - Discard packet */
                 };
 
                 struct sock_fprog bpf;
