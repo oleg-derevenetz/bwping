@@ -251,16 +251,16 @@ static void sendmmsg_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai
 #else /* ENABLE_MMSG && HAVE_SENDMMSG */
 
 static void send_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai, size_t pkt_size, uint16_t ident,
-                      bool first_in_burst, uint64_t *transmitted_count, uint64_t *transmitted_volume)
+                      bool insert_timestamp, uint64_t *transmitted_count, uint64_t *transmitted_volume)
 {
     static char packet[IP_MAXPACKET];
 
     memset(packet, 0, pkt_size);
 
     if (ipv4_mode) {
-        prepare_ping4(packet, pkt_size, ident, first_in_burst, transmitted_count, transmitted_volume);
+        prepare_ping4(packet, pkt_size, ident, insert_timestamp, transmitted_count, transmitted_volume);
     } else {
-        prepare_ping6(packet, pkt_size, ident, first_in_burst, transmitted_count, transmitted_volume);
+        prepare_ping6(packet, pkt_size, ident, insert_timestamp, transmitted_count, transmitted_volume);
     }
 
     ssize_t res = sendto(sock, packet, pkt_size, 0, to_ai->ai_addr, to_ai->ai_addrlen);
@@ -763,7 +763,7 @@ int main(int argc, char *argv[])
                     sendmmsg_ping(ipv4_mode, sock, to_ai, pkt_size, ident, pkt_count, &transmitted_count, &transmitted_volume);
 #else
                     for (uint64_t i = 0; i < pkt_count; i++) {
-                        send_ping(ipv4_mode, sock, to_ai, pkt_size, ident, !i, &transmitted_count, &transmitted_volume);
+                        send_ping(ipv4_mode, sock, to_ai, pkt_size, ident, i == 0, &transmitted_count, &transmitted_volume);
                     }
 #endif
 
