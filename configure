@@ -715,9 +715,9 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_silent_rules
+enable_dependency_tracking
 enable_mmsg
 enable_bpf
-enable_dependency_tracking
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1355,13 +1355,14 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-silent-rules   less verbose build output (undo: "make V=1")
   --disable-silent-rules  verbose build output (undo: "make V=0")
-  --disable-mmsg          Disable the use of sendmmsg()/recvmmsg()
-  --disable-bpf           Disable the use of BPF for filtering incoming
-                          packets
   --enable-dependency-tracking
                           do not reject slow dependency extractors
   --disable-dependency-tracking
                           speeds up one-time build
+  --disable-mmsg          Disable the use of the `sendmmsg' and `recvmmsg'
+                          functions
+  --disable-bpf           Disable the use of BPF for filtering incoming
+                          packets
 
 Some influential environment variables:
   CC          C compiler command
@@ -2701,31 +2702,6 @@ END
 fi
 
 
-# Check whether --enable-mmsg was given.
-if test "${enable_mmsg+set}" = set; then :
-  enableval=$enable_mmsg;
-fi
-
-if test "${enable_mmsg}" != "no"; then :
-
-
-$as_echo "#define ENABLE_MMSG 1" >>confdefs.h
-
-
-fi
-# Check whether --enable-bpf was given.
-if test "${enable_bpf+set}" = set; then :
-  enableval=$enable_bpf;
-fi
-
-if test "${enable_bpf}" != "no"; then :
-
-
-$as_echo "#define ENABLE_BPF 1" >>confdefs.h
-
-
-fi
-
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -4017,7 +3993,7 @@ if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 else
-  as_fn_error $? "socket() is required for build" "$LINENO" 5
+  as_fn_error $? "\`socket' function is required for build" "$LINENO" 5
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing getaddrinfo" >&5
@@ -4075,7 +4051,7 @@ if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 else
-  as_fn_error $? "getaddrinfo() is required for build" "$LINENO" 5
+  as_fn_error $? "\`getaddrinfo' function is required for build" "$LINENO" 5
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing getnameinfo" >&5
@@ -4133,7 +4109,7 @@ if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 else
-  as_fn_error $? "getnameinfo() is required for build" "$LINENO" 5
+  as_fn_error $? "\`getnameinfo' function is required for build" "$LINENO" 5
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing clock_gettime" >&5
@@ -5017,6 +4993,41 @@ $as_echo "${bwping_cv_sys_ipv6}" >&6; }
 if test "${bwping_cv_sys_ipv6}" = "no"; then :
 
     as_fn_error $? "IPv6 support is required for build" "$LINENO" 5
+
+fi
+
+# Check whether --enable-mmsg was given.
+if test "${enable_mmsg+set}" = set; then :
+  enableval=$enable_mmsg;
+fi
+
+if test "${enable_mmsg}" != "no"; then :
+
+
+$as_echo "#define ENABLE_MMSG 1" >>confdefs.h
+
+
+else
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: The use of the \`sendmmsg' and \`recvmmsg' functions has been disabled" >&5
+$as_echo "$as_me: The use of the \`sendmmsg' and \`recvmmsg' functions has been disabled" >&6;}
+
+fi
+# Check whether --enable-bpf was given.
+if test "${enable_bpf+set}" = set; then :
+  enableval=$enable_bpf;
+fi
+
+if test "${enable_bpf}" != "no"; then :
+
+
+$as_echo "#define ENABLE_BPF 1" >>confdefs.h
+
+
+else
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: The use of BPF for filtering incoming packets has been disabled" >&5
+$as_echo "$as_me: The use of BPF for filtering incoming packets has been disabled" >&6;}
 
 fi
 

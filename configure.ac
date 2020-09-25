@@ -6,19 +6,6 @@ AC_CONFIG_FILES([Makefile])
 
 AM_INIT_AUTOMAKE
 
-AC_ARG_ENABLE([mmsg],
-    AS_HELP_STRING([--disable-mmsg], [Disable the use of sendmmsg()/recvmmsg()]))
-AS_IF([test "${enable_mmsg}" != "no"], [
-    AC_DEFINE([ENABLE_MMSG], [1],
-        [Define to 1 if you want to use the `sendmmsg' and `recvmmsg' functions.])
-])
-AC_ARG_ENABLE([bpf],
-    AS_HELP_STRING([--disable-bpf], [Disable the use of BPF for filtering incoming packets]))
-AS_IF([test "${enable_bpf}" != "no"], [
-    AC_DEFINE([ENABLE_BPF], [1],
-        [Define to 1 if you want to use BPF to filter incoming packets.])
-])
-
 AC_PROG_CC
 AC_PROG_CC_C99
 AS_IF([test "${ac_cv_prog_cc_c99}" = "no"], [
@@ -29,11 +16,11 @@ AC_PROG_LN_S
 AC_PROG_INSTALL
 
 AC_SEARCH_LIBS([socket], [socket], [],
-    [AC_MSG_ERROR([socket() is required for build])])
+    [AC_MSG_ERROR([`socket' function is required for build])])
 AC_SEARCH_LIBS([getaddrinfo], [resolv nsl xnet], [],
-    [AC_MSG_ERROR([getaddrinfo() is required for build])])
+    [AC_MSG_ERROR([`getaddrinfo' function is required for build])])
 AC_SEARCH_LIBS([getnameinfo], [resolv nsl xnet], [],
-    [AC_MSG_ERROR([getnameinfo() is required for build])])
+    [AC_MSG_ERROR([`getnameinfo' function is required for build])])
 AC_SEARCH_LIBS([clock_gettime], [rt],
     [AC_DEFINE([HAVE_CLOCK_GETTIME], [1],
         [Define to 1 if you have the `clock_gettime' function.])])
@@ -241,6 +228,23 @@ struct icmp6_hdr {
 AC_MSG_RESULT([${bwping_cv_sys_ipv6}])
 AS_IF([test "${bwping_cv_sys_ipv6}" = "no"], [
     AC_MSG_ERROR([IPv6 support is required for build])
+])
+
+AC_ARG_ENABLE([mmsg],
+    AS_HELP_STRING([--disable-mmsg], [Disable the use of the `sendmmsg' and `recvmmsg' functions]))
+AS_IF([test "${enable_mmsg}" != "no"], [
+    AC_DEFINE([ENABLE_MMSG], [1],
+        [Define to 1 if you want to use the `sendmmsg' and `recvmmsg' functions.])
+], [
+    AC_MSG_NOTICE([The use of the `sendmmsg' and `recvmmsg' functions has been disabled])
+])
+AC_ARG_ENABLE([bpf],
+    AS_HELP_STRING([--disable-bpf], [Disable the use of BPF for filtering incoming packets]))
+AS_IF([test "${enable_bpf}" != "no"], [
+    AC_DEFINE([ENABLE_BPF], [1],
+        [Define to 1 if you want to use BPF to filter incoming packets.])
+], [
+    AC_MSG_NOTICE([The use of BPF for filtering incoming packets has been disabled])
 ])
 
 AC_OUTPUT
