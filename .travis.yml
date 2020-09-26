@@ -156,11 +156,7 @@ script:
         echo && \
         echo "------------------ MAKE -------------------" && \
         echo && \
-        make "CFLAGS=-Werror" && \
-        echo && \
-        echo "--------------- MAKE CHECK ----------------" && \
-        echo && \
-        sudo make check
+        make "CFLAGS=-Werror"
 
         STATUS=$?
 
@@ -171,33 +167,6 @@ script:
             cat config.log
             echo
             echo "------------ END OF CONFIG.LOG ------------"
-            echo
-        fi
-        if [[ -f test-suite.log ]]; then
-            echo
-            echo "--------- BEGIN OF TEST-SUITE.LOG ---------"
-            echo
-            cat test-suite.log
-            echo
-            echo "---------- END OF TEST-SUITE.LOG ----------"
-            echo
-        fi
-        if [[ -f tests/bwping.log ]]; then
-            echo
-            echo "-------- BEGIN OF TESTS/BWPING.LOG --------"
-            echo
-            cat tests/bwping.log
-            echo
-            echo "--------- END OF TESTS/BWPING.LOG ---------"
-            echo
-        fi
-        if [[ -f tests/bwping6.log ]]; then
-            echo
-            echo "------- BEGIN OF TESTS/BWPING6.LOG --------"
-            echo
-            cat tests/bwping6.log
-            echo
-            echo "-------- END OF TESTS/BWPING6.LOG ---------"
             echo
         fi
     elif [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
