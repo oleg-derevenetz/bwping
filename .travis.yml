@@ -295,4 +295,4 @@ script:
 
     sleep 5
 
-    exit $STATUS
+    [[ "$STATUS" == "0" ]]
