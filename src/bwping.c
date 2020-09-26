@@ -290,7 +290,7 @@ static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, 
             if (pkt_size >= (ssize_t)(hdr_len + sizeof(icmp4))) {
                 memcpy(&icmp4, &packet[hdr_len], sizeof(icmp4));
 
-                if (icmp4.icmp_type == ICMP_ECHOREPLY && icmp4.icmp_id == htons(ident)) {
+                if (icmp4.icmp_type == ICMP_ECHOREPLY && ntohs(icmp4.icmp_id) == ident) {
                     *received_count  += 1;
                     *received_volume += pkt_size - hdr_len;
 
@@ -340,7 +340,7 @@ static void process_ping6(const char *packet, ssize_t pkt_size, uint16_t ident, 
     if (pkt_size >= (ssize_t)sizeof(icmp6)) {
         memcpy(&icmp6, packet, sizeof(icmp6));
 
-        if (icmp6.icmp6_type == ICMP6_ECHO_REPLY && icmp6.icmp6_id == htons(ident)) {
+        if (icmp6.icmp6_type == ICMP6_ECHO_REPLY && ntohs(icmp6.icmp6_id) == ident) {
             *received_count  += 1;
             *received_volume += pkt_size;
 
