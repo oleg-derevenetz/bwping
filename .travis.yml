@@ -20,6 +20,12 @@ jobs:
     - os: linux
       arch: ppc64le
       compiler: clang
+    - os: linux
+      arch: s390x
+      compiler: gcc
+    - os: linux
+      arch: s390x
+      compiler: clang
     - os: osx
       compiler: gcc
     - os: osx
