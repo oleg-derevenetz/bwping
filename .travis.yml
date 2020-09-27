@@ -1,13 +1,33 @@
 language: c
 
-os:
-  - linux
-  - osx
-  - windows
-
-compiler:
-  - gcc
-  - clang
+jobs:
+  include:
+    - os: linux
+      arch: amd64
+      compiler: gcc
+    - os: linux
+      arch: amd64
+      compiler: clang
+    - os: linux
+      arch: arm64
+      compiler: gcc
+    - os: linux
+      arch: arm64
+      compiler: clang
+    - os: linux
+      arch: ppc64le
+      compiler: gcc
+    - os: linux
+      arch: ppc64le
+      compiler: clang
+    - os: osx
+      compiler: gcc
+    - os: osx
+      compiler: clang
+    - os: windows
+      compiler: gcc
+    - os: windows
+      compiler: clang
 
 addons:
   sonarcloud:
@@ -52,7 +72,11 @@ script:
             echo && \
             echo "--------------- MAKE CHECK ----------------" && \
             echo && \
-            sudo make check "TESTS=tests/bwping" && \
+            if [[ "$TRAVIS_CPU_ARCH" == "amd64" ]]; then \
+                sudo make check "TESTS=tests/bwping"; \
+            else \
+                sudo make check; \
+            fi && \
             echo && \
             echo "------------- MAKE DISTCLEAN --------------" && \
             echo && \
@@ -69,10 +93,6 @@ script:
             STATUS=$?
         else
             echo && \
-            echo "--------- UNSHALLOW GIT FOR SONAR ---------" && \
-            echo && \
-            git fetch --unshallow && \
-            echo && \
             echo "----------- AUTORECONF --FORCE ------------" && \
             echo && \
             autoreconf --force && \
@@ -87,8 +107,16 @@ script:
             echo && \
             echo "--------------- MAKE CHECK ----------------" && \
             echo && \
-            sudo make check "TESTS=tests/bwping" && \
-            if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then \
+            if [[ "$TRAVIS_CPU_ARCH" == "amd64" ]]; then \
+                sudo make check "TESTS=tests/bwping"; \
+            else \
+                sudo make check; \
+            fi && \
+            if [[ "$TRAVIS_CPU_ARCH" == "amd64" && "$TRAVIS_PULL_REQUEST" == "false" ]]; then \
+                echo && \
+                echo "--------- UNSHALLOW GIT FOR SONAR ---------" && \
+                echo && \
+                git fetch --unshallow && \
                 echo && \
                 echo "-------------- SONAR WRAPPER --------------" && \
                 echo && \
