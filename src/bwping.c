@@ -688,16 +688,16 @@ int main(int argc, char *argv[])
                     /* (06) */ {0x15, 0, 3, ICMP_ECHOREPLY}, /* jeq  $ICMP_ECHOREPLY jt 7  jf 10 - ICMP Type is Echo Reply */
                     /* (07) */ {0x48, 0, 0, 0x00000004},     /* ldh  [x + 4]                     - ICMP Id */
                     /* (08) */ {0x15, 0, 1, ident},          /* jeq  $ident          jt 9  jf 10 - ICMP Id is equal to ident */
-                    /* (09) */ {0x6,  0, 0, 0x00040000},     /* ret  #0x40000                    - Accept packet */
-                    /* (10) */ {0x6,  0, 0, 0x00000000}      /* ret  #0x0                        - Discard packet */
+                    /* (09) */ {0x06, 0, 0, 0x00040000},     /* ret  #0x40000                    - Accept packet */
+                    /* (10) */ {0x06, 0, 0, 0x00000000}      /* ret  #0x0                        - Discard packet */
                 };
                 struct sock_filter filter6[] = {
                     /* (00) */ {0x30, 0, 0, 0x00000000},       /* ldb [0]                         - ICMPv6 Type */
                     /* (01) */ {0x15, 0, 3, ICMP6_ECHO_REPLY}, /* jeq $ICMP6_ECHO_REPLY jt 2 jf 5 - ICMPv6 Type is Echo Reply */
                     /* (02) */ {0x28, 0, 0, 0x00000004},       /* ldh [4]                         - ICMPv6 Id */
                     /* (03) */ {0x15, 0, 1, ident},            /* jeq $ident            jt 4 jf 5 - ICMPv6 Id is equal to ident */
-                    /* (04) */ {0x6,  0, 0, 0x00040000},       /* ret #0x40000                    - Accept packet */
-                    /* (05) */ {0x6,  0, 0, 0x00000000}        /* ret #0x0                        - Discard packet */
+                    /* (04) */ {0x06, 0, 0, 0x00040000},       /* ret #0x40000                    - Accept packet */
+                    /* (05) */ {0x06, 0, 0, 0x00000000}        /* ret #0x0                        - Discard packet */
                 };
 
                 struct sock_fprog bpf;
