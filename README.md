@@ -103,9 +103,9 @@ Oleg Derevenetz <oleg.derevenetz@gmail.com>
 
 ## NOTES
 
-This utility uses raw sockets to deal with ICMP messages, so it may require
+These tools use raw sockets to deal with ICMP messages, so they may require
 root privileges or extended  capabilities (such as CAP_NET_RAW on Linux) to
-run. It can also be run as setuid root.
+run. They can also be run as setuid root.
 
 Although  bwping  and  bwping6 does not require any special software on the
 remote  host  (only the ability to respond on ICMP echo request  messages),
