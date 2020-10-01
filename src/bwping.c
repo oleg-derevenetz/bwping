@@ -571,8 +571,9 @@ int main(int argc, char *argv[])
     }
 
     if (exit_val != EX_OK) {
-        fprintf(stderr, "Usage: %s [-4 | -6] [-u buf_size] [-r reporting_period] [-T tos(v4) | traf_class(v6)] [-B bind_addr]"
-                        " -b kbps -s pkt_size -v volume target\n", prog_name);
+        fprintf(stderr, "This tool is part of the %s package\n"
+                        "Usage: %s [-4 | -6] [-u buf_size] [-r reporting_period] [-T tos(v4) | traf_class(v6)] [-B bind_addr]"
+                        " -b kbps -s pkt_size -v volume target\n", PACKAGE_STRING, prog_name);
 
         exit(exit_val);
     }
