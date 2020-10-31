@@ -1,4 +1,4 @@
-#include "../include/features.h"
+#include "features.h"
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -38,7 +38,7 @@
 #endif
 
 #ifdef __CYGWIN__
-#include "../include/cygwin.h"
+#include "cygwin.h"
 #endif
 
 #include <netdb.h>
