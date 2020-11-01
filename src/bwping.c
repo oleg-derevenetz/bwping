@@ -1,8 +1,17 @@
-#include "features.h"
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+/* GNU libc */
+#define _GNU_SOURCE
+
+/* Solaris */
+#define __EXTENSIONS__
+
+/* stdint.h, inttypes.h */
+#define __STDC_LIMIT_MACROS
+#define __STDC_CONSTANT_MACROS
+#define __STDC_FORMAT_MACROS
 
 #include <sys/time.h>
 #include <sys/types.h>

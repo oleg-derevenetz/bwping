@@ -2,7 +2,7 @@ AUTOMAKE_OPTIONS   = subdir-objects
 
 sbin_PROGRAMS      = bwping
 
-bwping_SOURCES     = src/bwping.c src/cygwin.h src/features.h
+bwping_SOURCES     = src/bwping.c src/cygwin.h
 
 man_MANS           = man/bwping.8
 EXTRA_DIST         = man/bwping.8
