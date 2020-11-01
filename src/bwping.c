@@ -2,12 +2,6 @@
 #include <config.h>
 #endif
 
-/* GNU libc */
-#define _GNU_SOURCE
-
-/* Solaris */
-#define __EXTENSIONS__
-
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/select.h>
