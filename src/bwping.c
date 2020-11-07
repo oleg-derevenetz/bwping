@@ -59,7 +59,6 @@ static char *prog_name;
 
 static void get_time(struct timespec *ts)
 {
-#if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_REALTIME)
 #if defined(CLOCK_HIGHRES)
     const clockid_t id = CLOCK_HIGHRES;
 #elif defined(CLOCK_MONOTONIC_RAW)
@@ -82,27 +81,6 @@ static void get_time(struct timespec *ts)
         ts->tv_sec  = 0;
         ts->tv_nsec = 0;
     }
-#else /* HAVE_CLOCK_GETTIME && CLOCK_REALTIME */
-    struct timeval tv;
-
-    if (gettimeofday(&tv, NULL) < 0) {
-        fprintf(stderr, "%s: gettimeofday() failed: %s\n", prog_name, strerror(errno));
-
-        ts->tv_sec  = 0;
-        ts->tv_nsec = 0;
-    } else {
-        ts->tv_sec  = tv.tv_sec;
-        ts->tv_nsec = tv.tv_usec * 1000;
-
-        if ((int64_t)ts->tv_sec  < MIN_TV_SEC  || (int64_t)ts->tv_sec  > MAX_TV_SEC ||
-                     ts->tv_nsec < MIN_TV_NSEC ||          ts->tv_nsec > MAX_TV_NSEC) {
-            fprintf(stderr, "%s: gettimeofday() result out of range\n", prog_name);
-
-            ts->tv_sec  = 0;
-            ts->tv_nsec = 0;
-        }
-    }
-#endif /* HAVE_CLOCK_GETTIME && CLOCK_REALTIME */
 }
 
 static int64_t ts_sub(const struct timespec *ts1, const struct timespec *ts2)

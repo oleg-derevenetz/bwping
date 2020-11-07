@@ -17,15 +17,14 @@ AS_IF([test "${ac_cv_prog_cc_c99}" = "no"], [
 AC_PROG_LN_S
 AC_PROG_INSTALL
 
+AC_SEARCH_LIBS([clock_gettime], [rt], [],
+    [AC_MSG_ERROR([`clock_gettime' function is required for build])])
 AC_SEARCH_LIBS([socket], [socket], [],
     [AC_MSG_ERROR([`socket' function is required for build])])
 AC_SEARCH_LIBS([getaddrinfo], [resolv nsl xnet], [],
     [AC_MSG_ERROR([`getaddrinfo' function is required for build])])
 AC_SEARCH_LIBS([getnameinfo], [resolv nsl xnet], [],
     [AC_MSG_ERROR([`getnameinfo' function is required for build])])
-AC_SEARCH_LIBS([clock_gettime], [rt],
-    [AC_DEFINE([HAVE_CLOCK_GETTIME], [1],
-        [Define to 1 if you have the `clock_gettime' function.])])
 AC_SEARCH_LIBS([sendmmsg], [socket],
     [AC_DEFINE([HAVE_SENDMMSG], [1],
         [Define to 1 if you have the `sendmmsg' function.])])
