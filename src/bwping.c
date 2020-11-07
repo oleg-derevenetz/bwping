@@ -50,8 +50,10 @@
 static const size_t   MAX_IPV4_HDR_SIZE  = 60;
 static const uint32_t CALIBRATION_CYCLES = 100,
                       PKT_BURST_SCALE    = 1000;
-static const int64_t  MAX_PKT_TIME_SEC   = 8589934592,
-                      MAX_PKT_TIME_NSEC  = 999999999;
+static const int64_t  MIN_TV_SEC         = INT64_MIN / 1000000 / 10,
+                      MAX_TV_SEC         = INT64_MAX / 1000000 / 10,
+                      MIN_TV_NSEC        = 0,
+                      MAX_TV_NSEC        = 999999999;
 
 static char *prog_name;
 
@@ -73,6 +75,12 @@ static void get_time(struct timespec *ts)
 
         ts->tv_sec  = 0;
         ts->tv_nsec = 0;
+    } else if ((int64_t)ts->tv_sec  < MIN_TV_SEC  || (int64_t)ts->tv_sec  > MAX_TV_SEC ||
+                        ts->tv_nsec < MIN_TV_NSEC ||          ts->tv_nsec > MAX_TV_NSEC) {
+        fprintf(stderr, "%s: clock_gettime() result out of range\n", prog_name);
+
+        ts->tv_sec  = 0;
+        ts->tv_nsec = 0;
     }
 #else /* HAVE_CLOCK_GETTIME && CLOCK_REALTIME */
     struct timeval tv;
@@ -85,6 +93,14 @@ static void get_time(struct timespec *ts)
     } else {
         ts->tv_sec  = tv.tv_sec;
         ts->tv_nsec = tv.tv_usec * 1000;
+
+        if ((int64_t)ts->tv_sec  < MIN_TV_SEC  || (int64_t)ts->tv_sec  > MAX_TV_SEC ||
+                     ts->tv_nsec < MIN_TV_NSEC ||          ts->tv_nsec > MAX_TV_NSEC) {
+            fprintf(stderr, "%s: gettimeofday() result out of range\n", prog_name);
+
+            ts->tv_sec  = 0;
+            ts->tv_nsec = 0;
+        }
     }
 #endif /* HAVE_CLOCK_GETTIME && CLOCK_REALTIME */
 }
@@ -298,8 +314,8 @@ static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, 
                         memcpy(&pkt_time, &packet[hdr_len + sizeof(icmp4)], sizeof(pkt_time));
 
                         if (pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0) {
-                            if ((int64_t)pkt_time.tv_sec  >= 0 && (int64_t)pkt_time.tv_sec  <= MAX_PKT_TIME_SEC &&
-                                         pkt_time.tv_nsec >= 0 &&          pkt_time.tv_nsec <= MAX_PKT_TIME_NSEC) {
+                            if ((int64_t)pkt_time.tv_sec  >= MIN_TV_SEC  && (int64_t)pkt_time.tv_sec  <= MAX_TV_SEC &&
+                                         pkt_time.tv_nsec >= MIN_TV_NSEC &&          pkt_time.tv_nsec <= MAX_TV_NSEC) {
                                 struct timespec now;
 
                                 get_time(&now);
@@ -348,8 +364,8 @@ static void process_ping6(const char *packet, ssize_t pkt_size, uint16_t ident, 
                 memcpy(&pkt_time, &packet[sizeof(icmp6)], sizeof(pkt_time));
 
                 if (pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0) {
-                    if ((int64_t)pkt_time.tv_sec  >= 0 && (int64_t)pkt_time.tv_sec  <= MAX_PKT_TIME_SEC &&
-                                 pkt_time.tv_nsec >= 0 &&          pkt_time.tv_nsec <= MAX_PKT_TIME_NSEC) {
+                    if ((int64_t)pkt_time.tv_sec  >= MIN_TV_SEC  && (int64_t)pkt_time.tv_sec  <= MAX_TV_SEC &&
+                                 pkt_time.tv_nsec >= MIN_TV_NSEC &&          pkt_time.tv_nsec <= MAX_TV_NSEC) {
                         struct timespec now;
 
                         get_time(&now);
