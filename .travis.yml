@@ -74,7 +74,11 @@ script:
             echo && \
             echo "------------------ MAKE -------------------" && \
             echo && \
-            make "CFLAGS=-Werror" && \
+            if [[ "$TRAVIS_CPU_ARCH" != "s390x" ]]; then \
+                make "CFLAGS=-Werror -fsanitize=undefined"; \
+            else \
+                make "CFLAGS=-Werror"; \
+            fi && \
             echo && \
             echo "--------------- MAKE CHECK ----------------" && \
             echo && \
@@ -109,7 +113,11 @@ script:
             echo && \
             echo "------------------ MAKE -------------------" && \
             echo && \
-            make "CFLAGS=-Werror" && \
+            if [[ "$TRAVIS_CPU_ARCH" != "s390x" ]]; then \
+                make "CFLAGS=-Werror -fsanitize=undefined"; \
+            else \
+                make "CFLAGS=-Werror"; \
+            fi && \
             echo && \
             echo "--------------- MAKE CHECK ----------------" && \
             echo && \
