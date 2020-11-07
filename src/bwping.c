@@ -76,7 +76,7 @@ static void get_time(struct timespec *ts)
         ts->tv_nsec = 0;
     } else if ((int64_t)ts->tv_sec  < MIN_TV_SEC  || (int64_t)ts->tv_sec  > MAX_TV_SEC ||
                         ts->tv_nsec < MIN_TV_NSEC ||          ts->tv_nsec > MAX_TV_NSEC) {
-        fprintf(stderr, "%s: clock_gettime() result out of range\n", prog_name);
+        fprintf(stderr, "%s: clock_gettime() result is out of range\n", prog_name);
 
         ts->tv_sec  = 0;
         ts->tv_nsec = 0;
@@ -235,7 +235,7 @@ static void sendmmsg_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai
         if (res < 0) {
             fprintf(stderr, "%s: sendmmsg() failed: %s\n", prog_name, strerror(errno));
         } else if ((unsigned int)res != vlen) {
-            fprintf(stderr, "%s: sendmmsg() warning: packets to send: %u, sent: %d\n", prog_name, vlen, res);
+            fprintf(stderr, "%s: sendmmsg() packets to send: %u, sent: %d\n", prog_name, vlen, res);
         }
     }
 }
@@ -260,7 +260,7 @@ static void send_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai, si
     if (res < 0) {
         fprintf(stderr, "%s: sendto() failed: %s\n", prog_name, strerror(errno));
     } else if ((size_t)res != pkt_size) {
-        fprintf(stderr, "%s: sendto() warning: packet size: %zu, sent: %zd\n", prog_name, pkt_size, res);
+        fprintf(stderr, "%s: sendto() packet size: %zu, sent: %zd\n", prog_name, pkt_size, res);
     }
 }
 
