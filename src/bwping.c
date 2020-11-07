@@ -76,7 +76,7 @@ static void get_time(struct timespec *ts)
         ts->tv_nsec = 0;
     } else if ((int64_t)ts->tv_sec  < MIN_TV_SEC  || (int64_t)ts->tv_sec  > MAX_TV_SEC ||
                         ts->tv_nsec < MIN_TV_NSEC ||          ts->tv_nsec > MAX_TV_NSEC) {
-        fprintf(stderr, "%s: clock_gettime() result is out of range\n", prog_name);
+        fprintf(stderr, "%s: clock_gettime() time is out of range\n", prog_name);
 
         ts->tv_sec  = 0;
         ts->tv_nsec = 0;
