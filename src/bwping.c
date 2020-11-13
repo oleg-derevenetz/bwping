@@ -56,9 +56,9 @@ static char *prog_name;
 static void get_time(struct timespec *ts)
 {
 #if defined(CLOCK_HIGHRES)
-    const clockid_t id = CLOCK_HIGHRES;
+    const clockid_t id = CLOCK_HIGHRES; /* Solaris */
 #elif defined(CLOCK_MONOTONIC_RAW)
-    const clockid_t id = CLOCK_MONOTONIC_RAW;
+    const clockid_t id = CLOCK_MONOTONIC_RAW; /* Linux */
 #elif defined(CLOCK_MONOTONIC)
     const clockid_t id = CLOCK_MONOTONIC;
 #else
