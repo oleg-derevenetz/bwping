@@ -82,7 +82,7 @@ script:
             echo && \
             echo "--------------- MAKE CHECK ----------------" && \
             echo && \
-            if [[ "$TRAVIS_CPU_ARCH" == "amd64" ]]; then \
+            if [[ "$TRAVIS_CPU_ARCH" == "amd64" || "$TRAVIS_CPU_ARCH" == "ppc64le" ]]; then \
                 sudo make check "TESTS=tests/bwping"; \
             else \
                 sudo make check; \
@@ -121,7 +121,7 @@ script:
             echo && \
             echo "--------------- MAKE CHECK ----------------" && \
             echo && \
-            if [[ "$TRAVIS_CPU_ARCH" == "amd64" ]]; then \
+            if [[ "$TRAVIS_CPU_ARCH" == "amd64" || "$TRAVIS_CPU_ARCH" == "ppc64le" ]]; then \
                 sudo make check "TESTS=tests/bwping"; \
             else \
                 sudo make check; \
