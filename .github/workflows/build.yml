@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - gh-actions-win
 
   pull_request:
     branches:
@@ -108,3 +109,44 @@ jobs:
         autoreconf --force && \
         ./configure && \
         make "CFLAGS=-Werror"
+
+  cygwin:
+    name: "Cygwin"
+    runs-on: windows-latest
+
+    defaults:
+        run:
+            shell: bash
+
+    steps:
+    - name: "Checkout repository"
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 2
+
+    - name: "Checkout HEAD^2 for pull request"
+      run: |
+        git checkout HEAD^2
+      if: ${{ github.event_name == 'pull_request' }}
+
+    - name: "Install additional packages"
+      run: |
+        choco.exe install cygwin cyg-get && \
+        cyg-get.bat autoconf automake make gcc-core git
+
+    - name: "Fix line endings"
+      run: |
+        cmd.exe //c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
+            cd \"$GITHUB_WORKSPACE\" && \
+            git ls-files -z | xargs -0 rm && \
+            git checkout -f ."
+
+    - name: "Run build"
+      run: |
+        cmd.exe //c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
+            cd \"$GITHUB_WORKSPACE\" && \
+            autoreconf --force && \
+            ./configure && \
+            make \"CFLAGS=-Werror\" && \
+            make check && \
+            make distcheck"
