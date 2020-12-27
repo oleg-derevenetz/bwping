@@ -1,0 +1,110 @@
+name: "Build"
+
+on:
+  push:
+    branches:
+    - master
+
+  pull_request:
+    branches:
+    - master
+
+  schedule:
+    - cron: "0 10 * * 6"
+
+jobs:
+  linux_gcc:
+    name: "Linux GCC"
+    runs-on: ubuntu-latest
+
+    defaults:
+        run:
+            shell: bash
+
+    steps:
+    - name: "Checkout repository"
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 2
+
+    - name: "Checkout HEAD^2 for pull request"
+      run: |
+        git checkout HEAD^2
+      if: ${{ github.event_name == 'pull_request' }}
+
+    - name: "Run build"
+      env:
+        CC: gcc
+      run: |
+        autoreconf --force && \
+        ./configure && \
+        make "CFLAGS=-Werror -fsanitize=undefined" && \
+        sudo make check
+
+  linux_clang:
+    name: "Linux Clang"
+    runs-on: ubuntu-latest
+
+    defaults:
+        run:
+            shell: bash
+
+    steps:
+    - name: "Checkout repository"
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 2
+
+    - name: "Checkout HEAD^2 for pull request"
+      run: |
+        git checkout HEAD^2
+      if: ${{ github.event_name == 'pull_request' }}
+
+    - name: "Install additional packages"
+      run: |
+        sudo apt-get install clang-tools
+
+    - name: "Run build"
+      env:
+        CC: clang
+      run: |
+        autoreconf --force && \
+        ./configure && \
+        make "CFLAGS=-Werror -fsanitize=undefined" && \
+        sudo make check
+
+    - name: "Run Clang Static Analyzer"
+      run: |
+        make distclean && \
+        autoreconf --force && \
+        scan-build ./configure && \
+        scan-build --status-bugs make "CFLAGS=-std=gnu99 -Werror"
+
+  macos:
+    name: "MacOS"
+    runs-on: macos-latest
+
+    defaults:
+        run:
+            shell: bash
+
+    steps:
+    - name: "Checkout repository"
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 2
+
+    - name: "Checkout HEAD^2 for pull request"
+      run: |
+        git checkout HEAD^2
+      if: ${{ github.event_name == 'pull_request' }}
+
+    - name: "Install additional packages"
+      run: |
+        brew install automake
+
+    - name: "Run build"
+      run: |
+        autoreconf --force && \
+        ./configure && \
+        make "CFLAGS=-Werror"
