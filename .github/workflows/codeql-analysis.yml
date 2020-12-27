@@ -2,43 +2,41 @@ name: "CodeQL Analysis"
 
 on:
   push:
-    branches: ["master"]
+    branches:
+    - master
+
   pull_request:
-    # The branches below must be a subset of the branches above
-    branches: ["master"]
+    branches:
+    - master
+
   schedule:
-    - cron: "0 17 * * 6"
+    - cron: "0 20 * * 6"
 
 jobs:
   analyze:
     name: "Analyze"
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ["cpp"]
-
     steps:
     - name: "Checkout repository"
       uses: actions/checkout@v2
       with:
-        # We must fetch at least the immediate parents so that if this is
-        # a pull request then we can checkout the head.
         fetch-depth: 2
 
-    # If this run was triggered by a pull request event, then checkout
-    # the head of the pull request instead of the merge commit.
-    - run: git checkout HEAD^2
+    - name: "Checkout HEAD^2 for pull request"
+      run: |
+        git checkout HEAD^2
       if: ${{ github.event_name == 'pull_request' }}
 
     - name: "Initialize CodeQL"
       uses: github/codeql-action/init@v1
       with:
-        languages: ${{ matrix.language }}
+        languages: cpp
 
     - run: |
-        autoreconf --force && ./configure && make
+        autoreconf --force && \
+        ./configure && \
+        make "CFLAGS=-Werror"
 
     - name: "Perform CodeQL analysis"
       uses: github/codeql-action/analyze@v1
