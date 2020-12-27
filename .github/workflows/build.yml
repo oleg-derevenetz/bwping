@@ -4,7 +4,6 @@ on:
   push:
     branches:
     - master
-    - gh-actions-win
 
   pull_request:
     branches:
@@ -39,7 +38,10 @@ jobs:
       run: |
         autoreconf --force && \
         ./configure && \
-        make "CFLAGS=-Werror -fsanitize=undefined" && \
+        make "CFLAGS=-Werror -fsanitize=undefined"
+
+    - name: "Run checks"
+      run: |
         sudo make check
 
   linux_clang:
@@ -71,7 +73,10 @@ jobs:
       run: |
         autoreconf --force && \
         ./configure && \
-        make "CFLAGS=-Werror -fsanitize=undefined" && \
+        make "CFLAGS=-Werror -fsanitize=undefined"
+
+    - name: "Run checks"
+      run: |
         sudo make check
 
     - name: "Run Clang Static Analyzer"
@@ -147,6 +152,12 @@ jobs:
             cd \"$GITHUB_WORKSPACE\" && \
             autoreconf --force && \
             ./configure && \
-            make \"CFLAGS=-Werror\" && \
+            make \"CFLAGS=-Werror\""
+
+    - name: "Run checks"
+      run: |
+        cmd.exe //c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
+            cd \"$GITHUB_WORKSPACE\" && \
             make check && \
             make distcheck"
+
