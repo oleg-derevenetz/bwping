@@ -65,7 +65,7 @@ jobs:
 
     - name: "Install additional packages"
       run: |
-        sudo apt-get install clang-tools
+        sudo apt-get -y install clang-tools
 
     - name: "Run build"
       env:
