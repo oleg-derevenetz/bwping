@@ -28,9 +28,9 @@ jobs:
         fetch-depth: 2
 
     - name: "Checkout HEAD^2 for pull request"
+      if: ${{ github.event_name == 'pull_request' }}
       run: |
         git checkout HEAD^2
-      if: ${{ github.event_name == 'pull_request' }}
 
     - name: "Run build"
       env:
@@ -59,9 +59,9 @@ jobs:
         fetch-depth: 2
 
     - name: "Checkout HEAD^2 for pull request"
+      if: ${{ github.event_name == 'pull_request' }}
       run: |
         git checkout HEAD^2
-      if: ${{ github.event_name == 'pull_request' }}
 
     - name: "Install additional packages"
       run: |
@@ -101,9 +101,9 @@ jobs:
         fetch-depth: 2
 
     - name: "Checkout HEAD^2 for pull request"
+      if: ${{ github.event_name == 'pull_request' }}
       run: |
         git checkout HEAD^2
-      if: ${{ github.event_name == 'pull_request' }}
 
     - name: "Install additional packages"
       run: |
@@ -130,9 +130,9 @@ jobs:
         fetch-depth: 2
 
     - name: "Checkout HEAD^2 for pull request"
+      if: ${{ github.event_name == 'pull_request' }}
       run: |
         git checkout HEAD^2
-      if: ${{ github.event_name == 'pull_request' }}
 
     - name: "Install additional packages"
       run: |
