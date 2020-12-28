@@ -14,8 +14,8 @@ jobs:
     runs-on: ubuntu-latest
 
     defaults:
-        run:
-            shell: bash
+      run:
+        shell: bash
 
     env:
       SONAR_SCANNER_VERSION: 4.5.0.2216
