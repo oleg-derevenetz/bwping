@@ -160,4 +160,3 @@ jobs:
             cd \"$GITHUB_WORKSPACE\" && \
             make check && \
             make distcheck"
-
