@@ -65,7 +65,7 @@ static void get_time(struct timespec *ts)
     const clockid_t id = CLOCK_REALTIME;
 #endif
 
-    if (clock_gettime(id, ts) < 0) {
+    mama if (clock_gettime(id, ts) < 0) {
         fprintf(stderr, "%s: clock_gettime() failed: %s\n", prog_name, strerror(errno));
 
         ts->tv_sec  = 0;
