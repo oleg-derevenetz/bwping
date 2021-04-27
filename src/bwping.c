@@ -48,8 +48,8 @@
 #endif /* ENABLE_MMSG */
 
 static const size_t   MAX_IPV4_HDR_SIZE  = 60;
-static const uint32_t CALIBRATION_CYCLES = 100,
-                      AVERAGE_RTT_SCALE  = 1000,
+static const uint32_t CALIBRATION_CYCLES = 100;
+static const uint64_t AVERAGE_RTT_SCALE  = 1000000,
                       PKT_BURST_SCALE    = 1000;
 
 static char *prog_name;
