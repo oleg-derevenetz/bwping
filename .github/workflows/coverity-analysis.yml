@@ -5,8 +5,8 @@ on:
     - cron: "0 12 * * 6"
 
 jobs:
-  analyze:
-    name: "Analyze"
+  coverity:
+    name: "Coverity Analysis"
     runs-on: ubuntu-latest
 
     defaults:

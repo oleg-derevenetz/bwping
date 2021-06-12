@@ -9,8 +9,8 @@ on:
     - cron: "0 13 * * 6"
 
 jobs:
-  analyze:
-    name: "Analyze"
+  sonarcloud:
+    name: "SonarCloud Analysis"
     runs-on: ubuntu-latest
 
     defaults:

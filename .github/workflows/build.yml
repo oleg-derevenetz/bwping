@@ -24,7 +24,7 @@ jobs:
           - { name: "no bpf",          options: "--disable-bpf" }
           - { name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
 
-    name: "Linux GCC ${{ matrix.config.name }}"
+    name: "Build Linux GCC ${{ matrix.config.name }}"
 
     defaults:
       run:
@@ -64,7 +64,7 @@ jobs:
           - { name: "no bpf",          options: "--disable-bpf" }
           - { name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
 
-    name: "Linux Clang ${{ matrix.config.name }}"
+    name: "Build Linux Clang ${{ matrix.config.name }}"
 
     defaults:
       run:
@@ -105,7 +105,7 @@ jobs:
         scan-build --status-bugs make "CFLAGS=-std=gnu99 -Werror"
 
   macos:
-    name: "MacOS"
+    name: "Build MacOS"
     runs-on: macos-latest
 
     defaults:
@@ -134,7 +134,7 @@ jobs:
         make "CFLAGS=-Werror"
 
   cygwin:
-    name: "Cygwin"
+    name: "Build Cygwin"
     runs-on: windows-latest
 
     defaults:
