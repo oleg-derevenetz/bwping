@@ -24,7 +24,7 @@ jobs:
           - { name: "no bpf",          options: "--disable-bpf" }
           - { name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
 
-    name: "CodeQL Analysis ${{ matrix.config.name }}"
+    name: "CodeQL Analysis (${{ matrix.config.name }})"
 
     defaults:
       run:

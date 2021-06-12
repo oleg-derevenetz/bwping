@@ -24,7 +24,7 @@ jobs:
           - { name: "no bpf",          options: "--disable-bpf" }
           - { name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
 
-    name: "Build Linux GCC ${{ matrix.config.name }}"
+    name: "Build Linux GCC (${{ matrix.config.name }})"
 
     defaults:
       run:
@@ -64,7 +64,7 @@ jobs:
           - { name: "no bpf",          options: "--disable-bpf" }
           - { name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
 
-    name: "Build Linux Clang ${{ matrix.config.name }}"
+    name: "Build Linux Clang (${{ matrix.config.name }})"
 
     defaults:
       run:
