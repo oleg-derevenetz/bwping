@@ -39,8 +39,8 @@ jobs:
 
     - name: "Run build"
       run: |
-        autoreconf --force && \
-        ./configure && \
+        autoreconf --force
+        ./configure
         make "CFLAGS=-Werror"
 
     - name: "Perform CodeQL analysis"

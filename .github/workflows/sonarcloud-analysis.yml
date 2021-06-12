@@ -28,16 +28,16 @@ jobs:
 
     - name: "Initialize SonarCloud"
       run: |
-        mkdir -p "$HOME/SonarCloud" && \
-        wget -P "$HOME/SonarCloud" "https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip" && \
-        wget -P "$HOME/SonarCloud" "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux.zip" && \
-        unzip "$HOME/SonarCloud/build-wrapper-linux-x86.zip" -d "$HOME/SonarCloud" && \
+        mkdir -p "$HOME/SonarCloud"
+        wget -P "$HOME/SonarCloud" "https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip"
+        wget -P "$HOME/SonarCloud" "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux.zip"
+        unzip "$HOME/SonarCloud/build-wrapper-linux-x86.zip" -d "$HOME/SonarCloud"
         unzip "$HOME/SonarCloud/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux.zip" -d "$HOME/SonarCloud"
 
     - name: "Run build via SonarCloud wrapper"
       run: |
-        autoreconf --force && \
-        ./configure && \
+        autoreconf --force
+        ./configure
         "$HOME/SonarCloud/build-wrapper-linux-x86/build-wrapper-linux-x86-64" --out-dir bw-output make
 
     - name: "Perform SonarCloud analysis"

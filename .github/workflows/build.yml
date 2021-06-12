@@ -14,8 +14,17 @@ on:
 
 jobs:
   linux_gcc:
-    name: "Linux GCC"
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        config:
+          - { name: "default",         options: "" }
+          - { name: "no mmsg",         options: "--disable-mmsg" }
+          - { name: "no bpf",          options: "--disable-bpf" }
+          - { name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
+
+    name: "Linux GCC ${{ matrix.config.name }}"
 
     defaults:
       run:
@@ -36,8 +45,8 @@ jobs:
       env:
         CC: gcc
       run: |
-        autoreconf --force && \
-        ./configure && \
+        autoreconf --force
+        ./configure ${{ matrix.config.options }}
         make "CFLAGS=-Werror -fsanitize=undefined"
 
     - name: "Run checks"
@@ -45,8 +54,17 @@ jobs:
         sudo make check
 
   linux_clang:
-    name: "Linux Clang"
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        config:
+          - { name: "default",         options: "" }
+          - { name: "no mmsg",         options: "--disable-mmsg" }
+          - { name: "no bpf",          options: "--disable-bpf" }
+          - { name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
+
+    name: "Linux Clang ${{ matrix.config.name }}"
 
     defaults:
       run:
@@ -71,8 +89,8 @@ jobs:
       env:
         CC: clang
       run: |
-        autoreconf --force && \
-        ./configure && \
+        autoreconf --force
+        ./configure ${{ matrix.config.options }}
         make "CFLAGS=-Werror -fsanitize=undefined"
 
     - name: "Run checks"
@@ -81,9 +99,9 @@ jobs:
 
     - name: "Run Clang Static Analyzer"
       run: |
-        make distclean && \
-        autoreconf --force && \
-        scan-build ./configure && \
+        make distclean
+        autoreconf --force
+        scan-build ./configure ${{ matrix.config.options }}
         scan-build --status-bugs make "CFLAGS=-std=gnu99 -Werror"
 
   macos:
@@ -111,8 +129,8 @@ jobs:
 
     - name: "Run build"
       run: |
-        autoreconf --force && \
-        ./configure && \
+        autoreconf --force
+        ./configure
         make "CFLAGS=-Werror"
 
   cygwin:
@@ -136,7 +154,7 @@ jobs:
 
     - name: "Install additional packages"
       run: |
-        choco.exe install cygwin cyg-get && \
+        choco.exe install cygwin cyg-get
         cyg-get.bat autoconf automake make gcc-core git
 
     - name: "Fix line endings"

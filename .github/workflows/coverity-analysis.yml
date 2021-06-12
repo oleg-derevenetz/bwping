@@ -27,22 +27,22 @@ jobs:
       env:
         COVERITY_TOKEN: ${{ secrets.COVERITY_TOKEN }}
       run: |
-        mkdir -p "$HOME/Coverity" && \
-        wget https://scan.coverity.com/download/linux64 --post-data "token=$COVERITY_TOKEN&project=$PROJECT_NAME" -O "$HOME/Coverity/coverity_tool.tgz" && \
-        tar -C "$HOME/Coverity" -xzf "$HOME/Coverity/coverity_tool.tgz" && \
+        mkdir -p "$HOME/Coverity"
+        wget https://scan.coverity.com/download/linux64 --post-data "token=$COVERITY_TOKEN&project=$PROJECT_NAME" -O "$HOME/Coverity/coverity_tool.tgz"
+        tar -C "$HOME/Coverity" -xzf "$HOME/Coverity/coverity_tool.tgz"
         mv "$HOME/Coverity/cov-analysis-linux64-"* "$HOME/Coverity/cov-analysis-linux64"
 
     - name: "Run build via Coverity wrapper"
       run: |
-        autoreconf --force && \
-        ./configure && \
+        autoreconf --force
+        ./configure
         "$HOME/Coverity/cov-analysis-linux64/bin/cov-build" --dir cov-int make
 
     - name: "Upload Coverity scan results"
       env:
         COVERITY_TOKEN: ${{ secrets.COVERITY_TOKEN }}
       run: |
-        tar -czf cov-int.tgz cov-int && \
+        tar -czf cov-int.tgz cov-int
         curl --form token="$COVERITY_TOKEN" \
              --form file=@cov-int.tgz \
              --form email="$NOTIFICATION_EMAIL" \
