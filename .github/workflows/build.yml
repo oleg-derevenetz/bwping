@@ -59,10 +59,10 @@ jobs:
     strategy:
       matrix:
         config:
-          - { name: "default",         options: "" }
-          - { name: "no mmsg",         options: "--disable-mmsg" }
-          - { name: "no bpf",          options: "--disable-bpf" }
-          - { name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
+        - { name: "default",         options: "" }
+        - { name: "no mmsg",         options: "--disable-mmsg" }
+        - { name: "no bpf",          options: "--disable-bpf" }
+        - { name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
 
     name: "Build Linux Clang (${{ matrix.config.name }})"
 
