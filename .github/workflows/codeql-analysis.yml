@@ -10,7 +10,7 @@ on:
     - master
 
   schedule:
-    - cron: "0 11 * * 6"
+  - cron: "0 11 * * 6"
 
 jobs:
   codeql:
@@ -19,10 +19,10 @@ jobs:
     strategy:
       matrix:
         config:
-          - { name: "default",         options: "" }
-          - { name: "no mmsg",         options: "--disable-mmsg" }
-          - { name: "no bpf",          options: "--disable-bpf" }
-          - { name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
+        - { name: "default",         options: "" }
+        - { name: "no mmsg",         options: "--disable-mmsg" }
+        - { name: "no bpf",          options: "--disable-bpf" }
+        - { name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
 
     name: "CodeQL Analysis (${{ matrix.config.name }})"
 
