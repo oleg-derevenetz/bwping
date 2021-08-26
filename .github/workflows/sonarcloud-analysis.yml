@@ -38,7 +38,7 @@ jobs:
       run: |
         autoreconf --force
         ./configure
-        "$HOME/SonarCloud/build-wrapper-linux-x86/build-wrapper-linux-x86-64" --out-dir bw-output make
+        "$HOME/SonarCloud/build-wrapper-linux-x86/build-wrapper-linux-x86-64" --out-dir .bw-output make
 
     - name: "Perform SonarCloud analysis"
       env:
@@ -50,7 +50,7 @@ jobs:
                                                                                         -Dsonar.organization=oleg-derevenetz-github \
                                                                                         -Dsonar.sources=. \
                                                                                         -Dsonar.sourceEncoding=UTF-8 \
-                                                                                        -Dsonar.cfamily.build-wrapper-output=bw-output \
+                                                                                        -Dsonar.cfamily.build-wrapper-output=.bw-output \
                                                                                         -Dsonar.cfamily.cache.enabled=false \
                                                                                         -Dsonar.cfamily.threads=1 \
                                                                                         -Dsonar.host.url=https://sonarcloud.io
