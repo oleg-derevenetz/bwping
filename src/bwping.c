@@ -496,17 +496,12 @@ static bool recv_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai, ui
 
 static bool resolve_name(bool ipv4_mode, const char *name, struct addrinfo **addr_info)
 {
-    size_t expected_addrlen;
     struct addrinfo hints = {.ai_flags = AI_CANONNAME, .ai_socktype = SOCK_RAW};
 
     if (ipv4_mode) {
-        expected_addrlen = sizeof(struct sockaddr_in);
-
         hints.ai_family   = AF_INET;
         hints.ai_protocol = IPPROTO_ICMP;
     } else {
-        expected_addrlen = sizeof(struct sockaddr_in6);
-
         hints.ai_family   = AF_INET6;
         hints.ai_protocol = IPPROTO_ICMPV6;
     }
@@ -517,16 +512,20 @@ static bool resolve_name(bool ipv4_mode, const char *name, struct addrinfo **add
         fprintf(stderr, "%s: cannot resolve %s: %s\n", prog_name, name, gai_strerror(res));
 
         return false;
-    } else if ((size_t)(*addr_info)->ai_addrlen != expected_addrlen) {
-        fprintf(stderr, "%s: getaddrinfo() expected ai_addrlen: %zu, returned: %zu\n", prog_name,
-                                                                                       expected_addrlen,
-                                                                                       (size_t)(*addr_info)->ai_addrlen);
-
-        freeaddrinfo(*addr_info);
-
-        return false;
     } else {
-        return true;
+        size_t expected_addrlen = ipv4_mode ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
+
+        if ((size_t)(*addr_info)->ai_addrlen != expected_addrlen) {
+            fprintf(stderr, "%s: getaddrinfo() expected ai_addrlen: %zu, returned: %zu\n", prog_name,
+                                                                                           expected_addrlen,
+                                                                                           (size_t)(*addr_info)->ai_addrlen);
+
+            freeaddrinfo(*addr_info);
+
+            return false;
+        } else {
+            return true;
+        }
     }
 }
 
