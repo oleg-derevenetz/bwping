@@ -461,12 +461,17 @@ static bool recv_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *receiv
 
 static bool resolve_name(bool ipv4_mode, const char *name, struct addrinfo **addr_info)
 {
+    size_t expected_addrlen;
     struct addrinfo hints = {.ai_flags = AI_CANONNAME, .ai_socktype = SOCK_RAW};
 
     if (ipv4_mode) {
+        expected_addrlen = sizeof(struct sockaddr_in);
+
         hints.ai_family   = AF_INET;
         hints.ai_protocol = IPPROTO_ICMP;
     } else {
+        expected_addrlen = sizeof(struct sockaddr_in6);
+
         hints.ai_family   = AF_INET6;
         hints.ai_protocol = IPPROTO_ICMPV6;
     }
@@ -475,6 +480,14 @@ static bool resolve_name(bool ipv4_mode, const char *name, struct addrinfo **add
 
     if (res != 0) {
         fprintf(stderr, "%s: cannot resolve %s: %s\n", prog_name, name, gai_strerror(res));
+
+        return false;
+    } else if ((size_t)(*addr_info)->ai_addrlen != expected_addrlen) {
+        fprintf(stderr, "%s: getaddrinfo() expected ai_addrlen: %zu, returned: %zu\n", prog_name,
+                                                                                       expected_addrlen,
+                                                                                       (size_t)(*addr_info)->ai_addrlen);
+
+        freeaddrinfo(*addr_info);
 
         return false;
     } else {
@@ -702,38 +715,32 @@ int main(int argc, char *argv[])
 
 #if defined(ENABLE_BPF) && defined(HAVE_LINUX_FILTER_H) && defined(SO_ATTACH_FILTER)
                 if (ipv4_mode) {
-                    if ((size_t)to_ai->ai_addrlen == sizeof(struct sockaddr_in)) {
-                        struct sockaddr_in sin4;
+                    struct sockaddr_in sin4;
 
-                        memcpy(&sin4, to_ai->ai_addr, sizeof(sin4));
+                    memcpy(&sin4, to_ai->ai_addr, sizeof(sin4));
 
-                        uint32_t to_ip4 = ntohl(sin4.sin_addr.s_addr);
+                    uint32_t to_ip4 = ntohl(sin4.sin_addr.s_addr);
 
-                        struct sock_filter filter[] = {
-                            /* (00) */ {0x30, 0, 0,  0x00000009},     /* ldb  [9]                         - IP Protocol */
-                            /* (01) */ {0x15, 0, 10, IPPROTO_ICMP},   /* jeq  $IPPROTO_ICMP   jt 2  jf 12 - IP Protocol is ICMP */
-                            /* (02) */ {0x20, 0, 0,  0x0000000C},     /* ld   [12]                        - Source IP Address */
-                            /* (03) */ {0x15, 0, 8,  to_ip4},         /* jeq  $to_ip4         jt 4  jf 12 - Source IP Address is to_ip4 */
-                            /* (04) */ {0x28, 0, 0,  0x00000006},     /* ldh  [6]                         - IP Fragment Offset */
-                            /* (05) */ {0x45, 6, 0,  0x00001FFF},     /* jset #0x1FFF         jt 12 jf 6  - IP Fragment Offset is zero */
-                            /* (06) */ {0xB1, 0, 0,  0x00000000},     /* ldxb 4*([0]&0xF)                 - Load IHL*4 to X */
-                            /* (07) */ {0x50, 0, 0,  0x00000000},     /* ldb  [x]                         - ICMP Type */
-                            /* (08) */ {0x15, 0, 3,  ICMP_ECHOREPLY}, /* jeq  $ICMP_ECHOREPLY jt 9  jf 12 - ICMP Type is Echo Reply */
-                            /* (09) */ {0x48, 0, 0,  0x00000004},     /* ldh  [x + 4]                     - ICMP Id */
-                            /* (10) */ {0x15, 0, 1,  ident},          /* jeq  $ident          jt 11 jf 12 - ICMP Id is ident */
-                            /* (11) */ {0x06, 0, 0,  0x00040000},     /* ret  #0x40000                    - Accept packet */
-                            /* (12) */ {0x06, 0, 0,  0x00000000}      /* ret  #0x0                        - Discard packet */
-                        };
+                    struct sock_filter filter[] = {
+                        /* (00) */ {0x30, 0, 0,  0x00000009},     /* ldb  [9]                         - IP Protocol */
+                        /* (01) */ {0x15, 0, 10, IPPROTO_ICMP},   /* jeq  $IPPROTO_ICMP   jt 2  jf 12 - IP Protocol is ICMP */
+                        /* (02) */ {0x20, 0, 0,  0x0000000C},     /* ld   [12]                        - Source IP Address */
+                        /* (03) */ {0x15, 0, 8,  to_ip4},         /* jeq  $to_ip4         jt 4  jf 12 - Source IP Address is to_ip4 */
+                        /* (04) */ {0x28, 0, 0,  0x00000006},     /* ldh  [6]                         - IP Fragment Offset */
+                        /* (05) */ {0x45, 6, 0,  0x00001FFF},     /* jset #0x1FFF         jt 12 jf 6  - IP Fragment Offset is zero */
+                        /* (06) */ {0xB1, 0, 0,  0x00000000},     /* ldxb 4*([0]&0xF)                 - Load IHL*4 to X */
+                        /* (07) */ {0x50, 0, 0,  0x00000000},     /* ldb  [x]                         - ICMP Type */
+                        /* (08) */ {0x15, 0, 3,  ICMP_ECHOREPLY}, /* jeq  $ICMP_ECHOREPLY jt 9  jf 12 - ICMP Type is Echo Reply */
+                        /* (09) */ {0x48, 0, 0,  0x00000004},     /* ldh  [x + 4]                     - ICMP Id */
+                        /* (10) */ {0x15, 0, 1,  ident},          /* jeq  $ident          jt 11 jf 12 - ICMP Id is ident */
+                        /* (11) */ {0x06, 0, 0,  0x00040000},     /* ret  #0x40000                    - Accept packet */
+                        /* (12) */ {0x06, 0, 0,  0x00000000}      /* ret  #0x0                        - Discard packet */
+                    };
 
-                        struct sock_fprog bpf = {.len = sizeof(filter) / sizeof(filter[0]), .filter = filter};
+                    struct sock_fprog bpf = {.len = sizeof(filter) / sizeof(filter[0]), .filter = filter};
 
-                        if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof(bpf)) < 0) {
-                            fprintf(stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror(errno));
-                        }
-                    } else {
-                        fprintf(stderr, "%s: invalid ai_addrlen: %zu, should be %zu\n", prog_name,
-                                                                                        (size_t)to_ai->ai_addrlen,
-                                                                                        sizeof(struct sockaddr_in));
+                    if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof(bpf)) < 0) {
+                        fprintf(stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror(errno));
                     }
                 } else {
                     struct sock_filter filter[] = {
