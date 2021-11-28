@@ -685,6 +685,19 @@ int main(int argc, char *argv[])
                     }
                 }
 
+#if defined(HAVE_NETINET_ICMP6_H) && defined(ICMP6_FILTER) && defined(ICMP6_FILTER_SETBLOCKALL) && defined(ICMP6_FILTER_SETPASS)
+                if (!ipv4_mode) {
+                    struct icmp6_filter filter6;
+
+                    ICMP6_FILTER_SETBLOCKALL(&filter6);
+                    ICMP6_FILTER_SETPASS(ICMP6_ECHO_REPLY, &filter6);
+
+                    if (setsockopt(sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filter6, sizeof(filter6)) < 0) {
+                        fprintf(stderr, "%s: setsockopt(ICMP6_FILTER) failed: %s\n", prog_name, strerror(errno));
+                    }
+                }
+#endif /* HAVE_NETINET_ICMP6_H && ICMP6_FILTER && ICMP6_FILTER_SETBLOCKALL && ICMP6_FILTER_SETPASS */
+
                 uint16_t ident = getpid() & 0xFFFF;
 
 #if defined(ENABLE_BPF) && defined(HAVE_LINUX_FILTER_H) && defined(SO_ATTACH_FILTER)
