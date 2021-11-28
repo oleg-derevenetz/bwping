@@ -311,8 +311,7 @@ static void process_ping4(const char *packet, ssize_t pkt_size, const struct in_
     if (pkt_size >= (ssize_t)sizeof(ip4)) {
         memcpy(&ip4, packet, sizeof(ip4));
 
-        if (ip4.ip_p == IPPROTO_ICMP && memcmp(&ip4.ip_src, to_addr4, sizeof(*to_addr4)) == 0 &&
-                                        (ntohs(ip4.ip_off) & 0x1FFF) == 0) {
+        if (ip4.ip_p == IPPROTO_ICMP && ip4.ip_src.s_addr == to_addr4->s_addr && (ntohs(ip4.ip_off) & 0x1FFF) == 0) {
             size_t hdr_len = ip4.ip_hl << 2;
 
             struct icmp icmp4;
@@ -371,7 +370,8 @@ static void process_ping6(const char *packet, ssize_t pkt_size, const struct in6
             *received_volume += pkt_size;
 
             if (pkt_size >= (ssize_t)(sizeof(icmp6) + sizeof(*to_addr6)) &&
-                memcmp(&packet[sizeof(icmp6)], to_addr6, sizeof(*to_addr6)) == 0) {
+                memcmp(&packet[sizeof(icmp6) + offsetof(struct in6_addr, s6_addr)],
+                       to_addr6->s6_addr, sizeof(to_addr6->s6_addr)) == 0) {
                 struct timespec pkt_time;
 
                 if (pkt_size >= (ssize_t)(sizeof(icmp6) + sizeof(*to_addr6) + sizeof(pkt_time))) {
