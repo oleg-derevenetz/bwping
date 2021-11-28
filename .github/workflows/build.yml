@@ -47,7 +47,7 @@ jobs:
       run: |
         autoreconf --force
         ./configure ${{ matrix.config.options }}
-        make "CFLAGS=-Werror -fsanitize=undefined"
+        make "CFLAGS=-Werror -fsanitize=address,undefined"
 
     - name: "Run checks"
       run: |
@@ -92,7 +92,7 @@ jobs:
       run: |
         autoreconf --force
         ./configure ${{ matrix.config.options }}
-        make "CFLAGS=-Werror -fsanitize=undefined"
+        make "CFLAGS=-Werror -fsanitize=address,undefined"
 
     - name: "Run checks"
       run: |
