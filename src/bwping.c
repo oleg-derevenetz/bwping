@@ -688,40 +688,55 @@ int main(int argc, char *argv[])
                 uint16_t ident = getpid() & 0xFFFF;
 
 #if defined(ENABLE_BPF) && defined(HAVE_LINUX_FILTER_H) && defined(SO_ATTACH_FILTER)
-                struct sock_filter filter4[] = {
-                    /* (00) */ {0x30, 0, 0, 0x00000009},     /* ldb  [9]                         - IP Protocol */
-                    /* (01) */ {0x15, 0, 8, IPPROTO_ICMP},   /* jeq  $IPPROTO_ICMP   jt 2  jf 10 - IP Protocol is ICMP */
-                    /* (02) */ {0x28, 0, 0, 0x00000006},     /* ldh  [6]                         - IP Fragment Offset */
-                    /* (03) */ {0x45, 6, 0, 0x00001FFF},     /* jset #0x1FFF         jt 10 jf 4  - IP Fragment Offset is zero */
-                    /* (04) */ {0xB1, 0, 0, 0x00000000},     /* ldxb 4*([0]&0xF)                 - Load IHL*4 to X */
-                    /* (05) */ {0x50, 0, 0, 0x00000000},     /* ldb  [x]                         - ICMP Type */
-                    /* (06) */ {0x15, 0, 3, ICMP_ECHOREPLY}, /* jeq  $ICMP_ECHOREPLY jt 7  jf 10 - ICMP Type is Echo Reply */
-                    /* (07) */ {0x48, 0, 0, 0x00000004},     /* ldh  [x + 4]                     - ICMP Id */
-                    /* (08) */ {0x15, 0, 1, ident},          /* jeq  $ident          jt 9  jf 10 - ICMP Id is equal to ident */
-                    /* (09) */ {0x06, 0, 0, 0x00040000},     /* ret  #0x40000                    - Accept packet */
-                    /* (10) */ {0x06, 0, 0, 0x00000000}      /* ret  #0x0                        - Discard packet */
-                };
-                struct sock_filter filter6[] = {
-                    /* (00) */ {0x30, 0, 0, 0x00000000},       /* ldb [0]                         - ICMPv6 Type */
-                    /* (01) */ {0x15, 0, 3, ICMP6_ECHO_REPLY}, /* jeq $ICMP6_ECHO_REPLY jt 2 jf 5 - ICMPv6 Type is Echo Reply */
-                    /* (02) */ {0x28, 0, 0, 0x00000004},       /* ldh [4]                         - ICMPv6 Id */
-                    /* (03) */ {0x15, 0, 1, ident},            /* jeq $ident            jt 4 jf 5 - ICMPv6 Id is equal to ident */
-                    /* (04) */ {0x06, 0, 0, 0x00040000},       /* ret #0x40000                    - Accept packet */
-                    /* (05) */ {0x06, 0, 0, 0x00000000}        /* ret #0x0                        - Discard packet */
-                };
-
-                struct sock_fprog bpf;
-
                 if (ipv4_mode) {
-                    bpf.len    = sizeof(filter4) / sizeof(filter4[0]);
-                    bpf.filter = filter4;
-                } else {
-                    bpf.len    = sizeof(filter6) / sizeof(filter6[0]);
-                    bpf.filter = filter6;
-                }
+                    if ((size_t)to_ai->ai_addrlen == sizeof(struct sockaddr_in)) {
+                        struct sockaddr_in sin4;
 
-                if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof(bpf)) < 0) {
-                    fprintf(stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror(errno));
+                        memcpy(&sin4, to_ai->ai_addr, sizeof(sin4));
+
+                        uint32_t to_ip4 = ntohl(sin4.sin_addr.s_addr);
+
+                        struct sock_filter filter[] = {
+                            /* (00) */ {0x30, 0, 0,  0x00000009},     /* ldb  [9]                         - IP Protocol */
+                            /* (01) */ {0x15, 0, 10, IPPROTO_ICMP},   /* jeq  $IPPROTO_ICMP   jt 2  jf 12 - IP Protocol is ICMP */
+                            /* (02) */ {0x20, 0, 0,  0x0000000C},     /* ld   [12]                        - Source IP Address */
+                            /* (03) */ {0x15, 0, 8,  to_ip4},         /* jeq  $to_ip4         jt 4  jf 12 - Source IP Address is to_ip4 */
+                            /* (04) */ {0x28, 0, 0,  0x00000006},     /* ldh  [6]                         - IP Fragment Offset */
+                            /* (05) */ {0x45, 6, 0,  0x00001FFF},     /* jset #0x1FFF         jt 12 jf 6  - IP Fragment Offset is zero */
+                            /* (06) */ {0xB1, 0, 0,  0x00000000},     /* ldxb 4*([0]&0xF)                 - Load IHL*4 to X */
+                            /* (07) */ {0x50, 0, 0,  0x00000000},     /* ldb  [x]                         - ICMP Type */
+                            /* (08) */ {0x15, 0, 3,  ICMP_ECHOREPLY}, /* jeq  $ICMP_ECHOREPLY jt 9  jf 12 - ICMP Type is Echo Reply */
+                            /* (09) */ {0x48, 0, 0,  0x00000004},     /* ldh  [x + 4]                     - ICMP Id */
+                            /* (10) */ {0x15, 0, 1,  ident},          /* jeq  $ident          jt 11 jf 12 - ICMP Id is ident */
+                            /* (11) */ {0x06, 0, 0,  0x00040000},     /* ret  #0x40000                    - Accept packet */
+                            /* (12) */ {0x06, 0, 0,  0x00000000}      /* ret  #0x0                        - Discard packet */
+                        };
+
+                        struct sock_fprog bpf = {.len = sizeof(filter) / sizeof(filter[0]), .filter = filter};
+
+                        if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof(bpf)) < 0) {
+                            fprintf(stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror(errno));
+                        }
+                    } else {
+                        fprintf(stderr, "%s: invalid ai_addrlen: %zu, should be %zu\n", prog_name,
+                                                                                        (size_t)to_ai->ai_addrlen,
+                                                                                        sizeof(struct sockaddr_in));
+                    }
+                } else {
+                    struct sock_filter filter[] = {
+                        /* (00) */ {0x30, 0, 0, 0x00000000},       /* ldb [0]                         - ICMPv6 Type */
+                        /* (01) */ {0x15, 0, 3, ICMP6_ECHO_REPLY}, /* jeq $ICMP6_ECHO_REPLY jt 2 jf 5 - ICMPv6 Type is Echo Reply */
+                        /* (02) */ {0x28, 0, 0, 0x00000004},       /* ldh [4]                         - ICMPv6 Id */
+                        /* (03) */ {0x15, 0, 1, ident},            /* jeq $ident            jt 4 jf 5 - ICMPv6 Id is ident */
+                        /* (04) */ {0x06, 0, 0, 0x00040000},       /* ret #0x40000                    - Accept packet */
+                        /* (05) */ {0x06, 0, 0, 0x00000000}        /* ret #0x0                        - Discard packet */
+                    };
+
+                    struct sock_fprog bpf = {.len = sizeof(filter) / sizeof(filter[0]), .filter = filter};
+
+                    if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof(bpf)) < 0) {
+                        fprintf(stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror(errno));
+                    }
                 }
 #endif /* ENABLE_BPF && HAVE_LINUX_FILTER_H && SO_ATTACH_FILTER */
 
