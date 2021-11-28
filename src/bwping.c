@@ -180,10 +180,12 @@ static void prepare_ping4(char *packet, size_t pkt_size, uint16_t ident, bool in
 
         memcpy(&packet[sizeof(icmp4)], &pkt_time, sizeof(pkt_time));
 
-        /* Optimization: it is assumed that packet was zeroed before calling this function */
+        /* Optimization: it is assumed that the rest of the packet is already zeroed */
         icmp4.icmp_cksum = cksum(packet, sizeof(icmp4) + sizeof(pkt_time));
     } else {
-        /* Optimization: it is assumed that packet was zeroed before calling this function */
+        memset(&packet[sizeof(icmp4)], 0, sizeof(struct timespec));
+
+        /* Optimization: it is assumed that the rest of the packet is already zeroed */
         icmp4.icmp_cksum = cksum(packet, sizeof(icmp4));
     }
 
@@ -212,6 +214,8 @@ static void prepare_ping6(char *packet, size_t pkt_size, uint16_t ident, bool in
         get_time(&pkt_time);
 
         memcpy(&packet[sizeof(icmp6)], &pkt_time, sizeof(pkt_time));
+    } else {
+        memset(&packet[sizeof(icmp6)], 0, sizeof(struct timespec));
     }
 
     *transmitted_count  += 1;
@@ -224,7 +228,7 @@ static void sendmmsg_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai
                           uint64_t pkt_count, uint64_t *transmitted_count, uint64_t *transmitted_volume)
 {
     for (uint64_t i = 0; i < pkt_count; i = i + MAX_MMSG_VLEN) {
-        static char packets[MAX_MMSG_VLEN][IP_MAXPACKET];
+        static char packets[MAX_MMSG_VLEN][IP_MAXPACKET] = {{0}};
 
         struct iovec   iov[MAX_MMSG_VLEN];
         struct mmsghdr msg[MAX_MMSG_VLEN];
@@ -232,8 +236,6 @@ static void sendmmsg_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai
         unsigned int vlen = pkt_count - i > MAX_MMSG_VLEN ? MAX_MMSG_VLEN : pkt_count - i;
 
         for (unsigned int j = 0; j < vlen; j++) {
-            memset(packets[j], 0, pkt_size);
-
             if (ipv4_mode) {
                 prepare_ping4(packets[j], pkt_size, ident, i == 0 && j == 0, transmitted_count, transmitted_volume);
             } else {
@@ -268,9 +270,7 @@ static void sendmmsg_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai
 static void send_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai, size_t pkt_size, uint16_t ident,
                       bool insert_timestamp, uint64_t *transmitted_count, uint64_t *transmitted_volume)
 {
-    static char packet[IP_MAXPACKET];
-
-    memset(packet, 0, pkt_size);
+    static char packet[IP_MAXPACKET] = {0};
 
     if (ipv4_mode) {
         prepare_ping4(packet, pkt_size, ident, insert_timestamp, transmitted_count, transmitted_volume);
