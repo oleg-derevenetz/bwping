@@ -47,6 +47,15 @@
 #endif /* HAVE_SENDMMSG || HAVE_RECVMMSG */
 #endif /* ENABLE_MMSG */
 
+struct addrinfo_46 {
+    struct addrinfo *ai;
+
+    union {
+        struct sockaddr_in sin4;
+        struct sockaddr_in6 sin6;
+    } sin;
+};
+
 static const size_t   MAX_IPV4_HDR_SIZE  = 60;
 static const uint32_t CALIBRATION_CYCLES = 100;
 static const uint64_t PKT_BURST_SCALE    = 1000;
@@ -209,16 +218,16 @@ static void prepare_ping6(char *packet, size_t pkt_size, const struct in6_addr *
     memcpy(packet, &icmp6, sizeof(icmp6));
 
     /* Since IPv6 headers are removed for incoming ICMPv6 packets, insert the destination IP address into the payload */
-    memcpy(&packet[sizeof(icmp6)], to_addr6, sizeof(*to_addr6));
+    memcpy(&packet[sizeof(icmp6)], to_addr6->s6_addr, sizeof(to_addr6->s6_addr));
 
     if (insert_timestamp) {
         struct timespec pkt_time;
 
         get_time(&pkt_time);
 
-        memcpy(&packet[sizeof(icmp6) + sizeof(*to_addr6)], &pkt_time, sizeof(pkt_time));
+        memcpy(&packet[sizeof(icmp6) + sizeof(to_addr6->s6_addr)], &pkt_time, sizeof(pkt_time));
     } else {
-        memset(&packet[sizeof(icmp6) + sizeof(*to_addr6)], 0, sizeof(struct timespec));
+        memset(&packet[sizeof(icmp6) + sizeof(to_addr6->s6_addr)], 0, sizeof(struct timespec));
     }
 
     *transmitted_count  += 1;
@@ -227,15 +236,9 @@ static void prepare_ping6(char *packet, size_t pkt_size, const struct in6_addr *
 
 #if defined(ENABLE_MMSG) && defined(HAVE_SENDMMSG)
 
-static void sendmmsg_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai, size_t pkt_size, uint16_t ident,
+static void sendmmsg_ping(bool ipv4_mode, int sock, const struct addrinfo_46 *to_ai, size_t pkt_size, uint16_t ident,
                           uint64_t pkt_count, uint64_t *transmitted_count, uint64_t *transmitted_volume)
 {
-    struct in6_addr to_addr6;
-
-    if (!ipv4_mode) {
-        memcpy(&to_addr6, &((char *)to_ai->ai_addr)[offsetof(struct sockaddr_in6, sin6_addr)], sizeof(to_addr6));
-    }
-
     for (uint64_t i = 0; i < pkt_count; i = i + MAX_MMSG_VLEN) {
         static char packets[MAX_MMSG_VLEN][IP_MAXPACKET] = {{0}};
 
@@ -248,7 +251,8 @@ static void sendmmsg_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai
             if (ipv4_mode) {
                 prepare_ping4(packets[j], pkt_size, ident, i == 0 && j == 0, transmitted_count, transmitted_volume);
             } else {
-                prepare_ping6(packets[j], pkt_size, &to_addr6, ident, i == 0 && j == 0, transmitted_count, transmitted_volume);
+                prepare_ping6(packets[j], pkt_size, &(to_ai->sin.sin6.sin6_addr), ident, i == 0 && j == 0,
+                              transmitted_count, transmitted_volume);
             }
 
             memset(&iov[j], 0, sizeof(iov[j]));
@@ -258,8 +262,8 @@ static void sendmmsg_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai
 
             memset(&msg[j], 0, sizeof(msg[j]));
 
-            msg[j].msg_hdr.msg_name    = to_ai->ai_addr;
-            msg[j].msg_hdr.msg_namelen = to_ai->ai_addrlen;
+            msg[j].msg_hdr.msg_name    = to_ai->ai->ai_addr;
+            msg[j].msg_hdr.msg_namelen = to_ai->ai->ai_addrlen;
             msg[j].msg_hdr.msg_iov     = &iov[j];
             msg[j].msg_hdr.msg_iovlen  = 1;
         }
@@ -276,7 +280,7 @@ static void sendmmsg_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai
 
 #else /* ENABLE_MMSG && HAVE_SENDMMSG */
 
-static void send_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai, size_t pkt_size, uint16_t ident,
+static void send_ping(bool ipv4_mode, int sock, const struct addrinfo_46 *to_ai, size_t pkt_size, uint16_t ident,
                       bool insert_timestamp, uint64_t *transmitted_count, uint64_t *transmitted_volume)
 {
     static char packet[IP_MAXPACKET] = {0};
@@ -284,14 +288,11 @@ static void send_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai, si
     if (ipv4_mode) {
         prepare_ping4(packet, pkt_size, ident, insert_timestamp, transmitted_count, transmitted_volume);
     } else {
-        struct in6_addr to_addr6;
-
-        memcpy(&to_addr6, &((char *)to_ai->ai_addr)[offsetof(struct sockaddr_in6, sin6_addr)], sizeof(to_addr6));
-
-        prepare_ping6(packet, pkt_size, &to_addr6, ident, insert_timestamp, transmitted_count, transmitted_volume);
+        prepare_ping6(packet, pkt_size, &(to_ai->sin.sin6.sin6_addr), ident, insert_timestamp,
+                      transmitted_count, transmitted_volume);
     }
 
-    ssize_t res = sendto(sock, packet, pkt_size, 0, to_ai->ai_addr, to_ai->ai_addrlen);
+    ssize_t res = sendto(sock, packet, pkt_size, 0, to_ai->ai->ai_addr, to_ai->ai->ai_addrlen);
 
     if (res < 0) {
         fprintf(stderr, "%s: sendto() failed: %s\n", prog_name, strerror(errno));
@@ -369,13 +370,12 @@ static void process_ping6(const char *packet, ssize_t pkt_size, const struct in6
             *received_count  += 1;
             *received_volume += pkt_size;
 
-            if (pkt_size >= (ssize_t)(sizeof(icmp6) + sizeof(*to_addr6)) &&
-                memcmp(&packet[sizeof(icmp6) + offsetof(struct in6_addr, s6_addr)],
-                       to_addr6->s6_addr, sizeof(to_addr6->s6_addr)) == 0) {
+            if (pkt_size >= (ssize_t)(sizeof(icmp6) + sizeof(to_addr6->s6_addr)) &&
+                memcmp(&packet[sizeof(icmp6)], to_addr6->s6_addr, sizeof(to_addr6->s6_addr)) == 0) {
                 struct timespec pkt_time;
 
-                if (pkt_size >= (ssize_t)(sizeof(icmp6) + sizeof(*to_addr6) + sizeof(pkt_time))) {
-                    memcpy(&pkt_time, &packet[sizeof(icmp6) + sizeof(*to_addr6)], sizeof(pkt_time));
+                if (pkt_size >= (ssize_t)(sizeof(icmp6) + sizeof(to_addr6->s6_addr) + sizeof(pkt_time))) {
+                    memcpy(&pkt_time, &packet[sizeof(icmp6) + sizeof(to_addr6->s6_addr)], sizeof(pkt_time));
 
                     if (pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0) {
                         struct timespec now;
@@ -406,7 +406,7 @@ static void process_ping6(const char *packet, ssize_t pkt_size, const struct in6
 
 #if defined(ENABLE_MMSG) && defined(HAVE_RECVMMSG)
 
-static bool recvmmsg_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai, uint16_t ident,
+static bool recvmmsg_ping(bool ipv4_mode, int sock, const struct addrinfo_46 *to_ai, uint16_t ident,
                           uint64_t *received_count, uint64_t *received_volume, uint64_t *rtt_count,
                           uint64_t *sum_rtt, uint64_t *min_rtt, uint64_t *max_rtt)
 {
@@ -431,20 +431,14 @@ static bool recvmmsg_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai
         return false;
     } else if (res > 0) {
         if (ipv4_mode) {
-            struct in_addr to_addr4;
-
-            memcpy(&to_addr4, &((char *)to_ai->ai_addr)[offsetof(struct sockaddr_in, sin_addr)], sizeof(to_addr4));
-
             for (int i = 0; i < res; i++) {
-                process_ping4(packets[i], msg[i].msg_len, &to_addr4, ident, received_count, received_volume, rtt_count, sum_rtt, min_rtt, max_rtt);
+                process_ping4(packets[i], msg[i].msg_len, &(to_ai->sin.sin4.sin_addr), ident, received_count,
+                              received_volume, rtt_count, sum_rtt, min_rtt, max_rtt);
             }
         } else {
-            struct in6_addr to_addr6;
-
-            memcpy(&to_addr6, &((char *)to_ai->ai_addr)[offsetof(struct sockaddr_in6, sin6_addr)], sizeof(to_addr6));
-
             for (int i = 0; i < res; i++) {
-                process_ping6(packets[i], msg[i].msg_len, &to_addr6, ident, received_count, received_volume, rtt_count, sum_rtt, min_rtt, max_rtt);
+                process_ping6(packets[i], msg[i].msg_len, &(to_ai->sin.sin6.sin6_addr), ident, received_count,
+                              received_volume, rtt_count, sum_rtt, min_rtt, max_rtt);
             }
         }
 
@@ -456,7 +450,7 @@ static bool recvmmsg_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai
 
 #else /* ENABLE_MMSG && HAVE_RECVMMSG */
 
-static bool recv_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai, uint16_t ident,
+static bool recv_ping(bool ipv4_mode, int sock, const struct addrinfo_46 *to_ai, uint16_t ident,
                       uint64_t *received_count, uint64_t *received_volume, uint64_t *rtt_count,
                       uint64_t *sum_rtt, uint64_t *min_rtt, uint64_t *max_rtt)
 {
@@ -473,17 +467,11 @@ static bool recv_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai, ui
         return false;
     } else if (res > 0) {
         if (ipv4_mode) {
-            struct in_addr to_addr4;
-
-            memcpy(&to_addr4, &((char *)to_ai->ai_addr)[offsetof(struct sockaddr_in, sin_addr)], sizeof(to_addr4));
-
-            process_ping4(packet, res, &to_addr4, ident, received_count, received_volume, rtt_count, sum_rtt, min_rtt, max_rtt);
+            process_ping4(packet, res, &(to_ai->sin.sin4.sin_addr), ident, received_count, received_volume,
+                          rtt_count, sum_rtt, min_rtt, max_rtt);
         } else {
-            struct in6_addr to_addr6;
-
-            memcpy(&to_addr6, &((char *)to_ai->ai_addr)[offsetof(struct sockaddr_in6, sin6_addr)], sizeof(to_addr6));
-
-            process_ping6(packet, res, &to_addr6, ident, received_count, received_volume, rtt_count, sum_rtt, min_rtt, max_rtt);
+            process_ping6(packet, res, &(to_ai->sin.sin6.sin6_addr), ident, received_count, received_volume,
+                          rtt_count, sum_rtt, min_rtt, max_rtt);
         }
 
         return true;
@@ -494,7 +482,7 @@ static bool recv_ping(bool ipv4_mode, int sock, const struct addrinfo *to_ai, ui
 
 #endif /* ENABLE_MMSG && HAVE_RECVMMSG */
 
-static bool resolve_name(bool ipv4_mode, const char *name, struct addrinfo **addr_info)
+static bool resolve_name(bool ipv4_mode, const char *name, struct addrinfo_46 *ai)
 {
     struct addrinfo hints = {.ai_flags = AI_CANONNAME, .ai_socktype = SOCK_RAW};
 
@@ -506,24 +494,30 @@ static bool resolve_name(bool ipv4_mode, const char *name, struct addrinfo **add
         hints.ai_protocol = IPPROTO_ICMPV6;
     }
 
-    int res = getaddrinfo(name, NULL, &hints, addr_info);
+    int res = getaddrinfo(name, NULL, &hints, &(ai->ai));
 
     if (res != 0) {
         fprintf(stderr, "%s: cannot resolve %s: %s\n", prog_name, name, gai_strerror(res));
 
         return false;
     } else {
-        size_t expected_addrlen = ipv4_mode ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
+        size_t addr_len = ipv4_mode ? sizeof(ai->sin.sin4) : sizeof(ai->sin.sin6);
 
-        if ((size_t)(*addr_info)->ai_addrlen != expected_addrlen) {
+        if ((size_t)ai->ai->ai_addrlen != addr_len) {
             fprintf(stderr, "%s: getaddrinfo() expected ai_addrlen: %zu, returned: %zu\n", prog_name,
-                                                                                           expected_addrlen,
-                                                                                           (size_t)(*addr_info)->ai_addrlen);
+                                                                                           addr_len,
+                                                                                           (size_t)ai->ai->ai_addrlen);
 
-            freeaddrinfo(*addr_info);
+            freeaddrinfo(ai->ai);
 
             return false;
         } else {
+            if (ipv4_mode) {
+                memcpy(&(ai->sin.sin4), ai->ai->ai_addr, addr_len);
+            } else {
+                memcpy(&(ai->sin.sin6), ai->ai->ai_addr, addr_len);
+            }
+
             return true;
         }
     }
@@ -643,9 +637,11 @@ int main(int argc, char *argv[])
             exit(EX_USAGE);
         }
     } else {
-        if (pkt_size < sizeof(struct icmp6_hdr) + sizeof(struct in6_addr) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET) {
+        struct in6_addr addr6;
+
+        if (pkt_size < sizeof(struct icmp6_hdr) + sizeof(addr6.s6_addr) + sizeof(struct timespec) || pkt_size > IP_MAXPACKET) {
             fprintf(stderr, "%s: invalid packet size, should be between %zu and %zu\n", prog_name,
-                                                                                        sizeof(struct icmp6_hdr) + sizeof(struct in6_addr)
+                                                                                        sizeof(struct icmp6_hdr) + sizeof(addr6.s6_addr)
                                                                                                                  + sizeof(struct timespec),
                                                                                         (size_t)IP_MAXPACKET);
 
@@ -685,28 +681,28 @@ int main(int argc, char *argv[])
         exit_val = EX_OSERR;
     } else {
         if (bind_addr != NULL) {
-            struct addrinfo *bind_ai;
+            struct addrinfo_46 bind_ai;
 
             if (resolve_name(ipv4_mode, bind_addr, &bind_ai)) {
-                if (bind(sock, bind_ai->ai_addr, bind_ai->ai_addrlen) < 0) {
+                if (bind(sock, bind_ai.ai->ai_addr, bind_ai.ai->ai_addrlen) < 0) {
                     fprintf(stderr, "%s: bind() failed: %s\n", prog_name, strerror(errno));
 
                     exit_val = EX_OSERR;
                 }
 
-                freeaddrinfo(bind_ai);
+                freeaddrinfo(bind_ai.ai);
             } else {
                 exit_val = EX_NOHOST;
             }
         }
 
         if (exit_val == EX_OK) {
-            struct addrinfo *to_ai;
+            struct addrinfo_46 to_ai;
 
             if (resolve_name(ipv4_mode, target, &to_ai)) {
                 char addr_buf[ipv4_mode ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN];
 
-                if (getnameinfo(to_ai->ai_addr, to_ai->ai_addrlen, addr_buf, sizeof(addr_buf), NULL, 0, NI_NUMERICHOST) != 0) {
+                if (getnameinfo(to_ai.ai->ai_addr, to_ai.ai->ai_addrlen, addr_buf, sizeof(addr_buf), NULL, 0, NI_NUMERICHOST) != 0) {
                     addr_buf[0] = '?';
                     addr_buf[1] = 0;
                 }
@@ -750,11 +746,7 @@ int main(int argc, char *argv[])
 
 #if defined(ENABLE_BPF) && defined(HAVE_LINUX_FILTER_H) && defined(SO_ATTACH_FILTER)
                 if (ipv4_mode) {
-                    struct sockaddr_in sin4;
-
-                    memcpy(&sin4, to_ai->ai_addr, sizeof(sin4));
-
-                    uint32_t to_ip4 = ntohl(sin4.sin_addr.s_addr);
+                    uint32_t to_ip4 = ntohl(to_ai.sin.sin4.sin_addr.s_addr);
 
                     struct sock_filter filter[] = {
                         /* (00) */ {0x30, 0, 0,  0x00000009},     /* ldb  [9]                         - IP Protocol */
@@ -778,14 +770,10 @@ int main(int argc, char *argv[])
                         fprintf(stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror(errno));
                     }
                 } else {
-                    struct sockaddr_in6 sin6;
-
-                    memcpy(&sin6, to_ai->ai_addr, sizeof(sin6));
-
-                    uint32_t to_ip6_w0 = ntohl(sin6.sin6_addr.s6_addr32[0]);
-                    uint32_t to_ip6_w1 = ntohl(sin6.sin6_addr.s6_addr32[1]);
-                    uint32_t to_ip6_w2 = ntohl(sin6.sin6_addr.s6_addr32[2]);
-                    uint32_t to_ip6_w3 = ntohl(sin6.sin6_addr.s6_addr32[3]);
+                    uint32_t to_ip6_w0 = ntohl(to_ai.sin.sin6.sin6_addr.s6_addr32[0]);
+                    uint32_t to_ip6_w1 = ntohl(to_ai.sin.sin6.sin6_addr.s6_addr32[1]);
+                    uint32_t to_ip6_w2 = ntohl(to_ai.sin.sin6.sin6_addr.s6_addr32[2]);
+                    uint32_t to_ip6_w3 = ntohl(to_ai.sin.sin6.sin6_addr.s6_addr32[3]);
 
                     struct sock_filter filter[] = {
                         /* (00) */ {0x30, 0, 0,  0x00000000},       /* ldb [0]                           - ICMPv6 Type */
@@ -858,10 +846,10 @@ int main(int argc, char *argv[])
                                                                            total_count - transmitted_count;
 
 #if defined(ENABLE_MMSG) && defined(HAVE_SENDMMSG)
-                    sendmmsg_ping(ipv4_mode, sock, to_ai, pkt_size, ident, pkt_count, &transmitted_count, &transmitted_volume);
+                    sendmmsg_ping(ipv4_mode, sock, &to_ai, pkt_size, ident, pkt_count, &transmitted_count, &transmitted_volume);
 #else
                     for (uint64_t i = 0; i < pkt_count; i++) {
-                        send_ping(ipv4_mode, sock, to_ai, pkt_size, ident, i == 0, &transmitted_count, &transmitted_volume);
+                        send_ping(ipv4_mode, sock, &to_ai, pkt_size, ident, i == 0, &transmitted_count, &transmitted_volume);
                     }
 #endif
 
@@ -884,10 +872,10 @@ int main(int argc, char *argv[])
                             fprintf(stderr, "%s: select() failed: %s\n", prog_name, strerror(errno));
                         } else if (n > 0) {
 #if defined(ENABLE_MMSG) && defined(HAVE_RECVMMSG)
-                            while (recvmmsg_ping(ipv4_mode, sock, to_ai, ident, &received_count, &received_volume, &rtt_count,
+                            while (recvmmsg_ping(ipv4_mode, sock, &to_ai, ident, &received_count, &received_volume, &rtt_count,
                                                  &sum_rtt, &min_rtt, &max_rtt)) {
 #else
-                            while (recv_ping(ipv4_mode, sock, to_ai, ident, &received_count, &received_volume, &rtt_count,
+                            while (recv_ping(ipv4_mode, sock, &to_ai, ident, &received_count, &received_volume, &rtt_count,
                                              &sum_rtt, &min_rtt, &max_rtt)) {
 #endif
                                 if (received_count >= transmitted_count) {
@@ -939,7 +927,7 @@ int main(int argc, char *argv[])
                        end.tv_sec - start.tv_sec > 0 ? received_volume / (end.tv_sec - start.tv_sec) * 8 / 1000 : received_volume * 8 / 1000,
                        min_rtt == UINT64_MAX ? 0 : min_rtt, max_rtt, rtt_count > 0 ? sum_rtt / rtt_count : 0);
 
-                freeaddrinfo(to_ai);
+                freeaddrinfo(to_ai.ai);
             } else {
                 exit_val = EX_NOHOST;
             }
