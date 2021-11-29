@@ -2,16 +2,14 @@ AC_INIT([bwping], [2.3])
 
 AC_CONFIG_SRCDIR([ChangeLog])
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([Makefile])
 
 AM_INIT_AUTOMAKE
 
 AC_USE_SYSTEM_EXTENSIONS
 
 AC_PROG_CC
-AC_PROG_CC_C99
-AS_IF([test "${ac_cv_prog_cc_c99}" = "no"], [
-    AC_MSG_ERROR([C99 compiler is required for build])
+AS_IF([test "${ac_cv_prog_cc_c11}" = "no"], [
+    AC_MSG_ERROR([C11 compiler is required for build])
 ])
 
 AC_PROG_LN_S
@@ -247,5 +245,7 @@ AS_IF([test "${enable_bpf}" != "no"], [
 ], [
     AC_MSG_NOTICE([The use of BPF for filtering incoming packets has been disabled])
 ])
+
+AC_CONFIG_FILES([Makefile])
 
 AC_OUTPUT

@@ -54,7 +54,7 @@ struct addrinfo_46 {
     union {
         struct sockaddr_in sin4;
         struct sockaddr_in6 sin6;
-    } sin;
+    };
 };
 
 static const size_t   MAX_IPV4_HDR_SIZE  = 60;
@@ -252,7 +252,7 @@ static void sendmmsg_ping(int sock, const struct addrinfo_46 *ai, size_t pkt_siz
             if (ai->ipv4) {
                 prepare_ping4(packets[j], pkt_size, ident, i == 0 && j == 0, transmitted_count, transmitted_volume);
             } else {
-                prepare_ping6(packets[j], pkt_size, &(ai->sin.sin6.sin6_addr), ident, i == 0 && j == 0,
+                prepare_ping6(packets[j], pkt_size, &(ai->sin6.sin6_addr), ident, i == 0 && j == 0,
                               transmitted_count, transmitted_volume);
             }
 
@@ -289,7 +289,7 @@ static void send_ping(int sock, const struct addrinfo_46 *ai, size_t pkt_size, u
     if (ai->ipv4) {
         prepare_ping4(packet, pkt_size, ident, insert_timestamp, transmitted_count, transmitted_volume);
     } else {
-        prepare_ping6(packet, pkt_size, &(ai->sin.sin6.sin6_addr), ident, insert_timestamp,
+        prepare_ping6(packet, pkt_size, &(ai->sin6.sin6_addr), ident, insert_timestamp,
                       transmitted_count, transmitted_volume);
     }
 
@@ -433,12 +433,12 @@ static bool recvmmsg_ping(int sock, const struct addrinfo_46 *ai, uint16_t ident
     } else if (res > 0) {
         if (ai->ipv4) {
             for (int i = 0; i < res; i++) {
-                process_ping4(packets[i], msg[i].msg_len, &(ai->sin.sin4.sin_addr), ident, received_count,
+                process_ping4(packets[i], msg[i].msg_len, &(ai->sin4.sin_addr), ident, received_count,
                               received_volume, rtt_count, sum_rtt, min_rtt, max_rtt);
             }
         } else {
             for (int i = 0; i < res; i++) {
-                process_ping6(packets[i], msg[i].msg_len, &(ai->sin.sin6.sin6_addr), ident, received_count,
+                process_ping6(packets[i], msg[i].msg_len, &(ai->sin6.sin6_addr), ident, received_count,
                               received_volume, rtt_count, sum_rtt, min_rtt, max_rtt);
             }
         }
@@ -468,10 +468,10 @@ static bool recv_ping(int sock, const struct addrinfo_46 *ai, uint16_t ident, ui
         return false;
     } else if (res > 0) {
         if (ai->ipv4) {
-            process_ping4(packet, res, &(ai->sin.sin4.sin_addr), ident, received_count, received_volume,
+            process_ping4(packet, res, &(ai->sin4.sin_addr), ident, received_count, received_volume,
                           rtt_count, sum_rtt, min_rtt, max_rtt);
         } else {
-            process_ping6(packet, res, &(ai->sin.sin6.sin6_addr), ident, received_count, received_volume,
+            process_ping6(packet, res, &(ai->sin6.sin6_addr), ident, received_count, received_volume,
                           rtt_count, sum_rtt, min_rtt, max_rtt);
         }
 
@@ -502,7 +502,7 @@ static bool resolve_name(bool ipv4_mode, const char *name, struct addrinfo_46 *a
 
         return false;
     } else {
-        size_t addr_len = ipv4_mode ? sizeof(ai->sin.sin4) : sizeof(ai->sin.sin6);
+        size_t addr_len = ipv4_mode ? sizeof(ai->sin4) : sizeof(ai->sin6);
 
         if ((size_t)ai->ai->ai_addrlen != addr_len) {
             fprintf(stderr, "%s: getaddrinfo() expected ai_addrlen: %zu, returned: %zu\n", prog_name,
@@ -516,9 +516,9 @@ static bool resolve_name(bool ipv4_mode, const char *name, struct addrinfo_46 *a
             ai->ipv4 = ipv4_mode;
 
             if (ipv4_mode) {
-                memcpy(&(ai->sin.sin4), ai->ai->ai_addr, addr_len);
+                memcpy(&(ai->sin4), ai->ai->ai_addr, addr_len);
             } else {
-                memcpy(&(ai->sin.sin6), ai->ai->ai_addr, addr_len);
+                memcpy(&(ai->sin6), ai->ai->ai_addr, addr_len);
             }
 
             return true;
@@ -749,7 +749,7 @@ int main(int argc, char *argv[])
 
 #if defined(ENABLE_BPF) && defined(HAVE_LINUX_FILTER_H) && defined(SO_ATTACH_FILTER)
                 if (ipv4_mode) {
-                    uint32_t ip4 = ntohl(to_ai.sin.sin4.sin_addr.s_addr);
+                    uint32_t ip4 = ntohl(to_ai.sin4.sin_addr.s_addr);
 
                     struct sock_filter filter[] = {
                         /* (00) */ {0x30, 0, 0,  0x00000009},     /* ldb  [9]                         - IP Protocol */
@@ -773,10 +773,10 @@ int main(int argc, char *argv[])
                         fprintf(stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror(errno));
                     }
                 } else {
-                    uint32_t ip6_w0 = ntohl(to_ai.sin.sin6.sin6_addr.s6_addr32[0]);
-                    uint32_t ip6_w1 = ntohl(to_ai.sin.sin6.sin6_addr.s6_addr32[1]);
-                    uint32_t ip6_w2 = ntohl(to_ai.sin.sin6.sin6_addr.s6_addr32[2]);
-                    uint32_t ip6_w3 = ntohl(to_ai.sin.sin6.sin6_addr.s6_addr32[3]);
+                    uint32_t ip6_w0 = ntohl(to_ai.sin6.sin6_addr.s6_addr32[0]);
+                    uint32_t ip6_w1 = ntohl(to_ai.sin6.sin6_addr.s6_addr32[1]);
+                    uint32_t ip6_w2 = ntohl(to_ai.sin6.sin6_addr.s6_addr32[2]);
+                    uint32_t ip6_w3 = ntohl(to_ai.sin6.sin6_addr.s6_addr32[3]);
 
                     struct sock_filter filter[] = {
                         /* (00) */ {0x30, 0, 0,  0x00000000},       /* ldb [0]                           - ICMPv6 Type */
