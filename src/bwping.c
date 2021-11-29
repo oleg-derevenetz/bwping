@@ -783,14 +783,14 @@ int main(int argc, char *argv[])
                         /* (01) */ {0x15, 0, 11, ICMP6_ECHO_REPLY}, /* jeq $ICMP6_ECHO_REPLY jt 2  jf 13 - ICMPv6 Type is Echo Reply */
                         /* (02) */ {0x28, 0, 0,  0x00000004},       /* ldh [4]                           - ICMPv6 Id */
                         /* (03) */ {0x15, 0, 9,  ident},            /* jeq $ident            jt 4  jf 13 - ICMPv6 Id is ident */
-                        /* (04) */ {0x20, 0, 0,  0x00000008},       /* ld  [8]                           - Payload IP W0 */
-                        /* (05) */ {0x15, 0, 7,  ip6_w0},           /* jeq $ip6_w0           jt 6  jf 13 - Payload IP W0 is ip6_w0 */
-                        /* (06) */ {0x20, 0, 0,  0x0000000C},       /* ld  [12]                          - Payload IP W1 */
-                        /* (07) */ {0x15, 0, 5,  ip6_w1},           /* jeq $ip6_w1           jt 8  jf 13 - Payload IP W1 is ip6_w1 */
-                        /* (08) */ {0x20, 0, 0,  0x00000010},       /* ld  [16]                          - Payload IP W2 */
-                        /* (09) */ {0x15, 0, 3,  ip6_w2},           /* jeq $ip6_w2           jt 10 jf 13 - Payload IP W2 is ip6_w2 */
-                        /* (10) */ {0x20, 0, 0,  0x00000014},       /* ld  [20]                          - Payload IP W3 */
-                        /* (11) */ {0x15, 0, 1,  ip6_w3},           /* jeq $ip6_w3           jt 12 jf 13 - Payload IP W3 is ip6_w3 */
+                        /* (04) */ {0x20, 0, 0,  0x00000008},       /* ld  [8]                           - IPv6 Address W0 (from payload) */
+                        /* (05) */ {0x15, 0, 7,  ip6_w0},           /* jeq $ip6_w0           jt 6  jf 13 - IPv6 Address W0 is ip6_w0 */
+                        /* (06) */ {0x20, 0, 0,  0x0000000C},       /* ld  [12]                          - IPv6 Address W1 (from payload) */
+                        /* (07) */ {0x15, 0, 5,  ip6_w1},           /* jeq $ip6_w1           jt 8  jf 13 - IPv6 Address W1 is ip6_w1 */
+                        /* (08) */ {0x20, 0, 0,  0x00000010},       /* ld  [16]                          - IPv6 Address W2 (from payload) */
+                        /* (09) */ {0x15, 0, 3,  ip6_w2},           /* jeq $ip6_w2           jt 10 jf 13 - IPv6 Address W2 is ip6_w2 */
+                        /* (10) */ {0x20, 0, 0,  0x00000014},       /* ld  [20]                          - IPv6 Address W3 (from payload) */
+                        /* (11) */ {0x15, 0, 1,  ip6_w3},           /* jeq $ip6_w3           jt 12 jf 13 - IPv6 Address W3 is ip6_w3 */
                         /* (12) */ {0x06, 0, 0,  0x00040000},       /* ret #0x40000                      - Accept packet */
                         /* (13) */ {0x06, 0, 0,  0x00000000}        /* ret #0x0                          - Discard packet */
                     };
