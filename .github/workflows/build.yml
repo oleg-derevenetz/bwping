@@ -103,7 +103,7 @@ jobs:
         make distclean
         autoreconf --force
         scan-build ./configure ${{ matrix.config.options }}
-        scan-build --status-bugs make "CFLAGS=-std=gnu99 -Werror"
+        scan-build --status-bugs make "CFLAGS=-std=c11 -Werror"
 
   macos:
     name: "Build MacOS"
