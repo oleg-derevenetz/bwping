@@ -539,7 +539,7 @@ int main(int argc, char *argv[])
     int32_t      reporting_period  = 0;
     uint32_t     kbps              = 0;
     uint64_t     volume            = 0;
-    char        *bind_addr         = NULL,
+    const char  *bind_addr         = NULL,
                 *target            = NULL;
 
     int ch;
