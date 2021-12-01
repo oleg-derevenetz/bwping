@@ -50,11 +50,11 @@
 #endif /* ENABLE_MMSG */
 
 struct addrinfo_46 {
-    bool ipv4;
+    bool             ipv4;
     struct addrinfo *ai;
 
     union {
-        struct sockaddr_in sin4;
+        struct sockaddr_in  sin4;
         struct sockaddr_in6 sin6;
     };
 };
