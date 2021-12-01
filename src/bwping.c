@@ -43,11 +43,9 @@
 
 #define CALIBRATION_CYCLES 32
 
-#if defined(ENABLE_MMSG)
-#if defined(HAVE_SENDMMSG) || defined(HAVE_RECVMMSG)
+#if defined(ENABLE_MMSG) && (defined(HAVE_SENDMMSG) || defined(HAVE_RECVMMSG))
 #define MAX_MMSG_VLEN 64
-#endif /* HAVE_SENDMMSG || HAVE_RECVMMSG */
-#endif /* ENABLE_MMSG */
+#endif
 
 struct addrinfo_46 {
     bool             ipv4;
