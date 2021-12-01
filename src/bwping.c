@@ -41,6 +41,8 @@
 
 #include <netdb.h>
 
+#define CALIBRATION_CYCLES 32
+
 #if defined(ENABLE_MMSG)
 #if defined(HAVE_SENDMMSG) || defined(HAVE_RECVMMSG)
 #define MAX_MMSG_VLEN 64
@@ -57,9 +59,8 @@ struct addrinfo_46 {
     };
 };
 
-static const size_t   MAX_IPV4_HDR_SIZE  = 60;
-static const uint32_t CALIBRATION_CYCLES = 100;
-static const uint64_t PKT_BURST_SCALE    = 1000;
+static const size_t   MAX_IPV4_HDR_SIZE = 60;
+static const uint64_t PKT_BURST_SCALE   = 1000;
 
 static char *prog_name;
 
@@ -145,10 +146,11 @@ static uint16_t cksum(const char *data, size_t size)
 
 static int64_t calibrate_timer(void)
 {
-    uint32_t successful_cycles = 0;
-    int64_t  sum               = 0;
+    int64_t time_diffs[CALIBRATION_CYCLES];
 
-    for (uint32_t i = 0; i < CALIBRATION_CYCLES; i++) {
+    size_t successful_cycles = 0;
+
+    for (unsigned int i = 0; i < CALIBRATION_CYCLES; i++) {
         struct timespec before;
 
         get_time(&before);
@@ -162,12 +164,34 @@ static int64_t calibrate_timer(void)
 
             get_time(&after);
 
-            successful_cycles += 1;
-            sum               += ts_sub(&after, &before);
+            int64_t time_diff = ts_sub(&after, &before);
+
+            if (time_diff >= 0) {
+                time_diffs[successful_cycles++] = time_diff;
+            } else {
+                fprintf(stderr, "%s: clock skew detected\n", prog_name);
+            }
         }
     }
 
-    return successful_cycles > 0 ? sum / successful_cycles : 0;
+    if (successful_cycles > 1) {
+        int64_t sum = 0;
+
+        /* Use the basic 3rd-order median filter to remove random spikes */
+        for (size_t i = 0; i < successful_cycles; i++) {
+            int64_t a = i == 0 ?                     time_diffs[i] : time_diffs[i - 1],
+                    b =                              time_diffs[i],
+                    c = i == successful_cycles - 1 ? time_diffs[i] : time_diffs[i + 1];
+
+            sum += (a < b) ? ((b < c) ? b : ((c < a) ? a : c)) : ((a < c) ? a : ((c < b) ? b : c));
+        }
+
+        return sum / successful_cycles;
+    } else if (successful_cycles == 1) {
+        return time_diffs[0];
+    } else {
+        return 0;
+    }
 }
 
 static void prepare_ping4(char *packet, size_t pkt_size, uint16_t ident, bool insert_timestamp,
@@ -900,11 +924,19 @@ int main(int argc, char *argv[])
 
                         get_time(&now);
 
-                        if (ts_sub(&now, &interval_start) >= current_interval) {
+                        int64_t time_diff = ts_sub(&now, &interval_start);
+
+                        if (time_diff < 0) {
+                            fprintf(stderr, "%s: clock skew detected\n", prog_name);
+
+                            time_diff = current_interval;
+                        }
+
+                        if (time_diff >= current_interval) {
                             if (transmitted_volume >= volume) {
                                 finish = true;
                             } else {
-                                interval_error += ts_sub(&now, &interval_start) - current_interval;
+                                interval_error += time_diff - current_interval;
 
                                 if (interval_error >= interval / 2) {
                                     current_interval  = interval / 2;
@@ -916,7 +948,7 @@ int main(int argc, char *argv[])
 
                             break;
                         } else {
-                            select_timeout = current_interval - ts_sub(&now, &interval_start);
+                            select_timeout = current_interval - time_diff;
                         }
                     }
 
