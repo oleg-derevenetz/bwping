@@ -179,7 +179,7 @@ static int64_t calibrate_timer(void)
 
         /* Use the basic 3rd-order median filter to remove random spikes */
         for (size_t i = 0; i < successful_cycles; i++) {
-            int64_t a = i == 0 ?                     time_diffs[i] : time_diffs[i - 1],
+            int64_t a = i == 0                     ? time_diffs[i] : time_diffs[i - 1],
                     b =                              time_diffs[i],
                     c = i == successful_cycles - 1 ? time_diffs[i] : time_diffs[i + 1];
 
