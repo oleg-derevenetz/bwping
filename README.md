@@ -8,14 +8,14 @@ bwping6 - with IPv6 networks.
 ## SYNOPSIS
 
 ```
-bwping [ -4 | -6 ] [ -u buf_size ] [ -r reporting_period ]
-       [ -T tos(v4) | traf_class(v6) ] [ -B bind_addr ]
+bwping [ -4 | -6 ] [ -B bind_addr ] [ -I ident ] [ -T tos(v4) |
+       traf_class(v6) ] [ -r reporting_period ] [ -u buf_size ]
        -b kbps -s pkt_size -v volume target
 ```
 
 ```
-bwping6 [ -4 | -6 ] [ -u buf_size ] [ -r reporting_period ]
-        [ -T tos(v4) | traf_class(v6) ] [ -B bind_addr ]
+bwping6 [ -4 | -6 ] [ -B bind_addr ] [ -I ident ] [ -T tos(v4) |
+        traf_class(v6) ] [ -r reporting_period ] [ -u buf_size ]
         -b kbps -s pkt_size -v volume target
 ```
 
@@ -36,19 +36,18 @@ Forces IPv6 mode. Default mode of operation is IPv4 for bwping and IPv6 for
 bwping6 otherwise.
 
 ```
--u buf_size
+-B bind_addr
 ```
 
-Sets the size of the socket send/receive buffer in bytes. If not specified,
-the  system  default  will  be  used.  Tune  this  parameter  if  the speed
-measurement results are unexpectedly low or packet loss occurs.
+Sets   the  source  address  of outgoing ip packets. By default the address
+of the outgoing interface will be used.
 
 ```
--r reporting_period
+-I ident
 ```
 
-Sets   the   interval  time in seconds between periodic bandwidth, RTT, and
-loss  reports.  If  zero,  there  will be no periodic reports (default).
+Sets  the  Identifier value of outgoing ICMP Echo Request packets. If zero,
+the value of the lower 16 bits of the process ID will be used (default).
 
 ```
 -T tos(v4) | traf_class(v6)
@@ -58,11 +57,19 @@ Sets  the  TOS  (in  IPv4  mode)  or  Traffic Class (in IPv6 mode) value of
 outgoing ip packets. Default value is zero.
 
 ```
--B bind_addr
+-r reporting_period
 ```
 
-Sets   the  source  address  of outgoing ip packets. By default the address
-of the outgoing interface will be used.
+Sets   the   interval  time in seconds between periodic bandwidth, RTT, and
+loss  reports.  If  zero,  there  will be no periodic reports (default).
+
+```
+-u buf_size
+```
+
+Sets  the  size  of  the  socket  send/receive  buffer  in  bytes.  If zero
+(default),  the  system  default  will  be used. Tune this parameter if the
+speed measurement results are unexpectedly low or packet loss occurs.
 
 ```
 -b kbps
@@ -120,6 +127,10 @@ testing path;
 request   messages   with   given   rate,  and  remote  host should quickly
 respond  on  these  messages  and should have no  ICMP  bandwidth  limiting
 turned on.
+
+3.  Each  bwping  and  bwping6 process should use its own ICMP Echo Request
+Identifier  value  to  reliably distinguish between ICMP Echo Reply packets
+destined for each of these processes.
 
 If  some  of  these  requirements  are  not  satisfied then the measurement
 results  will  be  inadequate  or  fail completely. In general, for testing

@@ -533,9 +533,10 @@ int main(int argc, char *argv[])
     bool ipv4_mode = (strcmp(prog_name, "bwping") == 0);
     int  exit_val  = EX_OK;
 
-    unsigned int buf_size          = 0,
-                 tos_or_traf_class = 0;
+    unsigned int tos_or_traf_class = 0,
+                 buf_size          = 0;
     size_t       pkt_size          = 0;
+    uint16_t     ident             = 0;
     int32_t      reporting_period  = 0;
     uint32_t     kbps              = 0;
     uint64_t     volume            = 0;
@@ -544,7 +545,7 @@ int main(int argc, char *argv[])
 
     int ch;
 
-    while ((ch = getopt(argc, argv, "46B:T:b:r:s:u:v:")) != -1) {
+    while ((ch = getopt(argc, argv, "46B:I:T:b:r:s:u:v:")) != -1) {
         char *ep;
 
         switch (ch) {
@@ -558,6 +559,14 @@ int main(int argc, char *argv[])
                 break;
             case 'B':
                 bind_addr = optarg;
+
+                break;
+            case 'I':
+                ident = strtoul(optarg, &ep, 0);
+
+                if (*ep || ep == optarg) {
+                    exit_val = EX_USAGE;
+                }
 
                 break;
             case 'T':
@@ -625,8 +634,8 @@ int main(int argc, char *argv[])
 #if defined(PACKAGE_STRING)
         fprintf(stderr, "%s is part of the %s package\n", prog_name, PACKAGE_STRING);
 #endif
-        fprintf(stderr, "Usage: %s [-4 | -6] [-u buf_size] [-r reporting_period] [-T tos(v4) | traf_class(v6)] [-B bind_addr]"
-                        " -b kbps -s pkt_size -v volume target\n", prog_name);
+        fprintf(stderr, "Usage: %s [-4 | -6] [-B bind_addr] [-I ident] [-T tos(v4) | traf_class(v6)] [-r reporting_period]"
+                        " [-u buf_size] -b kbps -s pkt_size -v volume target\n", prog_name);
 
         exit(exit_val);
     }
@@ -745,7 +754,9 @@ int main(int argc, char *argv[])
                 }
 #endif /* HAVE_NETINET_ICMP6_H && ICMP6_FILTER && ICMP6_FILTER_SETBLOCKALL && ICMP6_FILTER_SETPASS */
 
-                uint16_t ident = getpid() & 0xFFFF;
+                if (ident == 0) {
+                    ident = getpid() & 0xFFFF;
+                }
 
 #if defined(ENABLE_BPF) && defined(HAVE_LINUX_FILTER_H) && defined(SO_ATTACH_FILTER)
                 if (ipv4_mode) {

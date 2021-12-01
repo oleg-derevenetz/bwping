@@ -8,18 +8,20 @@ Internet Control Message Protocol (ICMP) echo request/echo reply mechanism.
 .SH SYNOPSIS
 .B bwping
 [ \fB-4\fR | \fB-6\fR ]
-[ \fB-u\fR \fIbuf_size\fR ]
-[ \fB-r\fR \fIreporting_period\fR ]
-[ \fB-T\fR \fItos(v4) | traf_class(v6)\fR ]
 [ \fB-B\fR \fIbind_addr\fR ]
+[ \fB-I\fR \fIident\fR ]
+[ \fB-T\fR \fItos(v4) | traf_class(v6)\fR ]
+[ \fB-r\fR \fIreporting_period\fR ]
+[ \fB-u\fR \fIbuf_size\fR ]
 \fB-b\fR \fIkbps\fR \fB-s\fR \fIpkt_size\fR \fB-v\fR \fIvolume\fR \fItarget\fR
 
 .B bwping6
 [ \fB-4\fR | \fB-6\fR ]
-[ \fB-u\fR \fIbuf_size\fR ]
-[ \fB-r\fR \fIreporting_period\fR ]
-[ \fB-T\fR \fItos(v4) | traf_class(v6)\fR ]
 [ \fB-B\fR \fIbind_addr\fR ]
+[ \fB-I\fR \fIident\fR ]
+[ \fB-T\fR \fItos(v4) | traf_class(v6)\fR ]
+[ \fB-r\fR \fIreporting_period\fR ]
+[ \fB-u\fR \fIbuf_size\fR ]
 \fB-b\fR \fIkbps\fR \fB-s\fR \fIpkt_size\fR \fB-v\fR \fIvolume\fR \fItarget\fR
 .SH OPTIONS
 .IP "\fB-4\fR" 5
@@ -34,20 +36,23 @@ Forces IPv6 mode. Default mode of operation is IPv4 for
 and IPv6 for
 .B bwping6
 otherwise.
-.IP "\fB-u\fR \fIbuf_size\fR" 5
-Sets the size of the socket send/receive buffer in bytes. If not
-specified, the system default will be used. Tune this parameter
-if the speed measurement results are unexpectedly low or packet
-loss occurs.
-.IP "\fB-r\fR \fIreporting_period\fR" 5
-Sets the interval time in seconds between periodic bandwidth, RTT,
-and loss reports. If zero, there will be no periodic reports (default).
-.IP "\fB-T\fR \fItos(v4) | traf_class(v6)\fR" 5
-Sets the TOS (in IPv4 mode) or Traffic Class (in IPv6 mode) value of
-outgoing ip packets. Default value is zero.
 .IP "\fB-B\fR \fIbind_addr\fR" 5
 Sets the source address of outgoing ip packets. By default the address
 of the outgoing interface will be used.
+.IP "\fB-I\fR \fIident\fR" 5
+Sets the Identifier value of outgoing ICMP Echo Request packets. If zero,
+the value of the lower 16 bits of the process ID will be used (default).
+.IP "\fB-T\fR \fItos(v4) | traf_class(v6)\fR" 5
+Sets the TOS (in IPv4 mode) or Traffic Class (in IPv6 mode) value of
+outgoing ip packets. Default value is zero.
+.IP "\fB-r\fR \fIreporting_period\fR" 5
+Sets the interval time in seconds between periodic bandwidth, RTT,
+and loss reports. If zero, there will be no periodic reports (default).
+.IP "\fB-u\fR \fIbuf_size\fR" 5
+Sets the size of the socket send/receive buffer in bytes. If zero
+(default), the system default will be used. Tune this parameter
+if the speed measurement results are unexpectedly low or packet
+loss occurs.
 .IP "\fB-b\fR \fIkbps\fR" 5
 Sets the transfer speed in kilobits per second.
 .IP "\fB-s\fR \fIpkt_size\fR" 5
@@ -79,6 +84,14 @@ the testing path;
 2. Local host should have enough CPU resources to send ICMP echo request
 messages with given rate, and remote host should quickly respond on these
 messages and should have no ICMP bandwidth limiting turned on.
+
+3. Each
+.B bwping
+and
+.B bwping6
+process should use its own ICMP Echo Request Identifier value to reliably
+distinguish between ICMP Echo Reply packets destined for each of these
+processes.
 
 If some of these requirements are not satisfied then the measurement
 results will be inadequate or fail completely. In general, for testing
