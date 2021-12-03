@@ -142,9 +142,9 @@ static uint16_t cksum(const char *data, size_t size)
     return ~sum;
 }
 
-static int64_t calibrate_timer(void)
+static uint64_t calibrate_timer(void)
 {
-    int64_t time_diffs[CALIBRATION_CYCLES];
+    uint64_t time_diffs[CALIBRATION_CYCLES];
 
     size_t successful_cycles = 0;
 
@@ -173,13 +173,13 @@ static int64_t calibrate_timer(void)
     }
 
     if (successful_cycles > 1) {
-        int64_t sum = 0;
+        uint64_t sum = 0;
 
         /* Use the basic 3rd-order median filter to remove random spikes */
         for (size_t i = 0; i < successful_cycles; i++) {
-            int64_t a = i == 0                     ? time_diffs[i] : time_diffs[i - 1],
-                    b =                              time_diffs[i],
-                    c = i == successful_cycles - 1 ? time_diffs[i] : time_diffs[i + 1];
+            uint64_t a = i == 0                     ? time_diffs[i] : time_diffs[i - 1],
+                     b =                              time_diffs[i],
+                     c = i == successful_cycles - 1 ? time_diffs[i] : time_diffs[i + 1];
 
             sum += (a < b) ? ((b < c) ? b : ((c < a) ? a : c)) : ((a < c) ? a : ((c < b) ? b : c));
         }
@@ -836,8 +836,8 @@ int main(int argc, char *argv[])
                 }
 #endif /* ENABLE_BPF && HAVE_LINUX_FILTER_H && SO_ATTACH_FILTER */
 
-                int64_t interval     = (int64_t)pkt_size * 8000 / kbps,
-                        min_interval = calibrate_timer() * 2; /* Leave space for interval_error adjustments */
+                uint64_t interval     = pkt_size * 8000 / kbps,
+                         min_interval = calibrate_timer() * 2; /* Leave space for interval_error adjustments */
 
                 uint64_t pkt_burst;
 
@@ -852,8 +852,6 @@ int main(int argc, char *argv[])
                 }
 
                 bool     finish             = false;
-                int64_t  current_interval   = interval,
-                         interval_error     = 0;
                 uint64_t total_count        = volume % pkt_size == 0 ? volume / pkt_size :
                                                                        volume / pkt_size + 1,
                          transmitted_count  = 0,
@@ -864,7 +862,9 @@ int main(int argc, char *argv[])
                          sum_rtt            = 0,
                          min_rtt            = UINT64_MAX,
                          max_rtt            = 0,
-                         pkt_burst_error    = 0;
+                         pkt_burst_error    = 0,
+                         current_interval   = interval,
+                         interval_error     = 0;
 
                 struct timespec start, end, report;
 
@@ -892,7 +892,7 @@ int main(int argc, char *argv[])
                     pkt_burst_error  = pkt_burst_error % PKT_BURST_SCALE;
                     pkt_burst_error += pkt_burst       % PKT_BURST_SCALE;
 
-                    int64_t select_timeout = current_interval;
+                    uint64_t select_timeout = current_interval;
 
                     while (1) {
                         fd_set fds;
@@ -924,17 +924,15 @@ int main(int argc, char *argv[])
 
                         int64_t time_diff = ts_sub(&now, &interval_start);
 
-                        if (time_diff < 0) {
-                            fprintf(stderr, "%s: clock skew detected\n", prog_name);
-
-                            time_diff = current_interval;
-                        }
-
-                        if (time_diff >= current_interval) {
+                        if (time_diff < 0 || (uint64_t)time_diff >= current_interval) {
                             if (transmitted_volume >= volume) {
                                 finish = true;
                             } else {
-                                interval_error += time_diff - current_interval;
+                                if (time_diff >= 0) {
+                                    interval_error += time_diff - current_interval;
+                                } else {
+                                    fprintf(stderr, "%s: clock skew detected\n", prog_name);
+                                }
 
                                 if (interval_error >= interval / 2) {
                                     current_interval  = interval / 2;
