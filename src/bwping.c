@@ -950,21 +950,26 @@ int main(int argc, char *argv[])
 
                     get_time(&end);
 
-                    if (reporting_period > 0 && end.tv_sec - report.tv_sec >= reporting_period) {
-                        printf("Periodic: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes, time: %ld sec,"
-                               " speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
-                               transmitted_count, received_count, transmitted_volume, received_volume, (long int)(end.tv_sec - start.tv_sec),
-                               end.tv_sec - start.tv_sec > 0 ? received_volume / (end.tv_sec - start.tv_sec) * 8 / 1000 : received_volume * 8 / 1000,
+                    int64_t report_sec_diff = ts_sub(&end, &report) / 1000000,
+                            start_sec_diff  = ts_sub(&end, &start)  / 1000000;
+
+                    if (reporting_period > 0 && report_sec_diff >= reporting_period) {
+                        printf("Periodic: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes,"
+                               " time: %" PRId64 " sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
+                               transmitted_count, received_count, transmitted_volume, received_volume, start_sec_diff,
+                               start_sec_diff > 0 ? received_volume / start_sec_diff * 8 / 1000 : received_volume * 8 / 1000,
                                min_rtt == UINT64_MAX ? 0 : min_rtt, max_rtt, rtt_count > 0 ? sum_rtt / rtt_count : 0);
 
                         get_time(&report);
                     }
                 }
 
-                printf("Total: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes, time: %ld sec,"
-                       " speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
-                       transmitted_count, received_count, transmitted_volume, received_volume, (long int)(end.tv_sec - start.tv_sec),
-                       end.tv_sec - start.tv_sec > 0 ? received_volume / (end.tv_sec - start.tv_sec) * 8 / 1000 : received_volume * 8 / 1000,
+                int64_t sec_diff = ts_sub(&end, &start) / 1000000;
+
+                printf("Total: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes,"
+                       " time: %" PRId64 " sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
+                       transmitted_count, received_count, transmitted_volume, received_volume, sec_diff,
+                       sec_diff > 0 ? received_volume / sec_diff * 8 / 1000 : received_volume * 8 / 1000,
                        min_rtt == UINT64_MAX ? 0 : min_rtt, max_rtt, rtt_count > 0 ? sum_rtt / rtt_count : 0);
 
                 freeaddrinfo(to_ai.ai);
