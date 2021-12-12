@@ -1,0 +1,26 @@
+#!/bin/sh
+
+for BIND_ADDR in "localhost" ""; do
+    for TARGET in "localhost" ""; do
+        if [ "$BIND_ADDR" != "" ] && [ "$TARGET" != "" ]; then
+            continue
+        fi
+
+        OUTPUT="$(./bwping -B "$BIND_ADDR" -b 800 -s 500 -v 200000 "$TARGET" 2>&1)"
+        STATUS="$?"
+
+        echo "$OUTPUT"
+
+        if [ "$STATUS" = "0" ]; then
+            exit 1
+        else
+            ISSUES="$(echo "$OUTPUT" | grep -v "^bwping: cannot resolve ")"
+
+            if [ "$ISSUES" != "" ]; then
+                exit 1
+            fi
+        fi
+    done
+done
+
+exit 0

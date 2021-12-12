@@ -1,0 +1,25 @@
+#!/bin/sh
+
+for MODE in "-4" "-6"; do
+    ERROR_MESSAGE="$(./bwping "$MODE" -b 800 -s 1 -v 200000 localhost 2>&1)"
+
+    for PKT_SIZE in "$(echo "$ERROR_MESSAGE" | sed -E "s/^bwping: invalid packet size, should be between ([0-9]+) and [0-9]+$/\1/")" \
+                    "$(echo "$ERROR_MESSAGE" | sed -E "s/^bwping: invalid packet size, should be between [0-9]+ and ([0-9]+)$/\1/")"; do
+        OUTPUT="$(./bwping "$MODE" -B localhost -u 100000 -b 800 -s "$PKT_SIZE" -v 200000 localhost 2>&1)"
+        STATUS="$?"
+
+        echo "$OUTPUT"
+
+        if [ "$STATUS" != "0" ]; then
+            exit "$STATUS"
+        else
+            ISSUES="$(echo "$OUTPUT" | grep -v "^Target: " | grep -v "^Total: ")"
+
+            if [ "$ISSUES" != "" ]; then
+                exit 1
+            fi
+        fi
+    done
+done
+
+exit 0

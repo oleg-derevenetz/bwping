@@ -484,8 +484,18 @@ AUTOMAKE_OPTIONS = subdir-objects
 bwping_SOURCES = src/bwping.c src/cygwin.h
 man_MANS = man/bwping.8
 EXTRA_DIST = man/bwping.8
-dist_check_SCRIPTS = tests/bwping tests/bwping6
-TESTS = tests/bwping tests/bwping6
+dist_check_SCRIPTS = tests/invalid-pkt-size \
+                     tests/min-max-pkt-size \
+                     tests/negative-reporting-period \
+                     tests/sanity \
+                     tests/unknown-host
+
+TESTS = tests/invalid-pkt-size \
+                     tests/min-max-pkt-size \
+                     tests/negative-reporting-period \
+                     tests/sanity \
+                     tests/unknown-host
+
 bwping_links = bwping6
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -869,16 +879,37 @@ recheck: all $(dist_check_SCRIPTS)
 	        am__force_recheck=am--force-recheck \
 	        TEST_LOGS="$$log_list"; \
 	exit $$?
-tests/bwping.log: tests/bwping
-	@p='tests/bwping'; \
-	b='tests/bwping'; \
+tests/invalid-pkt-size.log: tests/invalid-pkt-size
+	@p='tests/invalid-pkt-size'; \
+	b='tests/invalid-pkt-size'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-tests/bwping6.log: tests/bwping6
-	@p='tests/bwping6'; \
-	b='tests/bwping6'; \
+tests/min-max-pkt-size.log: tests/min-max-pkt-size
+	@p='tests/min-max-pkt-size'; \
+	b='tests/min-max-pkt-size'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+tests/negative-reporting-period.log: tests/negative-reporting-period
+	@p='tests/negative-reporting-period'; \
+	b='tests/negative-reporting-period'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+tests/sanity.log: tests/sanity
+	@p='tests/sanity'; \
+	b='tests/sanity'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+tests/unknown-host.log: tests/unknown-host
+	@p='tests/unknown-host'; \
+	b='tests/unknown-host'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -1219,30 +1250,30 @@ install-exec-hook:
 	cd $(DESTDIR)$(sbindir) && \
 	target=`echo bwping | sed '$(transform)'`$(EXEEXT) && \
 	for name in $(bwping_links); do \
-		link=`echo $$name | sed '$(transform)'`$(LN_EXEEXT) && \
-		rm -f $$link && \
-		$(LN_S) $$target $$link; \
+	    link=`echo $$name | sed '$(transform)'`$(LN_EXEEXT) && \
+	    rm -f $$link && \
+	    $(LN_S) $$target $$link; \
 	done
 
 install-data-hook:
 	cd $(DESTDIR)$(mandir)/man8 && \
 	target=`echo bwping | sed '$(transform)'` && \
 	for name in $(bwping_links); do \
-		link=`echo $$name | sed '$(transform)'` && \
-		rm -f $$link.8 && \
-		$(LN_S) $$target.8 $$link.8; \
+	    link=`echo $$name | sed '$(transform)'` && \
+	    rm -f $$link.8 && \
+	    $(LN_S) $$target.8 $$link.8; \
 	done
 
 uninstall-hook:
 	cd $(DESTDIR)$(sbindir) && \
 	for name in $(bwping_links); do \
-		link=`echo $$name | sed '$(transform)'`$(LN_EXEEXT) && \
-		rm -f $$link; \
+	    link=`echo $$name | sed '$(transform)'`$(LN_EXEEXT) && \
+	    rm -f $$link; \
 	done
 	cd $(DESTDIR)$(mandir)/man8 && \
 	for name in $(bwping_links); do \
-		link=`echo $$name | sed '$(transform)'` && \
-		rm -f $$link.8; \
+	    link=`echo $$name | sed '$(transform)'` && \
+	    rm -f $$link.8; \
 	done
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
