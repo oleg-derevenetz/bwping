@@ -57,7 +57,7 @@ jobs:
       if: ${{ failure() }}
       uses: actions/upload-artifact@v2
       with:
-        name: "check-results"
+        name: "check-results-linux-gcc"
         path: tests/*.log
 
   linux_clang:
@@ -109,7 +109,7 @@ jobs:
       if: ${{ failure() }}
       uses: actions/upload-artifact@v2
       with:
-        name: "check-results"
+        name: "check-results-linux-clang"
         path: tests/*.log
 
     - name: "Run Clang Static Analyzer"
@@ -198,5 +198,5 @@ jobs:
       if: ${{ failure() }}
       uses: actions/upload-artifact@v2
       with:
-        name: "check-results"
+        name: "check-results-cygwin"
         path: tests/*.log
