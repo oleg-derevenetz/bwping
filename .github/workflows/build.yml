@@ -20,10 +20,10 @@ jobs:
     strategy:
       matrix:
         config:
-        - { name: "default",         options: "" }
-        - { name: "no mmsg",         options: "--disable-mmsg" }
-        - { name: "no bpf",          options: "--disable-bpf" }
-        - { name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
+        - { id: "default",        name: "default",         options: "" }
+        - { id: "no-mmsg",        name: "no mmsg",         options: "--disable-mmsg" }
+        - { id: "no-bpf",         name: "no bpf",          options: "--disable-bpf" }
+        - { id: "no-mmsg-no-bpf", name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
 
     defaults:
       run:
@@ -56,7 +56,7 @@ jobs:
       if: ${{ failure() }}
       uses: actions/upload-artifact@v2
       with:
-        name: "check-results-linux-gcc"
+        name: "check-results-linux-gcc-${{ matrix.config.id }}"
         path: tests/*.log
 
   linux-clang:
@@ -66,10 +66,10 @@ jobs:
     strategy:
       matrix:
         config:
-        - { name: "default",         options: "" }
-        - { name: "no mmsg",         options: "--disable-mmsg" }
-        - { name: "no bpf",          options: "--disable-bpf" }
-        - { name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
+        - { id: "default",        name: "default",         options: "" }
+        - { id: "no-mmsg",        name: "no mmsg",         options: "--disable-mmsg" }
+        - { id: "no-bpf",         name: "no bpf",          options: "--disable-bpf" }
+        - { id: "no-mmsg-no-bpf", name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
 
     defaults:
       run:
@@ -107,7 +107,7 @@ jobs:
       if: ${{ failure() }}
       uses: actions/upload-artifact@v2
       with:
-        name: "check-results-linux-clang"
+        name: "check-results-linux-clang-${{ matrix.config.id }}"
         path: tests/*.log
 
     - name: "Run Clang Static Analyzer"
