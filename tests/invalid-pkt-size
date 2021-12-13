@@ -23,11 +23,11 @@ for MODE in "-4" "-6"; do
     MIN_PKT_SIZE="$(echo "$ERROR_MESSAGE" | sed -E "s/^bwping: invalid packet size, should be between ([0-9]+) and [0-9]+$/\1/")"
     MAX_PKT_SIZE="$(echo "$ERROR_MESSAGE" | sed -E "s/^bwping: invalid packet size, should be between [0-9]+ and ([0-9]+)$/\1/")"
 
-    PKT_SIZE="$(("$MIN_PKT_SIZE" - 1))"
+    PKT_SIZE="$((MIN_PKT_SIZE - 1))"
 
     run_check
 
-    PKT_SIZE="$(("$MAX_PKT_SIZE" + 1))"
+    PKT_SIZE="$((MAX_PKT_SIZE + 1))"
 
     run_check
 done
