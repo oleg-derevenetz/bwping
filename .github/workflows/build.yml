@@ -148,7 +148,7 @@ jobs:
 
     - name: "Run checks"
       run: |
-        sudo make check TESTS="$(find tests -type f -perm -u=x | grep -v "^tests/sanity$")"
+        sudo make check TESTS="$(find tests -type f -perm -u=x | grep -v "^tests/sanity$" | tr "\n" " ")"
 
     - name: "Upload check results"
       if: ${{ failure() }}
