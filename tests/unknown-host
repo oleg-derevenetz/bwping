@@ -1,8 +1,8 @@
 #!/bin/sh
 
-for BIND_ADDR in "localhost" ""; do
-    for TARGET in "localhost" ""; do
-        if [ "$BIND_ADDR" != "" ] && [ "$TARGET" != "" ]; then
+for BIND_ADDR in "localhost" "invalid."; do
+    for TARGET in "localhost" "invalid."; do
+        if [ "$BIND_ADDR" = "localhost" ] && [ "$TARGET" = "localhost" ]; then
             continue
         fi
 
