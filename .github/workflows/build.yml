@@ -53,6 +53,13 @@ jobs:
       run: |
         sudo make check
 
+    - name: "Upload check results"
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: "check-results"
+        path: tests/*.log
+
   linux_clang:
     runs-on: ubuntu-latest
 
@@ -97,6 +104,13 @@ jobs:
     - name: "Run checks"
       run: |
         sudo make check
+
+    - name: "Upload check results"
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: "check-results"
+        path: tests/*.log
 
     - name: "Run Clang Static Analyzer"
       run: |
@@ -179,3 +193,10 @@ jobs:
             cd \"$GITHUB_WORKSPACE\" && \
             make check && \
             make distcheck"
+
+    - name: "Upload check results"
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: "check-results"
+        path: tests/*.log
