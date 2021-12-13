@@ -146,7 +146,18 @@ jobs:
       run: |
         autoreconf --force
         ./configure
-        make "CFLAGS=-Werror"
+        make "CFLAGS=-Werror -fsanitize=address,undefined"
+
+    - name: "Run checks"
+      run: |
+        sudo make check TESTS="$(find tests -type f -perm -u=x | grep -v "^tests/sanity$")"
+
+    - name: "Upload check results"
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: "check-results-macos"
+        path: tests/*.log
 
   cygwin:
     name: "Build Cygwin"
