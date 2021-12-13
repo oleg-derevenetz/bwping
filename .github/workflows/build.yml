@@ -14,6 +14,7 @@ on:
 
 jobs:
   linux-gcc:
+    name: "Build Linux GCC (${{ matrix.config.name }})"
     runs-on: ubuntu-latest
 
     strategy:
@@ -23,8 +24,6 @@ jobs:
         - { name: "no mmsg",         options: "--disable-mmsg" }
         - { name: "no bpf",          options: "--disable-bpf" }
         - { name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
-
-    name: "Build Linux GCC (${{ matrix.config.name }})"
 
     defaults:
       run:
@@ -61,6 +60,7 @@ jobs:
         path: tests/*.log
 
   linux-clang:
+    name: "Build Linux Clang (${{ matrix.config.name }})"
     runs-on: ubuntu-latest
 
     strategy:
@@ -70,8 +70,6 @@ jobs:
         - { name: "no mmsg",         options: "--disable-mmsg" }
         - { name: "no bpf",          options: "--disable-bpf" }
         - { name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
-
-    name: "Build Linux Clang (${{ matrix.config.name }})"
 
     defaults:
       run:
