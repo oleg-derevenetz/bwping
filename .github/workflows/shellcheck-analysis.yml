@@ -1,0 +1,42 @@
+name: "ShellCheck Analysis"
+
+on:
+  push:
+    branches:
+    - master
+
+  pull_request:
+    branches:
+    - master
+
+  schedule:
+  - cron: "0 13 * * 6"
+
+jobs:
+  shellcheck:
+    name: "ShellCheck Analysis"
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - name: "Checkout repository"
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 2
+
+    - name: "Checkout HEAD^2 for pull request"
+      if: ${{ github.event_name == 'pull_request' }}
+      run: |
+        git checkout HEAD^2
+
+    - name: "Install additional packages"
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install shellcheck
+
+    - name: "Perform ShellCheck analysis"
+      run: |
+        shellcheck tests/*
