@@ -40,6 +40,11 @@ jobs:
       run: |
         git checkout HEAD^2
 
+    - name: "Install additional packages"
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install autoconf automake
+
     - name: "Initialize CodeQL"
       uses: github/codeql-action/init@v1
       with:
@@ -47,7 +52,7 @@ jobs:
 
     - name: "Run build"
       run: |
-        autoreconf --force
+        autoreconf -f -i -Wall,error
         ./configure ${{ matrix.config.options }}
         make "CFLAGS=-Werror"
 

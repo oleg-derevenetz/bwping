@@ -40,11 +40,16 @@ jobs:
       run: |
         git checkout HEAD^2
 
+    - name: "Install additional packages"
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install autoconf automake
+
     - name: "Run build"
       env:
         CC: gcc
       run: |
-        autoreconf --force
+        autoreconf -f -i -Wall,error
         ./configure ${{ matrix.config.options }}
         make "CFLAGS=-Werror -fsanitize=address,undefined"
 
@@ -89,13 +94,13 @@ jobs:
     - name: "Install additional packages"
       run: |
         sudo apt-get update
-        sudo apt-get -y install clang-tools
+        sudo apt-get -y install autoconf automake clang-tools
 
     - name: "Run build"
       env:
         CC: clang
       run: |
-        autoreconf --force
+        autoreconf -f -i -Wall,error
         ./configure ${{ matrix.config.options }}
         make "CFLAGS=-Werror -fsanitize=address,undefined"
 
@@ -110,10 +115,12 @@ jobs:
         name: "check-results-linux-clang-${{ matrix.config.id }}"
         path: tests/*.log
 
-    - name: "Run Clang Static Analyzer"
+    - name: "Clean the build"
       run: |
         make distclean
-        autoreconf --force
+
+    - name: "Run Clang Static Analyzer"
+      run: |
         scan-build ./configure ${{ matrix.config.options }}
         scan-build --status-bugs make "CFLAGS=-std=c11 -Werror"
 
@@ -138,11 +145,11 @@ jobs:
 
     - name: "Install additional packages"
       run: |
-        brew install automake
+        brew install autoconf automake
 
     - name: "Run build"
       run: |
-        autoreconf --force
+        autoreconf -f -i -Wall,error
         ./configure
         make "CFLAGS=-Werror -fsanitize=address,undefined"
 
@@ -192,7 +199,7 @@ jobs:
       run: |
         cmd.exe //c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
             cd \"$GITHUB_WORKSPACE\" && \
-            autoreconf --force && \
+            autoreconf -f -i -Wall,error && \
             ./configure && \
             make \"CFLAGS=-Werror\""
 

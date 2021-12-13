@@ -23,6 +23,11 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: "Install additional packages"
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install autoconf automake
+
     - name: "Initialize Coverity"
       env:
         COVERITY_TOKEN: ${{ secrets.COVERITY_TOKEN }}
@@ -34,7 +39,7 @@ jobs:
 
     - name: "Run build via Coverity wrapper"
       run: |
-        autoreconf --force
+        autoreconf -f -i -Wall,error
         ./configure
         "$HOME/Coverity/cov-analysis-linux64/bin/cov-build" --dir cov-int make
 
