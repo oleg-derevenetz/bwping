@@ -9,7 +9,7 @@ run_check() {
     if [ "$STATUS" = "0" ]; then
         exit 1
     else
-        ISSUES="$(echo "$OUTPUT" | grep -v "^./bwping: invalid option " | grep -v "^bwping is part of the " | \
+        ISSUES="$(echo "$OUTPUT" | grep -v "^bwping is part of the " | \
                                    grep -v "^Usage: bwping \[-4 | -6\] \[-B bind_addr\] \[-I ident\] \[-T tos(v4) | traf_class(v6)\] \[-r reporting_period\] \[-u buf_size\] -b kbps -s pkt_size -v volume target$")"
 
         if [ "$ISSUES" != "" ]; then
@@ -20,7 +20,6 @@ run_check() {
 
 run_check ./bwping
 run_check ./bwping localhost
-run_check ./bwping -x localhost
 run_check ./bwping -b 800 localhost
 run_check ./bwping -b 800 -s 500 localhost
 run_check ./bwping -b 800 -s 500 -v 200000
