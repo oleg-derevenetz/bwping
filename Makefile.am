@@ -11,12 +11,14 @@ dist_check_SCRIPTS = tests/invalid-pkt-size \
                      tests/min-max-pkt-size \
                      tests/negative-reporting-period \
                      tests/sanity \
-                     tests/unknown-host
+                     tests/unknown-host \
+                     tests/usage
 TESTS              = tests/invalid-pkt-size \
                      tests/min-max-pkt-size \
                      tests/negative-reporting-period \
                      tests/sanity \
-                     tests/unknown-host
+                     tests/unknown-host \
+                     tests/usage
 
 ## Create symlinks for bwping6 for convenience.
 bwping_links       = bwping6
