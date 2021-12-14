@@ -94,7 +94,7 @@ jobs:
     - name: "Install additional packages"
       run: |
         sudo apt-get update
-        sudo apt-get -y install autoconf automake clang-tools
+        sudo apt-get -y install autoconf automake
 
     - name: "Run build"
       env:
@@ -114,15 +114,6 @@ jobs:
       with:
         name: "check-results-linux-clang-${{ matrix.config.id }}"
         path: tests/*.log
-
-    - name: "Clean the build"
-      run: |
-        make distclean
-
-    - name: "Run Clang Static Analyzer"
-      run: |
-        scan-build ./configure ${{ matrix.config.options }}
-        scan-build --status-bugs make "CFLAGS=-std=c11 -Werror"
 
   macos:
     name: "Build MacOS"

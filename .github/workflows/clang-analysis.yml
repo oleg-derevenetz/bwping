@@ -1,4 +1,4 @@
-name: "CodeQL Analysis"
+name: "Clang Analysis"
 
 on:
   push:
@@ -10,11 +10,11 @@ on:
     - master
 
   schedule:
-  - cron: "0 12 * * 6"
+  - cron: "0 11 * * 6"
 
 jobs:
-  codeql:
-    name: "CodeQL Analysis (${{ matrix.config.name }})"
+  clang:
+    name: "Clang Analysis (${{ matrix.config.name }})"
     runs-on: ubuntu-latest
 
     strategy:
@@ -43,18 +43,10 @@ jobs:
     - name: "Install additional packages"
       run: |
         sudo apt-get update
-        sudo apt-get -y install autoconf automake
+        sudo apt-get -y install autoconf automake clang-tools
 
-    - name: "Initialize CodeQL"
-      uses: github/codeql-action/init@v1
-      with:
-        languages: cpp
-
-    - name: "Run build"
+    - name: "Perform Clang analysis"
       run: |
         autoreconf -f -i -Wall,error
-        ./configure ${{ matrix.config.options }}
-        make "CFLAGS=-Werror"
-
-    - name: "Perform CodeQL analysis"
-      uses: github/codeql-action/analyze@v1
+        scan-build ./configure ${{ matrix.config.options }}
+        scan-build --status-bugs make "CFLAGS=-std=c11 -Werror"

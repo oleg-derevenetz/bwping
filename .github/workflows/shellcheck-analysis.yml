@@ -10,7 +10,7 @@ on:
     - master
 
   schedule:
-  - cron: "0 13 * * 6"
+  - cron: "0 14 * * 6"
 
 jobs:
   shellcheck:
