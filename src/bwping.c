@@ -97,7 +97,7 @@ static int64_t int64_sub(int64_t i1, int64_t i2)
     return i1 - i2;
 }
 
-static int64_t ts_sub(const struct timespec *ts1, const struct timespec *ts2)
+static int64_t ts_sub(struct timespec *restrict ts1, struct timespec *restrict ts2)
 {
     int64_t sec_diff = int64_sub(ts1->tv_sec, ts2->tv_sec);
 
@@ -162,7 +162,7 @@ static uint64_t calibrate_timer(void)
 
             get_time(&after);
 
-            int64_t time_diff = ts_sub(&after, &before);
+            int64_t time_diff = ts_sub(&after, &after);
 
             if (time_diff >= 0) {
                 time_diffs[successful_cycles++] = time_diff;
