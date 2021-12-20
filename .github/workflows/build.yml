@@ -115,6 +115,7 @@ jobs:
 
     - name: "Install additional packages"
       run: |
+        brew update
         brew install autoconf automake
 
     - name: "Run build"
