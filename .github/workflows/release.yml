@@ -63,6 +63,21 @@ jobs:
         name: "BWPing ${{ needs.version.outputs.version }}"
         token: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: "Upload package to SourceForge"
+      env:
+        RELEASE_VERSION: ${{ needs.version.outputs.version }}
+        SF_PRIVATE_KEY: ${{ secrets.SF_PRIVATE_KEY }}
+      run: |
+        eval "$(ssh-agent)"
+        ssh-add - <<< "$SF_PRIVATE_KEY"
+        mkdir -p ~/.ssh
+        echo "frs.sourceforge.net ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOQD35Ujalhh+JJkPvMckDlhu4dS7WH6NsOJ15iGCJLC" >> ~/.ssh/known_hosts
+        sftp -b - oleg_derevenetz@frs.sourceforge.net << EOF
+        mkdir /home/frs/project/bwping/bwping/$RELEASE_VERSION
+        cd /home/frs/project/bwping/bwping/$RELEASE_VERSION
+        put bwping-*.tar.gz
+        EOF
+
   cygwin:
     name: "Release Cygwin Package"
     runs-on: windows-latest
@@ -84,22 +99,22 @@ jobs:
     - name: "Fix line endings"
       run: |
         C:\tools\cygwin\bin\bash.exe -l -c ^"^
-            cd "$GITHUB_WORKSPACE" ^&^& ^
+            cd ""$GITHUB_WORKSPACE"" ^&^& ^
             git ls-files -z ^| xargs -0 rm ^&^& ^
             git checkout -f .^"
 
     - name: "Run build"
       run: |
         C:\tools\cygwin\bin\bash.exe -l -c ^"^
-            cd "$GITHUB_WORKSPACE" ^&^& ^
+            cd ""$GITHUB_WORKSPACE"" ^&^& ^
             autoreconf -f -i -Wall,error ^&^& ^
             ./configure ^&^& ^
-            make "CFLAGS=-Werror"^"
+            make ""CFLAGS=-Werror""^"
 
     - name: "Run checks"
       run: |
         C:\tools\cygwin\bin\bash.exe -l -c ^"^
-            cd "$GITHUB_WORKSPACE" ^&^& ^
+            cd ""$GITHUB_WORKSPACE"" ^&^& ^
             make check^"
 
     - name: "Create package"
@@ -128,3 +143,17 @@ jobs:
         draft: true
         name: "BWPing ${{ needs.version.outputs.version }}"
         token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: "Upload package to SourceForge"
+      shell: bash
+      env:
+        SF_PRIVATE_KEY: ${{ secrets.SF_PRIVATE_KEY }}
+      run: |
+        eval "$(ssh-agent)"
+        ssh-add - <<< "$SF_PRIVATE_KEY"
+        mkdir -p ~/.ssh
+        echo "frs.sourceforge.net ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOQD35Ujalhh+JJkPvMckDlhu4dS7WH6NsOJ15iGCJLC" >> ~/.ssh/known_hosts
+        sftp -b - oleg_derevenetz@frs.sourceforge.net << EOF
+        cd /home/frs/project/bwping/ports/win64
+        put bwping-*.zip
+        EOF
