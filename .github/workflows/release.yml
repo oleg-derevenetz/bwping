@@ -53,7 +53,7 @@ jobs:
         ./configure
         sudo make distcheck "CFLAGS=-Werror"
 
-    - name: "Upload package"
+    - name: "Upload package to GitHub"
       uses: ncipollo/release-action@v1
       with:
         allowUpdates: true
@@ -134,7 +134,7 @@ jobs:
         OUTPUT="$(cmd.exe //c "set \"PATH=\" & .package\\bwping.exe" 2>&1 || true)"
         [[ "$(echo "$OUTPUT" | grep -v "^bwping is part of the " | grep -v "^Usage: ")" == "" ]] || ( echo "$OUTPUT" && false )
 
-    - name: "Upload package"
+    - name: "Upload package to GitHub"
       uses: ncipollo/release-action@v1
       with:
         allowUpdates: true
