@@ -141,7 +141,7 @@ jobs:
 
     defaults:
       run:
-        shell: bash
+        shell: cmd
 
     steps:
     - name: "Checkout repository"
@@ -154,25 +154,25 @@ jobs:
 
     - name: "Fix line endings"
       run: |
-        cmd.exe //c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
-            cd \"$GITHUB_WORKSPACE\" && \
-            git ls-files -z | xargs -0 rm && \
-            git checkout -f ."
+        C:\tools\cygwin\bin\bash.exe -l -c ^"^
+            cd "$GITHUB_WORKSPACE" ^&^& ^
+            git ls-files -z ^| xargs -0 rm ^&^& ^
+            git checkout -f .^"
 
     - name: "Run build"
       run: |
-        cmd.exe //c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
-            cd \"$GITHUB_WORKSPACE\" && \
-            autoreconf -f -i -Wall,error && \
-            ./configure && \
-            make \"CFLAGS=-Werror\""
+        C:\tools\cygwin\bin\bash.exe -l -c ^"^
+            cd "$GITHUB_WORKSPACE" ^&^& ^
+            autoreconf -f -i -Wall,error ^&^& ^
+            ./configure ^&^& ^
+            make "CFLAGS=-Werror"^"
 
     - name: "Run checks"
       run: |
-        cmd.exe //c C:\\tools\\cygwin\\bin\\bash.exe -l -c " \
-            cd \"$GITHUB_WORKSPACE\" && \
-            make check && \
-            make distcheck"
+        C:\tools\cygwin\bin\bash.exe -l -c ^"^
+            cd "$GITHUB_WORKSPACE" ^&^& ^
+            make check ^&^& ^
+            make distcheck^"
 
     - name: "Upload check results"
       if: ${{ failure() }}
