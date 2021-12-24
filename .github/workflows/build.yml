@@ -149,7 +149,7 @@ jobs:
 
     - name: "Install additional packages"
       run: |
-        choco.exe install cygwin cyg-get -y
+        choco.exe install cygwin cyg-get -y && ^
         cyg-get.bat autoconf automake make gcc-core git
 
     - name: "Fix line endings"
