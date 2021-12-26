@@ -13,17 +13,21 @@ on:
   - cron: "0 10 * * 6"
 
 jobs:
-  linux-gcc:
-    name: "Build Linux GCC (${{ matrix.config.name }})"
+  linux:
+    name: "Build Linux ${{ matrix.cc }} (--${{ matrix.mmsg }} --${{ matrix.bpf }})"
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        config:
-        - { id: "default",        name: "default",         options: "" }
-        - { id: "no-mmsg",        name: "no mmsg",         options: "--disable-mmsg" }
-        - { id: "no-bpf",         name: "no bpf",          options: "--disable-bpf" }
-        - { id: "no-mmsg-no-bpf", name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
+        cc:
+        - gcc
+        - clang
+        mmsg:
+        - enable-mmsg
+        - disable-mmsg
+        bpf:
+        - enable-bpf
+        - disable-bpf
 
     defaults:
       run:
@@ -47,10 +51,10 @@ jobs:
 
     - name: "Run build"
       env:
-        CC: gcc
+        CC: ${{ matrix.cc }}
       run: |
         autoreconf -f -i -Wall,error
-        ./configure ${{ matrix.config.options }}
+        ./configure --${{ matrix.mmsg }} --${{ matrix.bpf }}
         make "CFLAGS=-Werror -fsanitize=address,undefined"
 
     - name: "Run checks"
@@ -61,58 +65,7 @@ jobs:
       if: ${{ failure() }}
       uses: actions/upload-artifact@v2
       with:
-        name: "check-results-linux-gcc-${{ matrix.config.id }}"
-        path: tests/*.log
-
-  linux-clang:
-    name: "Build Linux Clang (${{ matrix.config.name }})"
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        config:
-        - { id: "default",        name: "default",         options: "" }
-        - { id: "no-mmsg",        name: "no mmsg",         options: "--disable-mmsg" }
-        - { id: "no-bpf",         name: "no bpf",          options: "--disable-bpf" }
-        - { id: "no-mmsg-no-bpf", name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
-
-    defaults:
-      run:
-        shell: bash
-
-    steps:
-    - name: "Checkout repository"
-      uses: actions/checkout@v2
-
-    - name: "Install additional packages"
-      run: |
-        sudo apt-get -y update
-        sudo apt-get -y install autoconf automake
-        # TODO: remove the following lines once ubuntu-latest will have the latest version of the autoconf package
-        echo "deb http://httpredir.debian.org/debian/ sid main contrib" | sudo tee -a /etc/apt/sources.list
-        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 648ACFD622F3D138
-        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0E98404D386FA1D9
-        sudo apt-get -y update
-        sudo apt-get -y install autoconf
-        # /TODO
-
-    - name: "Run build"
-      env:
-        CC: clang
-      run: |
-        autoreconf -f -i -Wall,error
-        ./configure ${{ matrix.config.options }}
-        make "CFLAGS=-Werror -fsanitize=address,undefined"
-
-    - name: "Run checks"
-      run: |
-        sudo make check
-
-    - name: "Upload check results"
-      if: ${{ failure() }}
-      uses: actions/upload-artifact@v2
-      with:
-        name: "check-results-linux-clang-${{ matrix.config.id }}"
+        name: "check-results-linux-${{ matrix.cc }}-${{ matrix.mmsg }}-${{ matrix.bpf }}"
         path: tests/*.log
 
   macos:

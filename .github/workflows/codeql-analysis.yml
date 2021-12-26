@@ -14,16 +14,17 @@ on:
 
 jobs:
   codeql:
-    name: "CodeQL Analysis (${{ matrix.config.name }})"
+    name: "CodeQL Analysis (--${{ matrix.mmsg }} --${{ matrix.bpf }})"
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        config:
-        - { name: "default",         options: "" }
-        - { name: "no mmsg",         options: "--disable-mmsg" }
-        - { name: "no bpf",          options: "--disable-bpf" }
-        - { name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
+        mmsg:
+        - enable-mmsg
+        - disable-mmsg
+        bpf:
+        - enable-bpf
+        - disable-bpf
 
     defaults:
       run:
@@ -46,7 +47,7 @@ jobs:
     - name: "Run build"
       run: |
         autoreconf -f -i -Wall,error
-        ./configure ${{ matrix.config.options }}
+        ./configure --${{ matrix.mmsg }} --${{ matrix.bpf }}
         make "CFLAGS=-Werror"
 
     - name: "Perform CodeQL analysis"

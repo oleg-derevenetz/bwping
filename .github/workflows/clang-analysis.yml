@@ -14,16 +14,17 @@ on:
 
 jobs:
   clang:
-    name: "Clang Analysis (${{ matrix.config.name }})"
+    name: "Clang Analysis (--${{ matrix.mmsg }} --${{ matrix.bpf }})"
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        config:
-        - { name: "default",         options: "" }
-        - { name: "no mmsg",         options: "--disable-mmsg" }
-        - { name: "no bpf",          options: "--disable-bpf" }
-        - { name: "no mmsg, no bpf", options: "--disable-mmsg --disable-bpf" }
+        mmsg:
+        - enable-mmsg
+        - disable-mmsg
+        bpf:
+        - enable-bpf
+        - disable-bpf
 
     defaults:
       run:
@@ -41,5 +42,5 @@ jobs:
     - name: "Perform Clang analysis"
       run: |
         autoreconf -f -i -Wall,error
-        scan-build ./configure ${{ matrix.config.options }}
+        scan-build ./configure --${{ matrix.mmsg }} --${{ matrix.bpf }}
         scan-build --status-bugs make "CFLAGS=-std=c11 -Werror"
