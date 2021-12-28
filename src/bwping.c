@@ -181,6 +181,7 @@ static uint64_t calibrate_timer(void)
                      b =                              time_diffs[i],
                      c = i == successful_cycles - 1 ? time_diffs[i] : time_diffs[i + 1];
 
+            /* Take the median value from the set of values a, b and c */
             sum += (a < b) ? ((b < c) ? b : ((c < a) ? a : c)) : ((a < c) ? a : ((c < b) ? b : c));
         }
 
