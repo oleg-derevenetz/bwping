@@ -41,9 +41,11 @@
 
 #include <netdb.h>
 
+#if !defined(CALIBRATION_CYCLES)
 #define CALIBRATION_CYCLES 32
+#endif
 
-#if defined(ENABLE_MMSG) && (defined(HAVE_SENDMMSG) || defined(HAVE_RECVMMSG))
+#if !defined(MAX_MMSG_VLEN) && defined(ENABLE_MMSG) && (defined(HAVE_SENDMMSG) || defined(HAVE_RECVMMSG))
 #define MAX_MMSG_VLEN 64
 #endif
 
