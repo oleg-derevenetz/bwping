@@ -4,21 +4,15 @@ sbin_PROGRAMS      = bwping
 
 bwping_SOURCES     = src/bwping.c src/cygwin.h
 
-man_MANS           = man/bwping.8
-EXTRA_DIST         = man/bwping.8
-
-dist_check_SCRIPTS = tests/invalid-pkt-size \
-                     tests/min-max-pkt-size \
-                     tests/negative-reporting-period \
-                     tests/sanity \
-                     tests/unknown-host \
-                     tests/usage
 TESTS              = tests/invalid-pkt-size \
                      tests/min-max-pkt-size \
                      tests/negative-reporting-period \
                      tests/sanity \
                      tests/unknown-host \
                      tests/usage
+
+dist_man_MANS      = man/bwping.8
+dist_check_SCRIPTS = $(TESTS)
 
 ## Create symlinks for bwping6 for convenience.
 bwping_links       = bwping6
