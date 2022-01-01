@@ -185,6 +185,38 @@ static uint64_t calibrate_timer(void)
     }
 }
 
+static void clear_socket_buffer(int sock)
+{
+    while (true) {
+        fd_set fds;
+
+        FD_ZERO(&fds);
+        FD_SET(sock, &fds);
+
+        struct timeval timeout = {.tv_sec = 0, .tv_usec = 0};
+
+        int n = select(sock + 1, &fds, NULL, NULL, &timeout);
+
+        if (n < 0) {
+            fprintf(stderr, "%s: select() failed: %s\n", prog_name, strerror(errno));
+
+            break;
+        } else if (n > 0) {
+            static char packet[IP_MAXPACKET];
+
+            ssize_t res = recv(sock, packet, sizeof(packet), MSG_DONTWAIT);
+
+            if (res < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+                fprintf(stderr, "%s: recv() failed: %s\n", prog_name, strerror(errno));
+
+                break;
+            }
+        } else {
+            break;
+        }
+    };
+}
+
 static void prepare_ping4(char *packet, size_t pkt_size, uint16_t ident, bool insert_timestamp,
                           uint64_t *transmitted_count, uint64_t *transmitted_volume)
 {
@@ -777,6 +809,8 @@ int main(int argc, char *argv[])
                     }
 #endif /* ENABLE_BPF && HAVE_LINUX_FILTER_H && SO_ATTACH_FILTER */
 
+                    clear_socket_buffer(sock);
+
                     uint64_t interval     = pkt_size * 8000 / kbps,
                              min_interval = calibrate_timer() * 2; /* Leave space for interval_error adjustments */
 
@@ -835,7 +869,7 @@ int main(int argc, char *argv[])
 
                         uint64_t select_timeout = current_interval;
 
-                        while (1) {
+                        while (true) {
                             fd_set fds;
 
                             FD_ZERO(&fds);
