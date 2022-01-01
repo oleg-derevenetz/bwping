@@ -710,33 +710,33 @@ int main(int argc, char *argv[])
         }
     }
 
-    char addr_buf[ipv4_mode ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN];
-
     if (exit_val == EX_OK) {
-        struct addrinfo *to_ai;
+        struct addrinfo *target_ai;
 
-        if (resolve_name(ipv4_mode, target, &to_ai)) {
-            if (getnameinfo(to_ai->ai_addr, to_ai->ai_addrlen, addr_buf, sizeof(addr_buf), NULL, 0, NI_NUMERICHOST) != 0) {
-                addr_buf[0] = '?';
-                addr_buf[1] = 0;
-            }
-
-            if (connect(sock, to_ai->ai_addr, to_ai->ai_addrlen) < 0) {
+        if (resolve_name(ipv4_mode, target, &target_ai)) {
+            if (connect(sock, target_ai->ai_addr, target_ai->ai_addrlen) < 0) {
                 fprintf(stderr, "%s: connect() failed: %s\n", prog_name, strerror(errno));
 
                 exit_val = EX_OSERR;
+            } else {
+                char addr_buf[ipv4_mode ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN];
+
+                if (getnameinfo(target_ai->ai_addr, target_ai->ai_addrlen, addr_buf, sizeof(addr_buf), NULL, 0, NI_NUMERICHOST) != 0) {
+                    addr_buf[0] = '?';
+                    addr_buf[1] = 0;
+                }
+
+                printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
+                       target, addr_buf, kbps, pkt_size, volume);
             }
 
-            freeaddrinfo(to_ai);
+            freeaddrinfo(target_ai);
         } else {
             exit_val = EX_NOHOST;
         }
     }
 
     if (exit_val == EX_OK) {
-        printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
-               target, addr_buf, kbps, pkt_size, volume);
-
         if (buf_size > 0) {
             if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(buf_size)) < 0) {
                 fprintf(stderr, "%s: setsockopt(SO_RCVBUF, %u) failed: %s\n", prog_name, buf_size, strerror(errno));
