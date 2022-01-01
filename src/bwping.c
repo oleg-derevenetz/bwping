@@ -12,6 +12,7 @@
 #include <stddef.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <sysexits.h>
@@ -187,34 +188,17 @@ static uint64_t calibrate_timer(void)
 
 static void clear_socket_buffer(int sock)
 {
-    while (true) {
-        fd_set fds;
+    ssize_t res = 0;
 
-        FD_ZERO(&fds);
-        FD_SET(sock, &fds);
+    do {
+        static char packet[IP_MAXPACKET];
 
-        struct timeval timeout = {.tv_sec = 0, .tv_usec = 0};
+        res = recv(sock, packet, sizeof(packet), 0);
 
-        int n = select(sock + 1, &fds, NULL, NULL, &timeout);
-
-        if (n < 0) {
-            fprintf(stderr, "%s: select() failed: %s\n", prog_name, strerror(errno));
-
-            break;
-        } else if (n > 0) {
-            static char packet[IP_MAXPACKET];
-
-            ssize_t res = recv(sock, packet, sizeof(packet), MSG_DONTWAIT);
-
-            if (res < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
-                fprintf(stderr, "%s: recv() failed: %s\n", prog_name, strerror(errno));
-
-                break;
-            }
-        } else {
-            break;
+        if (res < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+            fprintf(stderr, "%s: recv() failed: %s\n", prog_name, strerror(errno));
         }
-    };
+    } while (res > 0);
 }
 
 static void prepare_ping4(char *packet, size_t pkt_size, uint16_t ident, bool insert_timestamp,
@@ -460,7 +444,7 @@ static bool recvmmsg_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *re
         msg[i].msg_hdr.msg_iovlen = 1;
     }
 
-    int res = recvmmsg(sock, msg, MAX_MMSG_VLEN, MSG_DONTWAIT, NULL);
+    int res = recvmmsg(sock, msg, MAX_MMSG_VLEN, 0, NULL);
 
     if (res < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
         fprintf(stderr, "%s: recvmmsg() failed: %s\n", prog_name, strerror(errno));
@@ -492,7 +476,7 @@ static bool recv_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *receiv
 {
     static char packet[IP_MAXPACKET];
 
-    ssize_t res = recv(sock, packet, sizeof(packet), MSG_DONTWAIT);
+    ssize_t res = recv(sock, packet, sizeof(packet), 0);
 
     if (res < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
         fprintf(stderr, "%s: recv() failed: %s\n", prog_name, strerror(errno));
@@ -699,258 +683,264 @@ int main(int argc, char *argv[])
 
         exit_val = EX_OSERR;
     } else {
-        if (bind_addr != NULL) {
-            struct addrinfo *bind_ai;
+        if (fcntl(sock, F_SETFL, O_NONBLOCK) < 0) {
+            fprintf(stderr, "%s: fcntl(F_SETFL, O_NONBLOCK) failed: %s\n", prog_name, strerror(errno));
 
-            if (resolve_name(ipv4_mode, bind_addr, &bind_ai)) {
-                if (bind(sock, bind_ai->ai_addr, bind_ai->ai_addrlen) < 0) {
-                    fprintf(stderr, "%s: bind() failed: %s\n", prog_name, strerror(errno));
+            exit_val = EX_OSERR;
+        } else {
+            if (bind_addr != NULL) {
+                struct addrinfo *bind_ai;
 
-                    exit_val = EX_OSERR;
-                }
+                if (resolve_name(ipv4_mode, bind_addr, &bind_ai)) {
+                    if (bind(sock, bind_ai->ai_addr, bind_ai->ai_addrlen) < 0) {
+                        fprintf(stderr, "%s: bind() failed: %s\n", prog_name, strerror(errno));
 
-                freeaddrinfo(bind_ai);
-            } else {
-                exit_val = EX_NOHOST;
-            }
-        }
+                        exit_val = EX_OSERR;
+                    }
 
-        if (exit_val == EX_OK) {
-            struct addrinfo *to_ai;
-
-            if (resolve_name(ipv4_mode, target, &to_ai)) {
-                if (connect(sock, to_ai->ai_addr, to_ai->ai_addrlen) < 0) {
-                    fprintf(stderr, "%s: connect() failed: %s\n", prog_name, strerror(errno));
-
-                    exit_val = EX_OSERR;
+                    freeaddrinfo(bind_ai);
                 } else {
-                    char addr_buf[ipv4_mode ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN];
+                    exit_val = EX_NOHOST;
+                }
+            }
 
-                    if (getnameinfo(to_ai->ai_addr, to_ai->ai_addrlen, addr_buf, sizeof(addr_buf), NULL, 0, NI_NUMERICHOST) != 0) {
-                        addr_buf[0] = '?';
-                        addr_buf[1] = 0;
-                    }
+            if (exit_val == EX_OK) {
+                struct addrinfo *to_ai;
 
-                    printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
-                           target, addr_buf, kbps, pkt_size, volume);
+                if (resolve_name(ipv4_mode, target, &to_ai)) {
+                    if (connect(sock, to_ai->ai_addr, to_ai->ai_addrlen) < 0) {
+                        fprintf(stderr, "%s: connect() failed: %s\n", prog_name, strerror(errno));
 
-                    if (buf_size > 0) {
-                        if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(buf_size)) < 0) {
-                            fprintf(stderr, "%s: setsockopt(SO_RCVBUF, %u) failed: %s\n", prog_name, buf_size, strerror(errno));
-                        }
-                        if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &buf_size, sizeof(buf_size)) < 0) {
-                            fprintf(stderr, "%s: setsockopt(SO_SNDBUF, %u) failed: %s\n", prog_name, buf_size, strerror(errno));
-                        }
-                    }
-
-                    if (ipv4_mode) {
-                        if (setsockopt(sock, IPPROTO_IP, IP_TOS, &tos_or_traf_class, sizeof(tos_or_traf_class)) < 0) {
-                            fprintf(stderr, "%s: setsockopt(IP_TOS, %u) failed: %s\n", prog_name, tos_or_traf_class, strerror(errno));
-                        }
+                        exit_val = EX_OSERR;
                     } else {
-                        if (setsockopt(sock, IPPROTO_IPV6, IPV6_TCLASS, &tos_or_traf_class, sizeof(tos_or_traf_class)) < 0) {
-                            fprintf(stderr, "%s: setsockopt(IPV6_TCLASS, %u) failed: %s\n", prog_name, tos_or_traf_class, strerror(errno));
+                        char addr_buf[ipv4_mode ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN];
+
+                        if (getnameinfo(to_ai->ai_addr, to_ai->ai_addrlen, addr_buf, sizeof(addr_buf), NULL, 0, NI_NUMERICHOST) != 0) {
+                            addr_buf[0] = '?';
+                            addr_buf[1] = 0;
                         }
-                    }
+
+                        printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
+                               target, addr_buf, kbps, pkt_size, volume);
+
+                        if (buf_size > 0) {
+                            if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(buf_size)) < 0) {
+                                fprintf(stderr, "%s: setsockopt(SO_RCVBUF, %u) failed: %s\n", prog_name, buf_size, strerror(errno));
+                            }
+                            if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &buf_size, sizeof(buf_size)) < 0) {
+                                fprintf(stderr, "%s: setsockopt(SO_SNDBUF, %u) failed: %s\n", prog_name, buf_size, strerror(errno));
+                            }
+                        }
+
+                        if (ipv4_mode) {
+                            if (setsockopt(sock, IPPROTO_IP, IP_TOS, &tos_or_traf_class, sizeof(tos_or_traf_class)) < 0) {
+                                fprintf(stderr, "%s: setsockopt(IP_TOS, %u) failed: %s\n", prog_name, tos_or_traf_class, strerror(errno));
+                            }
+                        } else {
+                            if (setsockopt(sock, IPPROTO_IPV6, IPV6_TCLASS, &tos_or_traf_class, sizeof(tos_or_traf_class)) < 0) {
+                                fprintf(stderr, "%s: setsockopt(IPV6_TCLASS, %u) failed: %s\n", prog_name, tos_or_traf_class, strerror(errno));
+                            }
+                        }
 
 #if defined(HAVE_NETINET_ICMP6_H) && defined(ICMP6_FILTER) && defined(ICMP6_FILTER_SETBLOCKALL) && defined(ICMP6_FILTER_SETPASS)
-                    if (!ipv4_mode) {
-                        struct icmp6_filter filter6;
+                        if (!ipv4_mode) {
+                            struct icmp6_filter filter6;
 
-                        ICMP6_FILTER_SETBLOCKALL(&filter6);
-                        ICMP6_FILTER_SETPASS(ICMP6_ECHO_REPLY, &filter6);
+                            ICMP6_FILTER_SETBLOCKALL(&filter6);
+                            ICMP6_FILTER_SETPASS(ICMP6_ECHO_REPLY, &filter6);
 
-                        if (setsockopt(sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filter6, sizeof(filter6)) < 0) {
-                            fprintf(stderr, "%s: setsockopt(ICMP6_FILTER) failed: %s\n", prog_name, strerror(errno));
+                            if (setsockopt(sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filter6, sizeof(filter6)) < 0) {
+                                fprintf(stderr, "%s: setsockopt(ICMP6_FILTER) failed: %s\n", prog_name, strerror(errno));
+                            }
                         }
-                    }
 #endif /* HAVE_NETINET_ICMP6_H && ICMP6_FILTER && ICMP6_FILTER_SETBLOCKALL && ICMP6_FILTER_SETPASS */
 
-                    if (ident == 0) {
-                        ident = getpid() & 0xFFFF;
-                    }
+                        if (ident == 0) {
+                            ident = getpid() & 0xFFFF;
+                        }
 
 #if defined(ENABLE_BPF) && defined(HAVE_LINUX_FILTER_H) && defined(SO_ATTACH_FILTER)
-                    if (ipv4_mode) {
-                        struct sock_filter filter[] = {
-                            /* (00) */ {0x30, 0, 0, 0x00000009},     /* ldb  [9]                         - IP Protocol */
-                            /* (01) */ {0x15, 0, 8, IPPROTO_ICMP},   /* jeq  $IPPROTO_ICMP   jt 2  jf 10 - IP Protocol is ICMP */
-                            /* (02) */ {0x28, 0, 0, 0x00000006},     /* ldh  [6]                         - IP Fragment Offset */
-                            /* (03) */ {0x45, 6, 0, 0x00001FFF},     /* jset #0x1FFF         jt 10 jf 4  - IP Fragment Offset is zero */
-                            /* (04) */ {0xB1, 0, 0, 0x00000000},     /* ldxb 4*([0]&0xF)                 - Load IHL*4 to X */
-                            /* (05) */ {0x50, 0, 0, 0x00000000},     /* ldb  [x]                         - ICMP Type */
-                            /* (06) */ {0x15, 0, 3, ICMP_ECHOREPLY}, /* jeq  $ICMP_ECHOREPLY jt 7  jf 10 - ICMP Type is Echo Reply */
-                            /* (07) */ {0x48, 0, 0, 0x00000004},     /* ldh  [x + 4]                     - ICMP Id */
-                            /* (08) */ {0x15, 0, 1, ident},          /* jeq  $ident          jt 9  jf 10 - ICMP Id is ident */
-                            /* (09) */ {0x06, 0, 0, 0x00040000},     /* ret  #0x40000                    - Accept packet */
-                            /* (10) */ {0x06, 0, 0, 0x00000000}      /* ret  #0x0                        - Discard packet */
-                        };
+                        if (ipv4_mode) {
+                            struct sock_filter filter[] = {
+                                /* (00) */ {0x30, 0, 0, 0x00000009},     /* ldb  [9]                         - IP Protocol */
+                                /* (01) */ {0x15, 0, 8, IPPROTO_ICMP},   /* jeq  $IPPROTO_ICMP   jt 2  jf 10 - IP Protocol is ICMP */
+                                /* (02) */ {0x28, 0, 0, 0x00000006},     /* ldh  [6]                         - IP Fragment Offset */
+                                /* (03) */ {0x45, 6, 0, 0x00001FFF},     /* jset #0x1FFF         jt 10 jf 4  - IP Fragment Offset is zero */
+                                /* (04) */ {0xB1, 0, 0, 0x00000000},     /* ldxb 4*([0]&0xF)                 - Load IHL*4 to X */
+                                /* (05) */ {0x50, 0, 0, 0x00000000},     /* ldb  [x]                         - ICMP Type */
+                                /* (06) */ {0x15, 0, 3, ICMP_ECHOREPLY}, /* jeq  $ICMP_ECHOREPLY jt 7  jf 10 - ICMP Type is Echo Reply */
+                                /* (07) */ {0x48, 0, 0, 0x00000004},     /* ldh  [x + 4]                     - ICMP Id */
+                                /* (08) */ {0x15, 0, 1, ident},          /* jeq  $ident          jt 9  jf 10 - ICMP Id is ident */
+                                /* (09) */ {0x06, 0, 0, 0x00040000},     /* ret  #0x40000                    - Accept packet */
+                                /* (10) */ {0x06, 0, 0, 0x00000000}      /* ret  #0x0                        - Discard packet */
+                            };
 
-                        struct sock_fprog bpf = {.len = sizeof(filter) / sizeof(filter[0]), .filter = filter};
+                            struct sock_fprog bpf = {.len = sizeof(filter) / sizeof(filter[0]), .filter = filter};
 
-                        if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof(bpf)) < 0) {
-                            fprintf(stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror(errno));
+                            if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof(bpf)) < 0) {
+                                fprintf(stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror(errno));
+                            }
+                        } else {
+                            struct sock_filter filter[] = {
+                                /* (00) */ {0x30, 0, 0, 0x00000000},       /* ldb [0]                         - ICMPv6 Type */
+                                /* (01) */ {0x15, 0, 3, ICMP6_ECHO_REPLY}, /* jeq $ICMP6_ECHO_REPLY jt 2 jf 5 - ICMPv6 Type is Echo Reply */
+                                /* (02) */ {0x28, 0, 0, 0x00000004},       /* ldh [4]                         - ICMPv6 Id */
+                                /* (03) */ {0x15, 0, 1, ident},            /* jeq $ident            jt 4 jf 5 - ICMPv6 Id is ident */
+                                /* (04) */ {0x06, 0, 0, 0x00040000},       /* ret #0x40000                    - Accept packet */
+                                /* (05) */ {0x06, 0, 0, 0x00000000}        /* ret #0x0                        - Discard packet */
+                            };
+
+                            struct sock_fprog bpf = {.len = sizeof(filter) / sizeof(filter[0]), .filter = filter};
+
+                            if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof(bpf)) < 0) {
+                                fprintf(stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror(errno));
+                            }
                         }
-                    } else {
-                        struct sock_filter filter[] = {
-                            /* (00) */ {0x30, 0, 0, 0x00000000},       /* ldb [0]                         - ICMPv6 Type */
-                            /* (01) */ {0x15, 0, 3, ICMP6_ECHO_REPLY}, /* jeq $ICMP6_ECHO_REPLY jt 2 jf 5 - ICMPv6 Type is Echo Reply */
-                            /* (02) */ {0x28, 0, 0, 0x00000004},       /* ldh [4]                         - ICMPv6 Id */
-                            /* (03) */ {0x15, 0, 1, ident},            /* jeq $ident            jt 4 jf 5 - ICMPv6 Id is ident */
-                            /* (04) */ {0x06, 0, 0, 0x00040000},       /* ret #0x40000                    - Accept packet */
-                            /* (05) */ {0x06, 0, 0, 0x00000000}        /* ret #0x0                        - Discard packet */
-                        };
-
-                        struct sock_fprog bpf = {.len = sizeof(filter) / sizeof(filter[0]), .filter = filter};
-
-                        if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof(bpf)) < 0) {
-                            fprintf(stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror(errno));
-                        }
-                    }
 #endif /* ENABLE_BPF && HAVE_LINUX_FILTER_H && SO_ATTACH_FILTER */
 
-                    clear_socket_buffer(sock);
+                        clear_socket_buffer(sock);
 
-                    uint64_t interval     = pkt_size * 8000 / kbps,
-                             min_interval = calibrate_timer() * 2; /* Leave space for interval_error adjustments */
+                        uint64_t interval     = pkt_size * 8000 / kbps,
+                                 min_interval = calibrate_timer() * 2; /* Leave space for interval_error adjustments */
 
-                    uint64_t pkt_burst;
+                        uint64_t pkt_burst;
 
-                    if (interval >= min_interval) {
-                        pkt_burst = PKT_BURST_SCALE * 1;
-                    } else if (interval == 0) {
-                        pkt_burst = PKT_BURST_SCALE * min_interval * kbps / 8000 / pkt_size;
-                        interval  = min_interval;
-                    } else {
-                        pkt_burst = PKT_BURST_SCALE * min_interval / interval;
-                        interval  = min_interval;
-                    }
+                        if (interval >= min_interval) {
+                            pkt_burst = PKT_BURST_SCALE * 1;
+                        } else if (interval == 0) {
+                            pkt_burst = PKT_BURST_SCALE * min_interval * kbps / 8000 / pkt_size;
+                            interval  = min_interval;
+                        } else {
+                            pkt_burst = PKT_BURST_SCALE * min_interval / interval;
+                            interval  = min_interval;
+                        }
 
-                    bool     finish             = false;
-                    uint64_t total_count        = volume % pkt_size == 0 ? volume / pkt_size :
-                                                                           volume / pkt_size + 1,
-                             transmitted_count  = 0,
-                             received_count     = 0,
-                             rtt_count          = 0,
-                             transmitted_volume = 0,
-                             received_volume    = 0,
-                             sum_rtt            = 0,
-                             min_rtt            = UINT64_MAX,
-                             max_rtt            = 0,
-                             pkt_burst_error    = 0,
-                             current_interval   = interval,
-                             interval_error     = 0;
+                        bool     finish             = false;
+                        uint64_t total_count        = volume % pkt_size == 0 ? volume / pkt_size :
+                                                                               volume / pkt_size + 1,
+                                 transmitted_count  = 0,
+                                 received_count     = 0,
+                                 rtt_count          = 0,
+                                 transmitted_volume = 0,
+                                 received_volume    = 0,
+                                 sum_rtt            = 0,
+                                 min_rtt            = UINT64_MAX,
+                                 max_rtt            = 0,
+                                 pkt_burst_error    = 0,
+                                 current_interval   = interval,
+                                 interval_error     = 0;
 
-                    struct timespec start, end, report;
+                        struct timespec start, end, report;
 
-                    get_time(&start);
-                    get_time(&end);
-                    get_time(&report);
+                        get_time(&start);
+                        get_time(&end);
+                        get_time(&report);
 
-                    while (!finish) {
-                        struct timespec interval_start;
+                        while (!finish) {
+                            struct timespec interval_start;
 
-                        get_time(&interval_start);
+                            get_time(&interval_start);
 
-                        uint64_t pkt_count = total_count - transmitted_count > pkt_burst / PKT_BURST_SCALE + pkt_burst_error / PKT_BURST_SCALE ?
-                                                                               pkt_burst / PKT_BURST_SCALE + pkt_burst_error / PKT_BURST_SCALE :
-                                                                               total_count - transmitted_count;
+                            uint64_t pkt_count = total_count - transmitted_count > pkt_burst / PKT_BURST_SCALE + pkt_burst_error / PKT_BURST_SCALE ?
+                                                                                   pkt_burst / PKT_BURST_SCALE + pkt_burst_error / PKT_BURST_SCALE :
+                                                                                   total_count - transmitted_count;
 
 #if defined(ENABLE_MMSG) && defined(HAVE_SENDMMSG)
-                        sendmmsg_ping(ipv4_mode, sock, pkt_size, ident, pkt_count, &transmitted_count, &transmitted_volume);
+                            sendmmsg_ping(ipv4_mode, sock, pkt_size, ident, pkt_count, &transmitted_count, &transmitted_volume);
 #else
-                        for (uint64_t i = 0; i < pkt_count; i++) {
-                            send_ping(ipv4_mode, sock, pkt_size, ident, i == 0, &transmitted_count, &transmitted_volume);
-                        }
+                            for (uint64_t i = 0; i < pkt_count; i++) {
+                                send_ping(ipv4_mode, sock, pkt_size, ident, i == 0, &transmitted_count, &transmitted_volume);
+                            }
 #endif
 
-                        pkt_burst_error  = pkt_burst_error % PKT_BURST_SCALE;
-                        pkt_burst_error += pkt_burst       % PKT_BURST_SCALE;
+                            pkt_burst_error  = pkt_burst_error % PKT_BURST_SCALE;
+                            pkt_burst_error += pkt_burst       % PKT_BURST_SCALE;
 
-                        uint64_t select_timeout = current_interval;
+                            uint64_t select_timeout = current_interval;
 
-                        while (true) {
-                            fd_set fds;
+                            while (true) {
+                                fd_set fds;
 
-                            FD_ZERO(&fds);
-                            FD_SET(sock, &fds);
+                                FD_ZERO(&fds);
+                                FD_SET(sock, &fds);
 
-                            struct timeval timeout = {.tv_sec = select_timeout / 1000000, .tv_usec = select_timeout % 1000000};
+                                struct timeval timeout = {.tv_sec = select_timeout / 1000000, .tv_usec = select_timeout % 1000000};
 
-                            int n = select(sock + 1, &fds, NULL, NULL, &timeout);
+                                int n = select(sock + 1, &fds, NULL, NULL, &timeout);
 
-                            if (n < 0) {
-                                fprintf(stderr, "%s: select() failed: %s\n", prog_name, strerror(errno));
-                            } else if (n > 0) {
+                                if (n < 0) {
+                                    fprintf(stderr, "%s: select() failed: %s\n", prog_name, strerror(errno));
+                                } else if (n > 0) {
 #if defined(ENABLE_MMSG) && defined(HAVE_RECVMMSG)
-                                while (recvmmsg_ping(ipv4_mode, sock, ident, &received_count, &received_volume, &rtt_count, &sum_rtt, &min_rtt, &max_rtt)) {
+                                    while (recvmmsg_ping(ipv4_mode, sock, ident, &received_count, &received_volume, &rtt_count, &sum_rtt, &min_rtt, &max_rtt)) {
 #else
-                                while (recv_ping(ipv4_mode, sock, ident, &received_count, &received_volume, &rtt_count, &sum_rtt, &min_rtt, &max_rtt)) {
+                                    while (recv_ping(ipv4_mode, sock, ident, &received_count, &received_volume, &rtt_count, &sum_rtt, &min_rtt, &max_rtt)) {
 #endif
-                                    if (received_count >= transmitted_count) {
-                                        break;
+                                        if (received_count >= transmitted_count) {
+                                            break;
+                                        }
                                     }
                                 }
-                            }
 
-                            struct timespec now;
+                                struct timespec now;
 
-                            get_time(&now);
+                                get_time(&now);
 
-                            int64_t time_diff = ts_sub(&now, &interval_start);
+                                int64_t time_diff = ts_sub(&now, &interval_start);
 
-                            if (time_diff < 0 || (uint64_t)time_diff >= current_interval) {
-                                if (transmitted_volume >= volume) {
-                                    finish = true;
+                                if (time_diff < 0 || (uint64_t)time_diff >= current_interval) {
+                                    if (transmitted_volume >= volume) {
+                                        finish = true;
+                                    } else {
+                                        if (time_diff >= 0) {
+                                            interval_error += time_diff - current_interval;
+                                        } else {
+                                            fprintf(stderr, "%s: clock skew detected\n", prog_name);
+                                        }
+
+                                        if (interval_error >= interval / 2) {
+                                            current_interval  = interval / 2;
+                                            interval_error   -= interval / 2;
+                                        } else {
+                                            current_interval = interval;
+                                        }
+                                    }
+
+                                    break;
                                 } else {
-                                    if (time_diff >= 0) {
-                                        interval_error += time_diff - current_interval;
-                                    } else {
-                                        fprintf(stderr, "%s: clock skew detected\n", prog_name);
-                                    }
-
-                                    if (interval_error >= interval / 2) {
-                                        current_interval  = interval / 2;
-                                        interval_error   -= interval / 2;
-                                    } else {
-                                        current_interval = interval;
-                                    }
+                                    select_timeout = current_interval - time_diff;
                                 }
+                            }
 
-                                break;
-                            } else {
-                                select_timeout = current_interval - time_diff;
+                            get_time(&end);
+
+                            int64_t report_sec_diff = ts_sub(&end, &report) / 1000000,
+                                    start_sec_diff  = ts_sub(&end, &start)  / 1000000;
+
+                            if (reporting_period > 0 && report_sec_diff >= reporting_period) {
+                                printf("Periodic: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes,"
+                                       " time: %" PRId64 " sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
+                                       transmitted_count, received_count, transmitted_volume, received_volume, start_sec_diff,
+                                       start_sec_diff > 0 ? received_volume / start_sec_diff * 8 / 1000 : received_volume * 8 / 1000,
+                                       min_rtt == UINT64_MAX ? 0 : min_rtt, max_rtt, rtt_count > 0 ? sum_rtt / rtt_count : 0);
+
+                                get_time(&report);
                             }
                         }
 
-                        get_time(&end);
+                        int64_t sec_diff = ts_sub(&end, &start) / 1000000;
 
-                        int64_t report_sec_diff = ts_sub(&end, &report) / 1000000,
-                                start_sec_diff  = ts_sub(&end, &start)  / 1000000;
-
-                        if (reporting_period > 0 && report_sec_diff >= reporting_period) {
-                            printf("Periodic: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes,"
-                                   " time: %" PRId64 " sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
-                                   transmitted_count, received_count, transmitted_volume, received_volume, start_sec_diff,
-                                   start_sec_diff > 0 ? received_volume / start_sec_diff * 8 / 1000 : received_volume * 8 / 1000,
-                                   min_rtt == UINT64_MAX ? 0 : min_rtt, max_rtt, rtt_count > 0 ? sum_rtt / rtt_count : 0);
-
-                            get_time(&report);
-                        }
+                        printf("Total: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes,"
+                               " time: %" PRId64 " sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
+                               transmitted_count, received_count, transmitted_volume, received_volume, sec_diff,
+                               sec_diff > 0 ? received_volume / sec_diff * 8 / 1000 : received_volume * 8 / 1000,
+                               min_rtt == UINT64_MAX ? 0 : min_rtt, max_rtt, rtt_count > 0 ? sum_rtt / rtt_count : 0);
                     }
 
-                    int64_t sec_diff = ts_sub(&end, &start) / 1000000;
-
-                    printf("Total: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes,"
-                           " time: %" PRId64 " sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
-                           transmitted_count, received_count, transmitted_volume, received_volume, sec_diff,
-                           sec_diff > 0 ? received_volume / sec_diff * 8 / 1000 : received_volume * 8 / 1000,
-                           min_rtt == UINT64_MAX ? 0 : min_rtt, max_rtt, rtt_count > 0 ? sum_rtt / rtt_count : 0);
+                    freeaddrinfo(to_ai);
+                } else {
+                    exit_val = EX_NOHOST;
                 }
-
-                freeaddrinfo(to_ai);
-            } else {
-                exit_val = EX_NOHOST;
             }
         }
     }
