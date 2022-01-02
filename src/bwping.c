@@ -63,7 +63,7 @@ struct rtt_counters
 static const size_t   MAX_IPV4_HDR_SIZE = 60;
 static const uint64_t PKT_BURST_SCALE   = 1000;
 
-static char *prog_name;
+static const char *prog_name;
 
 static void get_time(struct timespec *ts)
 {
@@ -211,7 +211,8 @@ static void clear_socket_buffer(int sock)
     } while (res > 0);
 }
 
-static void prepare_ping4(char *packet, size_t pkt_size, uint16_t ident, bool insert_timestamp, struct pkt_counters *transmitted)
+static void prepare_ping4(char *const restrict packet, size_t pkt_size, uint16_t ident, bool insert_timestamp,
+                          struct pkt_counters *const restrict transmitted)
 {
     struct icmp icmp4 = {
         .icmp_type  = ICMP_ECHO,
@@ -245,7 +246,8 @@ static void prepare_ping4(char *packet, size_t pkt_size, uint16_t ident, bool in
     transmitted->volume += pkt_size;
 }
 
-static void prepare_ping6(char *packet, size_t pkt_size, uint16_t ident, bool insert_timestamp, struct pkt_counters *transmitted)
+static void prepare_ping6(char *const restrict packet, size_t pkt_size, uint16_t ident, bool insert_timestamp,
+                          struct pkt_counters *const restrict transmitted)
 {
     struct icmp6_hdr icmp6 = {
         .icmp6_type  = ICMP6_ECHO_REQUEST,
@@ -334,7 +336,8 @@ static void send_ping(bool ipv4_mode, int sock, size_t pkt_size, uint16_t ident,
 
 #endif /* ENABLE_MMSG && HAVE_SENDMMSG */
 
-static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, struct pkt_counters *received, struct rtt_counters *rtt)
+static void process_ping4(const char *const restrict packet, ssize_t pkt_size, uint16_t ident, struct pkt_counters *const restrict received,
+                          struct rtt_counters *const restrict rtt)
 {
     struct ip ip4;
 
@@ -386,7 +389,8 @@ static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, 
     }
 }
 
-static void process_ping6(const char *packet, ssize_t pkt_size, uint16_t ident, struct pkt_counters *received, struct rtt_counters *rtt)
+static void process_ping6(const char *const restrict packet, ssize_t pkt_size, uint16_t ident, struct pkt_counters *const restrict received,
+                          struct rtt_counters *const restrict rtt)
 {
     struct icmp6_hdr icmp6;
 
@@ -495,7 +499,7 @@ static bool recv_ping(bool ipv4_mode, int sock, uint16_t ident, struct pkt_count
 
 #endif /* ENABLE_MMSG && HAVE_RECVMMSG */
 
-static bool resolve_name(bool ipv4_mode, const char *name, struct addrinfo **ai)
+static bool resolve_name(bool ipv4_mode, const char *const restrict name, struct addrinfo **const restrict ai)
 {
     struct addrinfo hints = {.ai_flags = AI_CANONNAME, .ai_socktype = SOCK_RAW};
 
