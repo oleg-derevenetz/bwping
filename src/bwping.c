@@ -201,8 +201,8 @@ static void clear_socket_buffer(int sock)
     } while (res > 0);
 }
 
-static void prepare_ping4(char *packet, size_t pkt_size, uint16_t ident, bool insert_timestamp,
-                          uint64_t *transmitted_count, uint64_t *transmitted_volume)
+static void prepare_ping4(char *packet, size_t pkt_size, uint16_t ident, bool insert_timestamp, uint64_t *transmitted_count,
+                          uint64_t *transmitted_volume)
 {
     struct icmp icmp4 = {
         .icmp_type  = ICMP_ECHO,
@@ -236,8 +236,8 @@ static void prepare_ping4(char *packet, size_t pkt_size, uint16_t ident, bool in
     *transmitted_volume += pkt_size;
 }
 
-static void prepare_ping6(char *packet, size_t pkt_size, uint16_t ident, bool insert_timestamp,
-                          uint64_t *transmitted_count, uint64_t *transmitted_volume)
+static void prepare_ping6(char *packet, size_t pkt_size, uint16_t ident, bool insert_timestamp, uint64_t *transmitted_count,
+                          uint64_t *transmitted_volume)
 {
     struct icmp6_hdr icmp6 = {
         .icmp6_type  = ICMP6_ECHO_REQUEST,
@@ -265,8 +265,8 @@ static void prepare_ping6(char *packet, size_t pkt_size, uint16_t ident, bool in
 
 #if defined(ENABLE_MMSG) && defined(HAVE_SENDMMSG)
 
-static void sendmmsg_ping(bool ipv4_mode, int sock, size_t pkt_size, uint16_t ident, uint64_t pkt_count,
-                          uint64_t *transmitted_count, uint64_t *transmitted_volume)
+static void sendmmsg_ping(bool ipv4_mode, int sock, size_t pkt_size, uint16_t ident, uint64_t pkt_count, uint64_t *transmitted_count,
+                          uint64_t *transmitted_volume)
 {
     for (uint64_t i = 0; i < pkt_count; i = i + MAX_MMSG_VLEN) {
         static char packets[MAX_MMSG_VLEN][IP_MAXPACKET] = {{0}};
@@ -306,8 +306,8 @@ static void sendmmsg_ping(bool ipv4_mode, int sock, size_t pkt_size, uint16_t id
 
 #else /* ENABLE_MMSG && HAVE_SENDMMSG */
 
-static void send_ping(bool ipv4_mode, int sock, size_t pkt_size, uint16_t ident, bool insert_timestamp,
-                      uint64_t *transmitted_count, uint64_t *transmitted_volume)
+static void send_ping(bool ipv4_mode, int sock, size_t pkt_size, uint16_t ident, bool insert_timestamp, uint64_t *transmitted_count,
+                      uint64_t *transmitted_volume)
 {
     static char packet[IP_MAXPACKET] = {0};
 
@@ -328,9 +328,8 @@ static void send_ping(bool ipv4_mode, int sock, size_t pkt_size, uint16_t ident,
 
 #endif /* ENABLE_MMSG && HAVE_SENDMMSG */
 
-static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, uint64_t *received_count,
-                          uint64_t *received_volume, uint64_t *rtt_count, uint64_t *sum_rtt, uint64_t *min_rtt,
-                          uint64_t *max_rtt)
+static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, uint64_t *received_count, uint64_t *received_volume,
+                          uint64_t *rtt_count, uint64_t *sum_rtt, uint64_t *min_rtt, uint64_t *max_rtt)
 {
     struct ip ip4;
 
@@ -382,9 +381,8 @@ static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, 
     }
 }
 
-static void process_ping6(const char *packet, ssize_t pkt_size, uint16_t ident, uint64_t *received_count,
-                          uint64_t *received_volume, uint64_t *rtt_count, uint64_t *sum_rtt, uint64_t *min_rtt,
-                          uint64_t *max_rtt)
+static void process_ping6(const char *packet, ssize_t pkt_size, uint16_t ident, uint64_t *received_count, uint64_t *received_volume,
+                          uint64_t *rtt_count, uint64_t *sum_rtt, uint64_t *min_rtt, uint64_t *max_rtt)
 {
     struct icmp6_hdr icmp6;
 
@@ -428,8 +426,8 @@ static void process_ping6(const char *packet, ssize_t pkt_size, uint16_t ident, 
 
 #if defined(ENABLE_MMSG) && defined(HAVE_RECVMMSG)
 
-static bool recvmmsg_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *received_count, uint64_t *received_volume,
-                          uint64_t *rtt_count, uint64_t *sum_rtt, uint64_t *min_rtt, uint64_t *max_rtt)
+static bool recvmmsg_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *received_count, uint64_t *received_volume, uint64_t *rtt_count,
+                          uint64_t *sum_rtt, uint64_t *min_rtt, uint64_t *max_rtt)
 {
     static char packets[MAX_MMSG_VLEN][IP_MAXPACKET];
 
@@ -453,13 +451,11 @@ static bool recvmmsg_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *re
     } else if (res > 0) {
         if (ipv4_mode) {
             for (int i = 0; i < res; i++) {
-                process_ping4(packets[i], msg[i].msg_len, ident, received_count, received_volume,
-                              rtt_count, sum_rtt, min_rtt, max_rtt);
+                process_ping4(packets[i], msg[i].msg_len, ident, received_count, received_volume, rtt_count, sum_rtt, min_rtt, max_rtt);
             }
         } else {
             for (int i = 0; i < res; i++) {
-                process_ping6(packets[i], msg[i].msg_len, ident, received_count, received_volume,
-                              rtt_count, sum_rtt, min_rtt, max_rtt);
+                process_ping6(packets[i], msg[i].msg_len, ident, received_count, received_volume, rtt_count, sum_rtt, min_rtt, max_rtt);
             }
         }
 
@@ -471,8 +467,8 @@ static bool recvmmsg_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *re
 
 #else /* ENABLE_MMSG && HAVE_RECVMMSG */
 
-static bool recv_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *received_count, uint64_t *received_volume,
-                      uint64_t *rtt_count, uint64_t *sum_rtt, uint64_t *min_rtt, uint64_t *max_rtt)
+static bool recv_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *received_count, uint64_t *received_volume, uint64_t *rtt_count,
+                      uint64_t *sum_rtt, uint64_t *min_rtt, uint64_t *max_rtt)
 {
     static char packet[IP_MAXPACKET];
 
