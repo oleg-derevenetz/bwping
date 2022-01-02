@@ -50,6 +50,16 @@
 #define MAX_MMSG_VLEN 64
 #endif
 
+struct pkt_counters
+{
+    uint64_t count, volume;
+};
+
+struct rtt_counters
+{
+    uint64_t count, sum, min, max;
+};
+
 static const size_t   MAX_IPV4_HDR_SIZE = 60;
 static const uint64_t PKT_BURST_SCALE   = 1000;
 
@@ -201,15 +211,14 @@ static void clear_socket_buffer(int sock)
     } while (res > 0);
 }
 
-static void prepare_ping4(char *packet, size_t pkt_size, uint16_t ident, bool insert_timestamp, uint64_t *transmitted_count,
-                          uint64_t *transmitted_volume)
+static void prepare_ping4(char *packet, size_t pkt_size, uint16_t ident, bool insert_timestamp, struct pkt_counters *transmitted)
 {
     struct icmp icmp4 = {
         .icmp_type  = ICMP_ECHO,
         .icmp_code  = 0,
         .icmp_cksum = 0,
         .icmp_id    = htons(ident),
-        .icmp_seq   = htons(*transmitted_count)
+        .icmp_seq   = htons(transmitted->count)
     };
 
     memcpy(packet, &icmp4, sizeof(icmp4));
@@ -232,19 +241,18 @@ static void prepare_ping4(char *packet, size_t pkt_size, uint16_t ident, bool in
 
     memcpy(&packet[offsetof(struct icmp, icmp_cksum)], &icmp4.icmp_cksum, sizeof(icmp4.icmp_cksum));
 
-    *transmitted_count  += 1;
-    *transmitted_volume += pkt_size;
+    transmitted->count  += 1;
+    transmitted->volume += pkt_size;
 }
 
-static void prepare_ping6(char *packet, size_t pkt_size, uint16_t ident, bool insert_timestamp, uint64_t *transmitted_count,
-                          uint64_t *transmitted_volume)
+static void prepare_ping6(char *packet, size_t pkt_size, uint16_t ident, bool insert_timestamp, struct pkt_counters *transmitted)
 {
     struct icmp6_hdr icmp6 = {
         .icmp6_type  = ICMP6_ECHO_REQUEST,
         .icmp6_code  = 0,
         .icmp6_cksum = 0,
         .icmp6_id    = htons(ident),
-        .icmp6_seq   = htons(*transmitted_count)
+        .icmp6_seq   = htons(transmitted->count)
     };
 
     memcpy(packet, &icmp6, sizeof(icmp6));
@@ -259,14 +267,13 @@ static void prepare_ping6(char *packet, size_t pkt_size, uint16_t ident, bool in
         memset(&packet[sizeof(icmp6)], 0, sizeof(struct timespec));
     }
 
-    *transmitted_count  += 1;
-    *transmitted_volume += pkt_size;
+    transmitted->count  += 1;
+    transmitted->volume += pkt_size;
 }
 
 #if defined(ENABLE_MMSG) && defined(HAVE_SENDMMSG)
 
-static void sendmmsg_ping(bool ipv4_mode, int sock, size_t pkt_size, uint16_t ident, uint64_t pkt_count, uint64_t *transmitted_count,
-                          uint64_t *transmitted_volume)
+static void sendmmsg_ping(bool ipv4_mode, int sock, size_t pkt_size, uint16_t ident, uint64_t pkt_count, struct pkt_counters *transmitted)
 {
     for (uint64_t i = 0; i < pkt_count; i = i + MAX_MMSG_VLEN) {
         static char packets[MAX_MMSG_VLEN][IP_MAXPACKET] = {{0}};
@@ -278,9 +285,9 @@ static void sendmmsg_ping(bool ipv4_mode, int sock, size_t pkt_size, uint16_t id
 
         for (unsigned int j = 0; j < vlen; j++) {
             if (ipv4_mode) {
-                prepare_ping4(packets[j], pkt_size, ident, i == 0 && j == 0, transmitted_count, transmitted_volume);
+                prepare_ping4(packets[j], pkt_size, ident, i == 0 && j == 0, transmitted);
             } else {
-                prepare_ping6(packets[j], pkt_size, ident, i == 0 && j == 0, transmitted_count, transmitted_volume);
+                prepare_ping6(packets[j], pkt_size, ident, i == 0 && j == 0, transmitted);
             }
 
             memset(&iov[j], 0, sizeof(iov[j]));
@@ -306,15 +313,14 @@ static void sendmmsg_ping(bool ipv4_mode, int sock, size_t pkt_size, uint16_t id
 
 #else /* ENABLE_MMSG && HAVE_SENDMMSG */
 
-static void send_ping(bool ipv4_mode, int sock, size_t pkt_size, uint16_t ident, bool insert_timestamp, uint64_t *transmitted_count,
-                      uint64_t *transmitted_volume)
+static void send_ping(bool ipv4_mode, int sock, size_t pkt_size, uint16_t ident, bool insert_timestamp, struct pkt_counters *transmitted)
 {
     static char packet[IP_MAXPACKET] = {0};
 
     if (ipv4_mode) {
-        prepare_ping4(packet, pkt_size, ident, insert_timestamp, transmitted_count, transmitted_volume);
+        prepare_ping4(packet, pkt_size, ident, insert_timestamp, transmitted);
     } else {
-        prepare_ping6(packet, pkt_size, ident, insert_timestamp, transmitted_count, transmitted_volume);
+        prepare_ping6(packet, pkt_size, ident, insert_timestamp, transmitted);
     }
 
     ssize_t res = send(sock, packet, pkt_size, 0);
@@ -328,8 +334,7 @@ static void send_ping(bool ipv4_mode, int sock, size_t pkt_size, uint16_t ident,
 
 #endif /* ENABLE_MMSG && HAVE_SENDMMSG */
 
-static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, uint64_t *received_count, uint64_t *received_volume,
-                          uint64_t *rtt_count, uint64_t *sum_rtt, uint64_t *min_rtt, uint64_t *max_rtt)
+static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, struct pkt_counters *received, struct rtt_counters *rtt)
 {
     struct ip ip4;
 
@@ -345,8 +350,8 @@ static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, 
                 memcpy(&icmp4, &packet[hdr_len], sizeof(icmp4));
 
                 if (icmp4.icmp_type == ICMP_ECHOREPLY && ntohs(icmp4.icmp_id) == ident) {
-                    *received_count  += 1;
-                    *received_volume += pkt_size - hdr_len;
+                    received->count  += 1;
+                    received->volume += pkt_size - hdr_len;
 
                     struct timespec pkt_time;
 
@@ -358,17 +363,17 @@ static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, 
 
                             get_time(&now);
 
-                            int64_t rtt = ts_sub(&now, &pkt_time) / 1000;
+                            int64_t pkt_rtt = ts_sub(&now, &pkt_time) / 1000;
 
-                            if (rtt >= 0) {
-                                *rtt_count += 1;
-                                *sum_rtt   += rtt;
+                            if (pkt_rtt >= 0) {
+                                rtt->count += 1;
+                                rtt->sum   += pkt_rtt;
 
-                                if (*min_rtt > (uint64_t)rtt) {
-                                    *min_rtt = rtt;
+                                if (rtt->min > (uint64_t)pkt_rtt) {
+                                    rtt->min = pkt_rtt;
                                 }
-                                if (*max_rtt < (uint64_t)rtt) {
-                                    *max_rtt = rtt;
+                                if (rtt->max < (uint64_t)pkt_rtt) {
+                                    rtt->max = pkt_rtt;
                                 }
                             } else {
                                 fprintf(stderr, "%s: packet has an invalid timestamp\n", prog_name);
@@ -381,8 +386,7 @@ static void process_ping4(const char *packet, ssize_t pkt_size, uint16_t ident, 
     }
 }
 
-static void process_ping6(const char *packet, ssize_t pkt_size, uint16_t ident, uint64_t *received_count, uint64_t *received_volume,
-                          uint64_t *rtt_count, uint64_t *sum_rtt, uint64_t *min_rtt, uint64_t *max_rtt)
+static void process_ping6(const char *packet, ssize_t pkt_size, uint16_t ident, struct pkt_counters *received, struct rtt_counters *rtt)
 {
     struct icmp6_hdr icmp6;
 
@@ -390,8 +394,8 @@ static void process_ping6(const char *packet, ssize_t pkt_size, uint16_t ident, 
         memcpy(&icmp6, packet, sizeof(icmp6));
 
         if (icmp6.icmp6_type == ICMP6_ECHO_REPLY && ntohs(icmp6.icmp6_id) == ident) {
-            *received_count  += 1;
-            *received_volume += pkt_size;
+            received->count  += 1;
+            received->volume += pkt_size;
 
             struct timespec pkt_time;
 
@@ -403,17 +407,17 @@ static void process_ping6(const char *packet, ssize_t pkt_size, uint16_t ident, 
 
                     get_time(&now);
 
-                    int64_t rtt = ts_sub(&now, &pkt_time) / 1000;
+                    int64_t pkt_rtt = ts_sub(&now, &pkt_time) / 1000;
 
-                    if (rtt >= 0) {
-                        *rtt_count += 1;
-                        *sum_rtt   += rtt;
+                    if (pkt_rtt >= 0) {
+                        rtt->count += 1;
+                        rtt->sum   += pkt_rtt;
 
-                        if (*min_rtt > (uint64_t)rtt) {
-                            *min_rtt = rtt;
+                        if (rtt->min > (uint64_t)pkt_rtt) {
+                            rtt->min = pkt_rtt;
                         }
-                        if (*max_rtt < (uint64_t)rtt) {
-                            *max_rtt = rtt;
+                        if (rtt->max < (uint64_t)pkt_rtt) {
+                            rtt->max = pkt_rtt;
                         }
                     } else {
                         fprintf(stderr, "%s: packet has an invalid timestamp\n", prog_name);
@@ -426,8 +430,7 @@ static void process_ping6(const char *packet, ssize_t pkt_size, uint16_t ident, 
 
 #if defined(ENABLE_MMSG) && defined(HAVE_RECVMMSG)
 
-static bool recvmmsg_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *received_count, uint64_t *received_volume, uint64_t *rtt_count,
-                          uint64_t *sum_rtt, uint64_t *min_rtt, uint64_t *max_rtt)
+static bool recvmmsg_ping(bool ipv4_mode, int sock, uint16_t ident, struct pkt_counters *received, struct rtt_counters *rtt)
 {
     static char packets[MAX_MMSG_VLEN][IP_MAXPACKET];
 
@@ -451,11 +454,11 @@ static bool recvmmsg_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *re
     } else if (res > 0) {
         if (ipv4_mode) {
             for (int i = 0; i < res; i++) {
-                process_ping4(packets[i], msg[i].msg_len, ident, received_count, received_volume, rtt_count, sum_rtt, min_rtt, max_rtt);
+                process_ping4(packets[i], msg[i].msg_len, ident, received, rtt);
             }
         } else {
             for (int i = 0; i < res; i++) {
-                process_ping6(packets[i], msg[i].msg_len, ident, received_count, received_volume, rtt_count, sum_rtt, min_rtt, max_rtt);
+                process_ping6(packets[i], msg[i].msg_len, ident, received, rtt);
             }
         }
 
@@ -467,8 +470,7 @@ static bool recvmmsg_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *re
 
 #else /* ENABLE_MMSG && HAVE_RECVMMSG */
 
-static bool recv_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *received_count, uint64_t *received_volume, uint64_t *rtt_count,
-                      uint64_t *sum_rtt, uint64_t *min_rtt, uint64_t *max_rtt)
+static bool recv_ping(bool ipv4_mode, int sock, uint16_t ident, struct pkt_counters *received, struct rtt_counters *rtt)
 {
     static char packet[IP_MAXPACKET];
 
@@ -480,9 +482,9 @@ static bool recv_ping(bool ipv4_mode, int sock, uint16_t ident, uint64_t *receiv
         return false;
     } else if (res > 0) {
         if (ipv4_mode) {
-            process_ping4(packet, res, ident, received_count, received_volume, rtt_count, sum_rtt, min_rtt, max_rtt);
+            process_ping4(packet, res, ident, received, rtt);
         } else {
-            process_ping6(packet, res, ident, received_count, received_volume, rtt_count, sum_rtt, min_rtt, max_rtt);
+            process_ping6(packet, res, ident, received, rtt);
         }
 
         return true;
@@ -825,20 +827,15 @@ int main(int argc, char *argv[])
             interval  = min_interval;
         }
 
-        bool     finish             = false;
-        uint64_t total_count        = volume % pkt_size == 0 ? volume / pkt_size :
-                                                               volume / pkt_size + 1,
-                 transmitted_count  = 0,
-                 received_count     = 0,
-                 rtt_count          = 0,
-                 transmitted_volume = 0,
-                 received_volume    = 0,
-                 sum_rtt            = 0,
-                 min_rtt            = UINT64_MAX,
-                 max_rtt            = 0,
-                 pkt_burst_error    = 0,
-                 current_interval   = interval,
-                 interval_error     = 0;
+        bool                finish           = false;
+        uint64_t            total_count      = volume % pkt_size == 0 ? volume / pkt_size :
+                                                                        volume / pkt_size + 1,
+                            pkt_burst_error  = 0,
+                            current_interval = interval,
+                            interval_error   = 0;
+        struct pkt_counters transmitted      = {.count = 0, .volume = 0},
+                            received         = {.count = 0, .volume = 0};
+        struct rtt_counters rtt              = {.count = 0, .sum = 0, .min = UINT64_MAX, .max = 0};
 
         struct timespec start, end, report;
 
@@ -851,15 +848,15 @@ int main(int argc, char *argv[])
 
             get_time(&interval_start);
 
-            uint64_t pkt_count = total_count - transmitted_count > pkt_burst / PKT_BURST_SCALE + pkt_burst_error / PKT_BURST_SCALE ?
+            uint64_t pkt_count = total_count - transmitted.count > pkt_burst / PKT_BURST_SCALE + pkt_burst_error / PKT_BURST_SCALE ?
                                                                    pkt_burst / PKT_BURST_SCALE + pkt_burst_error / PKT_BURST_SCALE :
-                                                                   total_count - transmitted_count;
+                                                                   total_count - transmitted.count;
 
 #if defined(ENABLE_MMSG) && defined(HAVE_SENDMMSG)
-            sendmmsg_ping(ipv4_mode, sock, pkt_size, ident, pkt_count, &transmitted_count, &transmitted_volume);
+            sendmmsg_ping(ipv4_mode, sock, pkt_size, ident, pkt_count, &transmitted);
 #else
             for (uint64_t i = 0; i < pkt_count; i++) {
-                send_ping(ipv4_mode, sock, pkt_size, ident, i == 0, &transmitted_count, &transmitted_volume);
+                send_ping(ipv4_mode, sock, pkt_size, ident, i == 0, &transmitted);
             }
 #endif
 
@@ -882,11 +879,11 @@ int main(int argc, char *argv[])
                     fprintf(stderr, "%s: select() failed: %s\n", prog_name, strerror(errno));
                 } else if (n > 0) {
 #if defined(ENABLE_MMSG) && defined(HAVE_RECVMMSG)
-                    while (recvmmsg_ping(ipv4_mode, sock, ident, &received_count, &received_volume, &rtt_count, &sum_rtt, &min_rtt, &max_rtt)) {
+                    while (recvmmsg_ping(ipv4_mode, sock, ident, &received, &rtt)) {
 #else
-                    while (recv_ping(ipv4_mode, sock, ident, &received_count, &received_volume, &rtt_count, &sum_rtt, &min_rtt, &max_rtt)) {
+                    while (recv_ping(ipv4_mode, sock, ident, &received, &rtt)) {
 #endif
-                        if (received_count >= transmitted_count) {
+                        if (received.count >= transmitted.count) {
                             break;
                         }
                     }
@@ -899,7 +896,7 @@ int main(int argc, char *argv[])
                 int64_t time_diff = ts_sub(&now, &interval_start);
 
                 if (time_diff < 0 || (uint64_t)time_diff >= current_interval) {
-                    if (transmitted_volume >= volume) {
+                    if (transmitted.volume >= volume) {
                         finish = true;
                     } else {
                         if (time_diff >= 0) {
@@ -930,9 +927,9 @@ int main(int argc, char *argv[])
             if (reporting_period > 0 && report_sec_diff >= reporting_period) {
                 printf("Periodic: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes,"
                        " time: %" PRId64 " sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
-                       transmitted_count, received_count, transmitted_volume, received_volume, start_sec_diff,
-                       start_sec_diff > 0 ? received_volume / start_sec_diff * 8 / 1000 : received_volume * 8 / 1000,
-                       min_rtt == UINT64_MAX ? 0 : min_rtt, max_rtt, rtt_count > 0 ? sum_rtt / rtt_count : 0);
+                       transmitted.count, received.count, transmitted.volume, received.volume, start_sec_diff,
+                       start_sec_diff > 0 ? received.volume / start_sec_diff * 8 / 1000 : received.volume * 8 / 1000,
+                       rtt.min == UINT64_MAX ? 0 : rtt.min, rtt.max, rtt.count > 0 ? rtt.sum / rtt.count : 0);
 
                 get_time(&report);
             }
@@ -942,9 +939,9 @@ int main(int argc, char *argv[])
 
         printf("Total: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes,"
                " time: %" PRId64 " sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
-               transmitted_count, received_count, transmitted_volume, received_volume, sec_diff,
-               sec_diff > 0 ? received_volume / sec_diff * 8 / 1000 : received_volume * 8 / 1000,
-               min_rtt == UINT64_MAX ? 0 : min_rtt, max_rtt, rtt_count > 0 ? sum_rtt / rtt_count : 0);
+               transmitted.count, received.count, transmitted.volume, received.volume, sec_diff,
+               sec_diff > 0 ? received.volume / sec_diff * 8 / 1000 : received.volume * 8 / 1000,
+               rtt.min == UINT64_MAX ? 0 : rtt.min, rtt.max, rtt.count > 0 ? rtt.sum / rtt.count : 0);
     }
 
     close(sock);
