@@ -50,6 +50,14 @@
 #define MAX_MMSG_VLEN 64
 #endif
 
+/*
+    The max length of an IPv4 address is 15 chars, the max length of
+    an IPv6 address is 45 chars plus a scope ID (no fixed length)
+*/
+#if !defined(MAX_ADDR_LEN)
+#define MAX_ADDR_LEN 128
+#endif
+
 struct pkt_counters
 {
     uint64_t count, volume;
@@ -717,11 +725,19 @@ int main(int argc, char *argv[])
 
                 exit_val = EX_OSERR;
             } else {
-                char addr_buf[ipv4_mode ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN];
+                char addr_buf[MAX_ADDR_LEN];
 
-                if (getnameinfo(target_ai->ai_addr, target_ai->ai_addrlen, addr_buf, sizeof(addr_buf), NULL, 0, NI_NUMERICHOST) != 0) {
-                    addr_buf[0] = '?';
-                    addr_buf[1] = 0;
+                int res = getnameinfo(target_ai->ai_addr, target_ai->ai_addrlen, addr_buf, sizeof(addr_buf), NULL, 0, NI_NUMERICHOST);
+
+                if (res != 0) {
+                    fprintf(stderr, "%s: getnameinfo() failed: %s\n", prog_name, gai_strerror(res));
+
+                    if (sizeof(addr_buf) > 1) {
+                        addr_buf[0] = '?';
+                        addr_buf[1] = 0;
+                    } else {
+                        addr_buf[0] = 0;
+                    }
                 }
 
                 printf("Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
