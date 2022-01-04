@@ -35,13 +35,13 @@ jobs:
         tar -C "$HOME/Coverity" -xzf "$HOME/Coverity/coverity_tool.tgz"
         mv "$HOME/Coverity/cov-analysis-linux64-"* "$HOME/Coverity/cov-analysis-linux64"
 
-    - name: "Run build via Coverity wrapper"
+    - name: "Run build via Coverity Build Tool"
       run: |
         autoreconf -f -i -Wall,error
         ./configure
         "$HOME/Coverity/cov-analysis-linux64/bin/cov-build" --dir cov-int make
 
-    - name: "Upload Coverity scan results"
+    - name: "Upload Coverity Build Tool results"
       env:
         COVERITY_TOKEN: ${{ secrets.COVERITY_TOKEN }}
       run: |
@@ -50,4 +50,4 @@ jobs:
              --form file=@cov-int.tgz \
              --form email="$NOTIFICATION_EMAIL" \
              --form version="$GITHUB_REF" \
-             --form description="Automatic Coverity Scan build for $GITHUB_REF" "https://scan.coverity.com/builds?project=$PROJECT_NAME"
+             --form description="Coverity Build Tool results for $GITHUB_REF" "https://scan.coverity.com/builds?project=$PROJECT_NAME"
