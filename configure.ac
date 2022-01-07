@@ -1,4 +1,4 @@
-AC_INIT([bwping], [2.3])
+AC_INIT([bwping], [2.4])
 
 AC_CONFIG_SRCDIR([ChangeLog])
 AC_CONFIG_HEADERS([config.h])
