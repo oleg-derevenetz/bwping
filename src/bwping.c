@@ -42,20 +42,36 @@
 
 #include <netdb.h>
 
-#if !defined(CALIBRATION_CYCLES)
-#define CALIBRATION_CYCLES 32
+#ifdef BWPING_CALIBRATION_CYCLES
+#   if BWPING_CALIBRATION_CYCLES < 1
+#      error "BWPING_CALIBRATION_CYCLES must be greater than zero"
+#   endif
+#else
+#   define BWPING_CALIBRATION_CYCLES 32
 #endif
 
-#if !defined(MAX_MMSG_VLEN) && defined(ENABLE_MMSG) && (defined(HAVE_SENDMMSG) || defined(HAVE_RECVMMSG))
-#define MAX_MMSG_VLEN 64
+#if defined(ENABLE_MMSG) && (defined(HAVE_SENDMMSG) || defined(HAVE_RECVMMSG))
+#   ifdef BWPING_MAX_MMSG_VLEN
+#      if BWPING_MAX_MMSG_VLEN < 1
+#         error "BWPING_MAX_MMSG_VLEN must be greater than zero"
+#      endif
+#   else
+#      define BWPING_MAX_MMSG_VLEN 64
+#   endif
+#else
+#   undef BWPING_MAX_MMSG_VLEN
 #endif
 
 /*
     The max length of an IPv4 address is 15 chars, the max length of
     an IPv6 address is 45 chars plus a scope ID (no fixed length)
 */
-#if !defined(MAX_ADDR_LEN)
-#define MAX_ADDR_LEN 128
+#ifdef BWPING_MAX_ADDR_LEN
+#   if BWPING_MAX_ADDR_LEN < 1
+#      error "BWPING_MAX_ADDR_LEN must be greater than zero"
+#   endif
+#else
+#   define BWPING_MAX_ADDR_LEN 128
 #endif
 
 struct pkt_counters
@@ -155,11 +171,11 @@ static uint16_t cksum(const char *data, size_t size)
 
 static uint64_t calibrate_timer(void)
 {
-    uint64_t time_diffs[CALIBRATION_CYCLES];
+    uint64_t time_diffs[BWPING_CALIBRATION_CYCLES];
 
     size_t successful_cycles = 0;
 
-    for (unsigned int i = 0; i < CALIBRATION_CYCLES; i++) {
+    for (unsigned int i = 0; i < BWPING_CALIBRATION_CYCLES; i++) {
         struct timespec before;
 
         get_time(&before);
@@ -283,13 +299,13 @@ static void prepare_ping6(char *packet, size_t pkt_size, uint16_t ident, bool in
 
 static void sendmmsg_ping(bool ipv4_mode, int sock, size_t pkt_size, uint16_t ident, uint64_t pkt_count, struct pkt_counters *transmitted)
 {
-    for (uint64_t i = 0; i < pkt_count; i = i + MAX_MMSG_VLEN) {
-        static char packets[MAX_MMSG_VLEN][IP_MAXPACKET] = {{0}};
+    for (uint64_t i = 0; i < pkt_count; i = i + BWPING_MAX_MMSG_VLEN) {
+        static char packets[BWPING_MAX_MMSG_VLEN][IP_MAXPACKET] = {{0}};
 
-        struct iovec   iov[MAX_MMSG_VLEN];
-        struct mmsghdr msg[MAX_MMSG_VLEN];
+        struct iovec   iov[BWPING_MAX_MMSG_VLEN];
+        struct mmsghdr msg[BWPING_MAX_MMSG_VLEN];
 
-        unsigned int vlen = pkt_count - i > MAX_MMSG_VLEN ? MAX_MMSG_VLEN : pkt_count - i;
+        unsigned int vlen = pkt_count - i > BWPING_MAX_MMSG_VLEN ? BWPING_MAX_MMSG_VLEN : pkt_count - i;
 
         for (unsigned int j = 0; j < vlen; j++) {
             if (ipv4_mode) {
@@ -440,12 +456,12 @@ static void process_ping6(const char *packet, ssize_t pkt_size, uint16_t ident, 
 
 static bool recvmmsg_ping(bool ipv4_mode, int sock, uint16_t ident, struct pkt_counters *received, struct rtt_counters *rtt)
 {
-    static char packets[MAX_MMSG_VLEN][IP_MAXPACKET];
+    static char packets[BWPING_MAX_MMSG_VLEN][IP_MAXPACKET];
 
-    struct iovec   iov[MAX_MMSG_VLEN] = {{.iov_len = 0}};
-    struct mmsghdr msg[MAX_MMSG_VLEN] = {{.msg_len = 0}};
+    struct iovec   iov[BWPING_MAX_MMSG_VLEN] = {{.iov_len = 0}};
+    struct mmsghdr msg[BWPING_MAX_MMSG_VLEN] = {{.msg_len = 0}};
 
-    for (unsigned int i = 0; i < MAX_MMSG_VLEN; i++) {
+    for (unsigned int i = 0; i < BWPING_MAX_MMSG_VLEN; i++) {
         iov[i].iov_base = packets[i];
         iov[i].iov_len  = sizeof(packets[i]);
 
@@ -453,7 +469,7 @@ static bool recvmmsg_ping(bool ipv4_mode, int sock, uint16_t ident, struct pkt_c
         msg[i].msg_hdr.msg_iovlen = 1;
     }
 
-    int res = recvmmsg(sock, msg, MAX_MMSG_VLEN, 0, NULL);
+    int res = recvmmsg(sock, msg, BWPING_MAX_MMSG_VLEN, 0, NULL);
 
     if (res < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
         fprintf(stderr, "%s: recvmmsg() failed: %s\n", prog_name, strerror(errno));
@@ -725,7 +741,7 @@ int main(int argc, char *argv[])
 
                 exit_val = EX_OSERR;
             } else {
-                char addr_buf[MAX_ADDR_LEN];
+                char addr_buf[BWPING_MAX_ADDR_LEN];
 
                 int res = getnameinfo(target_ai->ai_addr, target_ai->ai_addrlen, addr_buf, sizeof(addr_buf), NULL, 0, NI_NUMERICHOST);
 
