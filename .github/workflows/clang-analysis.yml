@@ -49,5 +49,5 @@ jobs:
       if: ${{ failure() }}
       uses: actions/upload-artifact@v2
       with:
-        name: "scan-build-results-${{ matrix.mmsg }}-${{ matrix.bpf }}"
+        name: "clang-analysis-results-${{ matrix.mmsg }}-${{ matrix.bpf }}"
         path: scan-build-results/
