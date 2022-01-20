@@ -43,4 +43,11 @@ jobs:
       run: |
         autoreconf -f -i -Wall,error
         scan-build ./configure --${{ matrix.mmsg }} --${{ matrix.bpf }}
-        scan-build --status-bugs make "CFLAGS=-std=c11 -Werror"
+        scan-build --status-bugs -v -o scan-build-results make "CFLAGS=-std=c11 -Werror"
+
+    - name: "Upload Clang analysis results"
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: "scan-build-results-${{ matrix.mmsg }}-${{ matrix.bpf }}"
+        path: scan-build-results/
