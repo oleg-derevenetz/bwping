@@ -119,6 +119,12 @@ jobs:
         choco.exe install cygwin cyg-get -y && ^
         cyg-get.bat autoconf automake make gcc-core git
 
+    - name: "Fix Git settings"
+      run: |
+        C:\tools\cygwin\bin\bash.exe -l -c ^"^
+            cd ""$GITHUB_WORKSPACE"" ^&^& ^
+            git config --global --add safe.directory ""$(pwd)""^"
+
     - name: "Fix line endings"
       run: |
         C:\tools\cygwin\bin\bash.exe -l -c ^"^
