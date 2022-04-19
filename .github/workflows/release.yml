@@ -81,8 +81,7 @@ jobs:
 
     - name: "Install additional packages"
       run: |
-        choco.exe install cygwin cyg-get zip unzip -y && ^
-        cyg-get.bat autoconf automake make gcc-core git
+        choco.exe install autoconf automake make gcc-core git -y --source cygwin
 
     - name: "Fix Git settings"
       run: |
