@@ -35,7 +35,7 @@ jobs:
 
     steps:
     - name: "Checkout repository"
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: "Install additional packages"
       run: |
@@ -63,7 +63,7 @@ jobs:
 
     - name: "Upload check results"
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: "check-results-linux-${{ matrix.cc }}-${{ matrix.mmsg }}-${{ matrix.bpf }}"
         path: tests/*.log
@@ -78,7 +78,7 @@ jobs:
 
     steps:
     - name: "Checkout repository"
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: "Install additional packages"
       run: |
@@ -97,7 +97,7 @@ jobs:
 
     - name: "Upload check results"
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: "check-results-macos"
         path: tests/*.log
@@ -112,7 +112,7 @@ jobs:
 
     steps:
     - name: "Checkout repository"
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: "Install additional packages"
       run: |
@@ -148,7 +148,7 @@ jobs:
 
     - name: "Upload check results"
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: "check-results-cygwin"
         path: tests/*.log
