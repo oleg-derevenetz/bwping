@@ -115,29 +115,29 @@ jobs:
     - name: "Fix Git settings"
       run: |
         C:\tools\cygwin\bin\bash.exe -l -eo pipefail -c ^"^
-            cd ""$GITHUB_WORKSPACE"" ^
+            cd ""$GITHUB_WORKSPACE""; ^
             git config --global --add safe.directory ""$(pwd)""^"
 
     - name: "Fix line endings"
       run: |
         C:\tools\cygwin\bin\bash.exe -l -eo pipefail -c ^"^
-            cd ""$GITHUB_WORKSPACE"" ^
-            git ls-files -z ^| xargs -0 rm ^
+            cd ""$GITHUB_WORKSPACE""; ^
+            git ls-files -z ^| xargs -0 rm; ^
             git checkout -f .^"
 
     - name: "Run build"
       run: |
         C:\tools\cygwin\bin\bash.exe -l -eo pipefail -c ^"^
-            cd ""$GITHUB_WORKSPACE"" ^
-            autoreconf -f -i -Wall,error ^
-            ./configure ^
+            cd ""$GITHUB_WORKSPACE""; ^
+            autoreconf -f -i -Wall,error; ^
+            ./configure; ^
             make ""CFLAGS=-Werror""^"
 
     - name: "Run checks"
       run: |
         C:\tools\cygwin\bin\bash.exe -l -eo pipefail -c ^"^
-            cd ""$GITHUB_WORKSPACE"" ^
-            make check ^
+            cd ""$GITHUB_WORKSPACE""; ^
+            make check; ^
             make distcheck^"
 
     - name: "Upload check results"
