@@ -41,13 +41,6 @@ jobs:
       run: |
         sudo apt-get -y update
         sudo apt-get -y install autoconf automake
-        # TODO: remove the following lines once ubuntu-latest will have the latest version of the autoconf package
-        echo "deb http://httpredir.debian.org/debian/ sid main contrib" | sudo tee -a /etc/apt/sources.list
-        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 648ACFD622F3D138
-        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0E98404D386FA1D9
-        sudo apt-get -y update
-        sudo apt-get -y install autoconf
-        # /TODO
 
     - name: "Run build"
       env:
