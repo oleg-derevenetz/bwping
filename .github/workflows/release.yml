@@ -22,7 +22,7 @@ jobs:
       id: version
       run: |
         if echo "${{ github.ref }}" | grep -E "^refs/tags/RELEASE_[0-9]+\.[0-9]+$" > /dev/null; then
-            echo "::set-output name=version::$(echo "${{ github.ref }}" | sed -E "s|^refs/tags/RELEASE_([0-9]+\.[0-9]+)$|\1|")"
+            echo "version=$(echo "${{ github.ref }}" | sed -E "s|^refs/tags/RELEASE_([0-9]+\.[0-9]+)$|\1|")" >> "$GITHUB_OUTPUT"
         else
             false
         fi
