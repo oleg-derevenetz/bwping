@@ -1,12 +1,12 @@
-name: "Coverity Analysis"
+name: Coverity Analysis
 
 on:
   schedule:
-  - cron: "0 13 * * 6"
+  - cron: '0 13 * * 6'
 
 jobs:
   coverity:
-    name: "Coverity Analysis"
+    name: Coverity Analysis
     runs-on: ubuntu-latest
 
     defaults:
@@ -18,15 +18,15 @@ jobs:
       NOTIFICATION_EMAIL: oleg-derevenetz@yandex.ru
 
     steps:
-    - name: "Checkout repository"
+    - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: "Install additional packages"
+    - name: Install additional packages
       run: |
         sudo apt-get -y update
         sudo apt-get -y install autoconf automake
 
-    - name: "Initialize Coverity"
+    - name: Initialize Coverity
       env:
         COVERITY_TOKEN: ${{ secrets.COVERITY_TOKEN }}
       run: |
@@ -35,13 +35,13 @@ jobs:
         tar -C "$HOME/Coverity" -xzf "$HOME/Coverity/coverity_tool.tgz"
         mv "$HOME/Coverity/cov-analysis-linux64-"* "$HOME/Coverity/cov-analysis-linux64"
 
-    - name: "Run build via Coverity Build Tool"
+    - name: Run build via Coverity Build Tool
       run: |
         autoreconf -f -i -Wall,error
         ./configure
         "$HOME/Coverity/cov-analysis-linux64/bin/cov-build" --dir cov-int make
 
-    - name: "Upload Coverity Build Tool results"
+    - name: Upload Coverity Build Tool results
       env:
         COVERITY_TOKEN: ${{ secrets.COVERITY_TOKEN }}
       run: |

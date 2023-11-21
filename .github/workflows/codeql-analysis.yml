@@ -1,4 +1,4 @@
-name: "CodeQL Analysis"
+name: CodeQL Analysis
 
 on:
   push:
@@ -10,11 +10,11 @@ on:
     - master
 
   schedule:
-  - cron: "0 12 * * 6"
+  - cron: '0 12 * * 6'
 
 jobs:
   codeql:
-    name: "CodeQL Analysis (--${{ matrix.mmsg }} --${{ matrix.bpf }})"
+    name: CodeQL Analysis (--${{ matrix.mmsg }} --${{ matrix.bpf }})
     runs-on: ubuntu-latest
 
     strategy:
@@ -31,24 +31,24 @@ jobs:
         shell: bash
 
     steps:
-    - name: "Checkout repository"
+    - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: "Install additional packages"
+    - name: Install additional packages
       run: |
         sudo apt-get -y update
         sudo apt-get -y install autoconf automake
 
-    - name: "Initialize CodeQL"
+    - name: Initialize CodeQL
       uses: github/codeql-action/init@v2
       with:
         languages: cpp
 
-    - name: "Run build"
+    - name: Run build
       run: |
         autoreconf -f -i -Wall,error
         ./configure --${{ matrix.mmsg }} --${{ matrix.bpf }}
         make "CFLAGS=-Werror"
 
-    - name: "Perform CodeQL analysis"
+    - name: Perform CodeQL analysis
       uses: github/codeql-action/analyze@v2

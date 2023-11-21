@@ -1,4 +1,4 @@
-name: "ShellCheck Analysis"
+name: ShellCheck Analysis
 
 on:
   push:
@@ -10,11 +10,11 @@ on:
     - master
 
   schedule:
-  - cron: "0 14 * * 6"
+  - cron: '0 14 * * 6'
 
 jobs:
   shellcheck:
-    name: "ShellCheck Analysis"
+    name: ShellCheck Analysis
     runs-on: ubuntu-latest
 
     defaults:
@@ -22,14 +22,14 @@ jobs:
         shell: bash
 
     steps:
-    - name: "Checkout repository"
+    - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: "Install additional packages"
+    - name: Install additional packages
       run: |
         sudo apt-get -y update
         sudo apt-get -y install shellcheck
 
-    - name: "Perform ShellCheck analysis"
+    - name: Perform ShellCheck analysis
       run: |
         shellcheck tests/*
