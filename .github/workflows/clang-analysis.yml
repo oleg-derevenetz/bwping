@@ -47,7 +47,7 @@ jobs:
 
     - name: Upload Clang analysis results
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: clang-analysis-results-${{ matrix.mmsg }}-${{ matrix.bpf }}
         path: scan-build-results/
