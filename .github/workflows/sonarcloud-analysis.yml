@@ -8,6 +8,8 @@ on:
   schedule:
   - cron: '0 15 * * 6'
 
+permissions: {}
+
 jobs:
   sonarcloud:
     name: SonarCloud Analysis

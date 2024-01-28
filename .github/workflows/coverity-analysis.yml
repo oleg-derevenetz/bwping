@@ -4,6 +4,8 @@ on:
   schedule:
   - cron: '0 13 * * 6'
 
+permissions: {}
+
 jobs:
   coverity:
     name: Coverity Analysis

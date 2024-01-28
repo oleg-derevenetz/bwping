@@ -12,6 +12,8 @@ on:
   schedule:
   - cron: '0 11 * * 6'
 
+permissions: {}
+
 jobs:
   clang:
     name: Clang Analysis (--${{ matrix.mmsg }} --${{ matrix.bpf }})
