@@ -5,6 +5,9 @@ on:
     tags:
     - RELEASE_*
 
+permissions:
+  contents: write
+
 jobs:
   version:
     name: Determine Release Version

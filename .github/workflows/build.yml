@@ -12,6 +12,8 @@ on:
   schedule:
   - cron: '0 10 * * 6'
 
+permissions: {}
+
 jobs:
   linux:
     name: Build Linux ${{ matrix.cc }} (--${{ matrix.mmsg }} --${{ matrix.bpf }})
