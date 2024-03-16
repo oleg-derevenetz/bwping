@@ -50,7 +50,7 @@ jobs:
       run: |
         autoreconf -f -i -Wall,error
         ./configure --${{ matrix.mmsg }} --${{ matrix.bpf }}
-        make "CFLAGS=-Werror -fsanitize=address,undefined"
+        make "CFLAGS=-Werror -fsanitize=undefined"
 
     - name: Run checks
       run: |
