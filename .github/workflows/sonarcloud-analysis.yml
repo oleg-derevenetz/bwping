@@ -31,7 +31,7 @@ jobs:
         sudo apt-get -y install autoconf automake
 
     - name: Initialize SonarCloud
-      uses: SonarSource/sonarcloud-github-c-cpp@v2
+      uses: SonarSource/sonarcloud-github-c-cpp@v3
 
     - name: Run build via SonarCloud wrapper
       run: |
