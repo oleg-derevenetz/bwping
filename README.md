@@ -99,7 +99,6 @@ Oleg Derevenetz <oleg.derevenetz@gmail.com>
 [![Clang Analysis Status](https://github.com/oleg-derevenetz/bwping/actions/workflows/clang-analysis.yml/badge.svg?branch=master)](https://github.com/oleg-derevenetz/bwping/actions/workflows/clang-analysis.yml?query=branch%3Amaster)
 [![CodeQL Analysis Status](https://github.com/oleg-derevenetz/bwping/actions/workflows/codeql-analysis.yml/badge.svg?branch=master)](https://github.com/oleg-derevenetz/bwping/actions/workflows/codeql-analysis.yml?query=branch%3Amaster)
 [![ShellCheck Analysis Status](https://github.com/oleg-derevenetz/bwping/actions/workflows/shellcheck-analysis.yml/badge.svg?branch=master)](https://github.com/oleg-derevenetz/bwping/actions/workflows/shellcheck-analysis.yml?query=branch%3Amaster)
-[![Coverity Scan Status](https://scan.coverity.com/projects/20880/badge.svg)](https://scan.coverity.com/projects/oleg-derevenetz-bwping)
 [![SonarCloud Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=oleg-derevenetz_bwping&metric=alert_status)](https://sonarcloud.io/dashboard?id=oleg-derevenetz_bwping)
 
 [![SonarCloud Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=oleg-derevenetz_bwping&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=oleg-derevenetz_bwping)
