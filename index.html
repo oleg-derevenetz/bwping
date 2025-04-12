@@ -1,0 +1,37 @@
+---
+---
+
+{% include header.inc.html %}
+
+<section id="page-header" class="clearfix">
+    <div class="wrapper">
+        <h1>BWPing</h1>
+    </div>
+</section>
+
+<div class="wrapper" id="main">
+    <section id="content">
+        <p>BWPing is a tool to measure bandwidth and response times between two hosts using Internet Control
+        Message Protocol (ICMP) echo request/echo reply mechanism. It does not require any special software
+        on the remote host. The only requirement is the ability to respond on ICMP echo request messages.
+        BWPing supports both IPv4 and IPv6 networks.</p>
+
+        <p>Although BWPing does not require any special software on the remote host (only the ability to respond
+        on ICMP echo request messages), there are some special requirements to network infrastructure, local and
+        remote host performance:</p>
+
+        <ul>
+            <li>There should be no ICMP echo request/reply filtering on the network; this includes QoS mechanisms
+            (which often affects ICMP) at any point in the testing path.</li>
+            <li>Local host should have enough CPU resources to send ICMP echo request messages with given rate,
+            and remote host should quickly respond on these messages and should have no ICMP bandwidth limiting
+            turned on.</li>
+        </ul>
+
+        <p>If some of these requirements are not satisfied then the measurement results will be inadequate or fail
+        completely. In general, for testing bandwidth where QoS is implemented, always test with traffic that matches
+        the QoS class to be tested.</p>
+    </section>
+</div>
+
+{% include footer.inc.html %}
