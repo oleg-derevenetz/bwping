@@ -1,6 +1,7 @@
 {
     "config": {
         "default": true,
+        "first-line-heading": false,
         "heading-style": {
             "style": "atx"
         },
@@ -15,6 +16,7 @@
             "heading_line_length": 170,
             "line_length": 170
         },
+        "list-marker-space": false,
         "no-inline-html": {
             "allowed_elements": [
                 "a",
