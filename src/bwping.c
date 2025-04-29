@@ -681,7 +681,10 @@ int main( int argc, char * argv[] )
 
     if ( ipv4_mode ) {
         if ( pkt_size < sizeof( struct icmp ) + sizeof( struct timespec ) || pkt_size > IP_MAXPACKET - MAX_IPV4_HDR_SIZE ) {
-            fprintf( stderr, "%s: invalid packet size, should be between %zu and %zu\n", prog_name, sizeof( struct icmp ) + sizeof( struct timespec ),
+            fprintf( stderr,
+                     "%s: invalid packet size, should be between %zu and %zu\n",
+                     prog_name,
+                     sizeof( struct icmp ) + sizeof( struct timespec ),
                      (size_t)IP_MAXPACKET - MAX_IPV4_HDR_SIZE );
 
             exit( EX_USAGE );
@@ -689,7 +692,10 @@ int main( int argc, char * argv[] )
     }
     else {
         if ( pkt_size < sizeof( struct icmp6_hdr ) + sizeof( struct timespec ) || pkt_size > IP_MAXPACKET ) {
-            fprintf( stderr, "%s: invalid packet size, should be between %zu and %zu\n", prog_name, sizeof( struct icmp6_hdr ) + sizeof( struct timespec ),
+            fprintf( stderr,
+                     "%s: invalid packet size, should be between %zu and %zu\n",
+                     prog_name,
+                     sizeof( struct icmp6_hdr ) + sizeof( struct timespec ),
                      (size_t)IP_MAXPACKET );
 
             exit( EX_USAGE );
@@ -782,8 +788,12 @@ int main( int argc, char * argv[] )
                     }
                 }
 
-                printf( "Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n", target, addr_buf, kbps,
-                        pkt_size, volume );
+                printf( "Target: %s (%s), transfer speed: %" PRIu32 " kbps, packet size: %zu bytes, traffic volume: %" PRIu64 " bytes\n",
+                        target,
+                        addr_buf,
+                        kbps,
+                        pkt_size,
+                        volume );
             }
 
             freeaddrinfo( target_ai );
@@ -996,8 +1006,14 @@ int main( int argc, char * argv[] )
             if ( reporting_period > 0 && report_sec_diff >= reporting_period ) {
                 printf( "Periodic: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes,"
                         " time: %" PRId64 " sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
-                        transmitted.count, received.count, transmitted.volume, received.volume, start_sec_diff,
-                        start_sec_diff > 0 ? received.volume / start_sec_diff * 8 / 1000 : received.volume * 8 / 1000, rtt.min == UINT64_MAX ? 0 : rtt.min, rtt.max,
+                        transmitted.count,
+                        received.count,
+                        transmitted.volume,
+                        received.volume,
+                        start_sec_diff,
+                        start_sec_diff > 0 ? received.volume / start_sec_diff * 8 / 1000 : received.volume * 8 / 1000,
+                        rtt.min == UINT64_MAX ? 0 : rtt.min,
+                        rtt.max,
                         rtt.count > 0 ? rtt.sum / rtt.count : 0 );
 
                 get_time( &report );
@@ -1008,8 +1024,14 @@ int main( int argc, char * argv[] )
 
         printf( "Total: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes,"
                 " time: %" PRId64 " sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
-                transmitted.count, received.count, transmitted.volume, received.volume, sec_diff,
-                sec_diff > 0 ? received.volume / sec_diff * 8 / 1000 : received.volume * 8 / 1000, rtt.min == UINT64_MAX ? 0 : rtt.min, rtt.max,
+                transmitted.count,
+                received.count,
+                transmitted.volume,
+                received.volume,
+                sec_diff,
+                sec_diff > 0 ? received.volume / sec_diff * 8 / 1000 : received.volume * 8 / 1000,
+                rtt.min == UINT64_MAX ? 0 : rtt.min,
+                rtt.max,
                 rtt.count > 0 ? rtt.sum / rtt.count : 0 );
     }
 
