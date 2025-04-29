@@ -42,8 +42,5 @@
     },
     "globs": [
         "**/*.md"
-    ],
-    "ignores": [
-        "cmake/README_findsdl2.md"
     ]
 }
