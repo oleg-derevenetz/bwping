@@ -210,7 +210,9 @@ static uint64_t calibrate_timer( void )
 
         /* Use the basic 3rd-order median filter to remove random spikes */
         for ( size_t i = 0; i < successful_cycles; i++ ) {
-            uint64_t a = i == 0 ? time_diffs[i] : time_diffs[i - 1], b = time_diffs[i], c = i == successful_cycles - 1 ? time_diffs[i] : time_diffs[i + 1];
+            uint64_t a = i == 0 ? time_diffs[i] : time_diffs[i - 1];
+            uint64_t b = time_diffs[i];
+            uint64_t c = i == successful_cycles - 1 ? time_diffs[i] : time_diffs[i + 1];
 
             /* Take the median value from the set of values a, b and c */
             sum += ( a < b ) ? ( ( b < c ) ? b : ( ( c < a ) ? a : c ) ) : ( ( a < c ) ? a : ( ( c < b ) ? b : c ) );
@@ -243,7 +245,7 @@ static void clear_socket_buffer( int sock )
 
 static void prepare_ping4( char * packet, size_t pkt_size, uint16_t ident, bool insert_timestamp, struct pkt_counters * transmitted )
 {
-    struct icmp icmp4 = { .icmp_type = ICMP_ECHO, .icmp_code = 0, .icmp_cksum = 0, .icmp_id = htons( ident ), .icmp_seq = htons( transmitted->count ) };
+    struct icmp icmp4 = { .icmp_type = ICMP_ECHO, .icmp_code = 0, .icmp_cksum = 0, .icmp_id = htons( ident ), .icmp_seq = htons( (uint16_t)transmitted->count ) };
 
     memcpy( packet, &icmp4, sizeof( icmp4 ) );
 
@@ -273,7 +275,7 @@ static void prepare_ping4( char * packet, size_t pkt_size, uint16_t ident, bool 
 static void prepare_ping6( char * packet, size_t pkt_size, uint16_t ident, bool insert_timestamp, struct pkt_counters * transmitted )
 {
     struct icmp6_hdr icmp6
-        = { .icmp6_type = ICMP6_ECHO_REQUEST, .icmp6_code = 0, .icmp6_cksum = 0, .icmp6_id = htons( ident ), .icmp6_seq = htons( transmitted->count ) };
+        = { .icmp6_type = ICMP6_ECHO_REQUEST, .icmp6_code = 0, .icmp6_cksum = 0, .icmp6_id = htons( ident ), .icmp6_seq = htons( (uint16_t)transmitted->count ) };
 
     memcpy( packet, &icmp6, sizeof( icmp6 ) );
 
