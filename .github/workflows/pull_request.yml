@@ -25,11 +25,6 @@ jobs:
     needs:
     - style
     uses: ./.github/workflows/clang_analyzer.yml
-  codeql:
-    name: CodeQL Analyzer
-    needs:
-    - style
-    uses: ./.github/workflows/codeql.yml
   sonarcloud:
     name: SonarCloud Analyzer
     needs:
