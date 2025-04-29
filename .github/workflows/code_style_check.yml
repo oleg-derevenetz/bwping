@@ -43,3 +43,5 @@ jobs:
     - name: Check format of shell scripts
       run: |
         shellcheck tests/*
+    - name: Check format of markdown files
+      uses: DavidAnson/markdownlint-cli2-action@v19
