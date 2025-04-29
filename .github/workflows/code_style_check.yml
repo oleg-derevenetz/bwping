@@ -1,0 +1,45 @@
+name: Code style check
+
+on:
+  workflow_call:
+
+permissions: {}
+
+jobs:
+  style:
+    name: Code style check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 50
+    - name: Install shellcheck
+      run: |
+        sudo apt-get -y update
+        sudo apt-get -y install shellcheck
+    - name: Setup clang-format
+      run: |
+        sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-17 100
+        sudo update-alternatives --install /usr/bin/clang-format-diff clang-format-diff /usr/bin/clang-format-diff-17 100
+    - name: Check code format
+      run: |
+        FILES_TO_CHECK=$(git diff --name-only HEAD^ | (grep -E ".*\.(c|h)$" || true))
+        if [ -z "$FILES_TO_CHECK" ]; then
+          echo "There is no source code to check the formatting."
+          exit 0
+        fi
+        if FORMAT_DIFF=$(git diff -U0 HEAD^ -- $FILES_TO_CHECK | clang-format-diff -p1 -style=file) && [ -z "$FORMAT_DIFF" ]; then
+          echo "All the source code in the PR is formatted correctly."
+          exit 0
+        else
+          echo "Formatting errors found!"
+          echo "$FORMAT_DIFF"
+          exit 1
+        fi
+    - name: Check format of shell scripts
+      run: |
+        shellcheck tests/*
