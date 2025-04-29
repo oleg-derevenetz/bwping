@@ -23,7 +23,7 @@ jobs:
         shell: bash
     steps:
     - uses: actions/checkout@v4
-    - name: Install additional packages
+    - name: Install dependencies and clang-analyzer
       run: |
         sudo apt-get -y update
         sudo apt-get -y install autoconf automake clang-tools

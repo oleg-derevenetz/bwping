@@ -42,7 +42,7 @@ jobs:
         shell: bash
     steps:
     - uses: actions/checkout@v4
-    - name: Install additional packages
+    - name: Install dependencies
       run: |
         sudo apt-get -y update
         sudo apt-get -y install autoconf automake
@@ -69,7 +69,7 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-    - name: Install additional packages
+    - name: Install dependencies
       run: |
         choco.exe install cygwin cyg-get zip unzip -y && ^
         cyg-get.bat autoconf automake make gcc-core git
