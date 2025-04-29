@@ -1,9 +1,9 @@
 ## NAME
 
-bwping  and  bwping6  are  tools  to  measure  bandwidth and response times
+`bwping` and `bwping6` are tools  to  measure  bandwidth and response times
 between  two  hosts  using  Internet  Control  Message Protocol (ICMP) echo
-request/echo  reply  mechanism.  bwping  deals  with  IPv4  networks, while
-bwping6 - with IPv6 networks.
+request/echo  reply  mechanism. `bwping` deals  with  IPv4  networks, while
+`bwping6` - with IPv6 networks.
 
 ## SYNOPSIS
 
@@ -25,15 +25,15 @@ bwping6 [ -4 | -6 ] [ -B bind_addr ] [ -I ident ] [ -T tos(v4) |
 -4
 ```
 
-Forces IPv4 mode. Default mode of operation is IPv4 for bwping and IPv6 for
-bwping6 otherwise.
+Forces  IPv4  mode. Default mode of operation is IPv4 for `bwping` and IPv6
+for `bwping6` otherwise.
 
 ```text
 -6
 ```
 
-Forces IPv6 mode. Default mode of operation is IPv4 for bwping and IPv6 for
-bwping6 otherwise.
+Forces  IPv6  mode. Default mode of operation is IPv4 for `bwping` and IPv6
+for `bwping6` otherwise.
 
 ```text
 -B bind_addr
@@ -108,13 +108,13 @@ Oleg Derevenetz <oleg.derevenetz@gmail.com>
 ## NOTES
 
 These tools use raw sockets to deal with ICMP messages, so they may require
-root privileges or extended  capabilities (such as CAP_NET_RAW on Linux) to
-run. They can also be run as setuid root.
+root  privileges or extended  capabilities (such as `CAP_NET_RAW` on Linux)
+to run. They can also be run as setuid root.
 
-Although  bwping  and  bwping6 does not require any special software on the
-remote  host  (only the ability to respond on ICMP echo request  messages),
-there  are  some  special requirements to network infrastructure, local and
-remote host performance:
+Although  `bwping`  and  `bwping6` does not require any special software on
+the  remote   host   (only  the  ability  to  respond  on ICMP echo request
+messages),    there    are    some    special   requirements   to   network
+infrastructure, local and remote host performance:
 
 1.  There  should  be  no ICMP echo request/reply filtering on the network.
 This includes QoS mechanisms (which often affects ICMP) at any point in the
@@ -125,7 +125,7 @@ request   messages   with   given   rate,  and  remote  host should quickly
 respond  on  these  messages  and should have no  ICMP  bandwidth  limiting
 turned on.
 
-3.  Each  bwping  and  bwping6 process should use its own ICMP Echo Request
+3. Each `bwping` and `bwping6` process should use its own ICMP Echo Request
 Identifier  value  to  reliably distinguish between ICMP Echo Reply packets
 destined for each of these processes.
 
