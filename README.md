@@ -124,7 +124,7 @@ remote host performance:
 This includes QoS mechanisms (which often affects ICMP) at any point in the
 testing path;
 
-1.  Local  host  should  have  enough  CPU  resources  to  send  ICMP  echo
+2.  Local  host  should  have  enough  CPU  resources  to  send  ICMP  echo
 request   messages   with   given   rate,  and  remote  host should quickly
 respond  on  these  messages  and should have no  ICMP  bandwidth  limiting
 turned on.
