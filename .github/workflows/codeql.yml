@@ -1,25 +1,13 @@
-name: CodeQL Analysis
+name: CodeQL Analyzer
 
 on:
-  push:
-    branches:
-    - master
-
-  pull_request:
-    branches:
-    - master
-
-  schedule:
-  - cron: '0 12 * * 6'
+  workflow_call:
 
 permissions:
   security-events: write
 
 jobs:
   codeql:
-    name: CodeQL Analysis (--${{ matrix.mmsg }} --${{ matrix.bpf }})
-    runs-on: ubuntu-latest
-
     strategy:
       matrix:
         mmsg:
@@ -28,30 +16,24 @@ jobs:
         bpf:
         - enable-bpf
         - disable-bpf
-
+    name: CodeQL Analyzer (--${{ matrix.mmsg }} --${{ matrix.bpf }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         shell: bash
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Install additional packages
+    - uses: actions/checkout@v4
+    - name: Install dependencies
       run: |
         sudo apt-get -y update
         sudo apt-get -y install autoconf automake
-
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
+    - uses: github/codeql-action/init@v3
       with:
         languages: cpp
-
     - name: Run build
       run: |
         autoreconf -f -i -Wall,error
         ./configure --${{ matrix.mmsg }} --${{ matrix.bpf }}
         make "CFLAGS=-Werror"
-
-    - name: Perform CodeQL analysis
-      uses: github/codeql-action/analyze@v3
+    - uses: github/codeql-action/analyze@v3

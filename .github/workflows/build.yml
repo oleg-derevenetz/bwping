@@ -1,24 +1,12 @@
 name: Build
 
 on:
-  push:
-    branches:
-    - master
-
-  pull_request:
-    branches:
-    - master
-
-  schedule:
-  - cron: '0 10 * * 6'
+  workflow_call:
 
 permissions: {}
 
 jobs:
-  linux:
-    name: Build Linux ${{ matrix.cc }} (--${{ matrix.mmsg }} --${{ matrix.bpf }})
-    runs-on: ubuntu-latest
-
+  build-linux:
     strategy:
       matrix:
         cc:
@@ -30,20 +18,18 @@ jobs:
         bpf:
         - enable-bpf
         - disable-bpf
-
+    name: Build Linux ${{ matrix.cc }} (--${{ matrix.mmsg }} --${{ matrix.bpf }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         shell: bash
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Install additional packages
+    - uses: actions/checkout@v4
+    - name: Install dependencies
       run: |
         sudo apt-get -y update
         sudo apt-get -y install autoconf automake
-
     - name: Run build
       env:
         CC: ${{ matrix.cc }}
@@ -51,82 +37,64 @@ jobs:
         autoreconf -f -i -Wall,error
         ./configure --${{ matrix.mmsg }} --${{ matrix.bpf }}
         make "CFLAGS=-Werror -fsanitize=address,undefined"
-
     - name: Run checks
       run: |
         sudo make check
-
-    - name: Upload check results
+    - uses: actions/upload-artifact@v4
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v4
       with:
         name: check-results-linux-${{ matrix.cc }}-${{ matrix.mmsg }}-${{ matrix.bpf }}
         path: tests/*.log
-
-  macos:
+  build-macos:
     name: Build MacOS
     runs-on: macos-latest
-
+    timeout-minutes: 10
     defaults:
       run:
         shell: bash
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Install additional packages
+    - uses: actions/checkout@v4
+    - name: Install dependencies
       run: |
         brew update
         brew install autoconf automake
-
     - name: Run build
       run: |
         autoreconf -f -i -Wall,error
         ./configure
         make "CFLAGS=-Werror -fsanitize=address,undefined"
-
     - name: Run checks
       run: |
         sudo make check TESTS="$(find tests -type f -perm -u=x | grep -v "^tests/sanity$" | tr "\n" " ")"
-
-    - name: Upload check results
+    - uses: actions/upload-artifact@v4
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v4
       with:
         name: check-results-macos
         path: tests/*.log
-
-  cygwin:
+  build-cygwin:
     name: Build Cygwin
     runs-on: windows-latest
-
+    timeout-minutes: 10
     defaults:
       run:
         shell: cmd
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Install additional packages
+    - uses: actions/checkout@v4
+    - name: Install dependencies
       run: |
         choco.exe install cygwin cyg-get -y && ^
         cyg-get.bat autoconf automake make gcc-core git
-
     - name: Fix Git settings
       run: |
         C:\tools\cygwin\bin\bash.exe -l -eo pipefail -c ^"^
             cd ""$GITHUB_WORKSPACE""; ^
             git config --global --add safe.directory ""$(pwd)""^"
-
     - name: Fix line endings
       run: |
         C:\tools\cygwin\bin\bash.exe -l -eo pipefail -c ^"^
             cd ""$GITHUB_WORKSPACE""; ^
             git ls-files -z ^| xargs -0 rm; ^
             git checkout -f .^"
-
     - name: Run build
       run: |
         C:\tools\cygwin\bin\bash.exe -l -eo pipefail -c ^"^
@@ -134,17 +102,14 @@ jobs:
             autoreconf -f -i -Wall,error; ^
             ./configure; ^
             make ""CFLAGS=-Werror""^"
-
     - name: Run checks
       run: |
         C:\tools\cygwin\bin\bash.exe -l -eo pipefail -c ^"^
             cd ""$GITHUB_WORKSPACE""; ^
             make check; ^
             make distcheck^"
-
-    - name: Upload check results
+    - uses: actions/upload-artifact@v4
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v4
       with:
         name: check-results-cygwin
         path: tests/*.log

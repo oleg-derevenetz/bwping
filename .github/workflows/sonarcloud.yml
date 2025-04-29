@@ -1,0 +1,51 @@
+name: SonarCloud Analyzer
+
+on:
+  workflow_call:
+    secrets:
+      SONAR_TOKEN:
+        required: true
+
+permissions: {}
+
+jobs:
+  sonarcloud:
+    name: SonarCloud Analyzer
+    if: >-
+      ${{
+          github.repository == 'oleg-derevenetz/bwping'
+          && ( github.event_name == 'push' || ( github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository ) )
+          && github.actor != 'dependabot[bot]'
+       }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Install dependencies
+      run: |
+        sudo apt-get -y update
+        sudo apt-get -y install autoconf automake
+    - uses: SonarSource/sonarqube-scan-action/install-build-wrapper@v5
+      env:
+        SONAR_HOST_URL: https://sonarcloud.io
+    - name: Run build via SonarCloud wrapper
+      run: |
+        autoreconf -f -i -Wall,error
+        ./configure
+        build-wrapper-linux-x86-64 --out-dir .bw-output make
+    - uses: SonarSource/sonarqube-scan-action@v5
+      with:
+        args: >-
+          -Dsonar.projectKey=oleg-derevenetz_bwping
+          -Dsonar.projectName=BWPing
+          -Dsonar.organization=oleg-derevenetz-github
+          -Dsonar.cfamily.build-wrapper-output=.bw-output
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: https://sonarcloud.io
