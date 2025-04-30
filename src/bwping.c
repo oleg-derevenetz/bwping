@@ -973,7 +973,7 @@ int main( int argc, char * argv[] )
                         finish = true;
                     }
                     else {
-                        if ( time_diff >= 0 ) {
+                        if ( time_diff >= 0  ) {
                             interval_error += time_diff - current_interval;
                         }
                         else {

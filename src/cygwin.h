@@ -21,7 +21,7 @@
 
 struct icmp_ra_addr
 {
-    u_int32_t ira_addr;
+    u_int32_t  ira_addr;
     u_int32_t ira_preference;
 } __attribute__( ( packed ) );
 
