@@ -229,12 +229,12 @@ static uint64_t calibrate_timer( void )
 
         return sum / successful_cycles;
     }
-    else if ( successful_cycles == 1 ) {
+
+    if ( successful_cycles == 1 ) {
         return time_diffs[0];
     }
-    else {
-        return 0;
-    }
+
+    return 0;
 }
 
 static void clear_socket_buffer( int sock )
@@ -254,7 +254,7 @@ static void clear_socket_buffer( int sock )
 
 static void prepare_ping4( char * packet, size_t pkt_size, uint16_t ident, bool insert_timestamp, struct pkt_counters * transmitted )
 {
-    struct icmp icmp4 = { .icmp_type = ICMP_ECHO, .icmp_code = 0, .icmp_cksum = 0, .icmp_id = htons( ident ), .icmp_seq = htons( (uint16_t)transmitted->count ) };
+    struct icmp icmp4 = { .icmp_type = ICMP_ECHO, .icmp_code = 0, .icmp_cksum = 0, .icmp_id = htons( ident ), .icmp_seq = htons( transmitted->count ) };
 
     memcpy( packet, &icmp4, sizeof( icmp4 ) );
 
@@ -284,7 +284,7 @@ static void prepare_ping4( char * packet, size_t pkt_size, uint16_t ident, bool 
 static void prepare_ping6( char * packet, size_t pkt_size, uint16_t ident, bool insert_timestamp, struct pkt_counters * transmitted )
 {
     struct icmp6_hdr icmp6
-        = { .icmp6_type = ICMP6_ECHO_REQUEST, .icmp6_code = 0, .icmp6_cksum = 0, .icmp6_id = htons( ident ), .icmp6_seq = htons( (uint16_t)transmitted->count ) };
+        = { .icmp6_type = ICMP6_ECHO_REQUEST, .icmp6_code = 0, .icmp6_cksum = 0, .icmp6_id = htons( ident ), .icmp6_seq = htons( transmitted->count ) };
 
     memcpy( packet, &icmp6, sizeof( icmp6 ) );
 
@@ -370,11 +370,11 @@ static void send_ping( bool ipv4_mode, int sock, size_t pkt_size, uint16_t ident
 
 #endif /* ENABLE_MMSG && HAVE_SENDMMSG */
 
-static void process_ping4( const char * packet, ssize_t pkt_size, uint16_t ident, struct pkt_counters * received, struct rtt_counters * rtt )
+static void process_ping4( const char * packet, size_t pkt_size, uint16_t ident, struct pkt_counters * received, struct rtt_counters * rtt )
 {
     struct ip ip4;
 
-    if ( pkt_size >= (ssize_t)sizeof( ip4 ) ) {
+    if ( pkt_size >= sizeof( ip4 ) ) {
         memcpy( &ip4, packet, sizeof( ip4 ) );
 
         if ( ip4.ip_p == IPPROTO_ICMP && ( ntohs( ip4.ip_off ) & 0x1FFF ) == 0 ) {
@@ -382,7 +382,7 @@ static void process_ping4( const char * packet, ssize_t pkt_size, uint16_t ident
 
             struct icmp icmp4;
 
-            if ( pkt_size >= (ssize_t)( hdr_len + sizeof( icmp4 ) ) ) {
+            if ( pkt_size >= hdr_len + sizeof( icmp4 ) ) {
                 memcpy( &icmp4, &packet[hdr_len], sizeof( icmp4 ) );
 
                 if ( icmp4.icmp_type == ICMP_ECHOREPLY && ntohs( icmp4.icmp_id ) == ident ) {
@@ -391,7 +391,7 @@ static void process_ping4( const char * packet, ssize_t pkt_size, uint16_t ident
 
                     struct timespec pkt_time;
 
-                    if ( pkt_size >= (ssize_t)( hdr_len + sizeof( icmp4 ) + sizeof( pkt_time ) ) ) {
+                    if ( pkt_size >= hdr_len + sizeof( icmp4 ) + sizeof( pkt_time ) ) {
                         memcpy( &pkt_time, &packet[hdr_len + sizeof( icmp4 )], sizeof( pkt_time ) );
 
                         if ( pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0 ) {
@@ -423,11 +423,11 @@ static void process_ping4( const char * packet, ssize_t pkt_size, uint16_t ident
     }
 }
 
-static void process_ping6( const char * packet, ssize_t pkt_size, uint16_t ident, struct pkt_counters * received, struct rtt_counters * rtt )
+static void process_ping6( const char * packet, size_t pkt_size, uint16_t ident, struct pkt_counters * received, struct rtt_counters * rtt )
 {
     struct icmp6_hdr icmp6;
 
-    if ( pkt_size >= (ssize_t)sizeof( icmp6 ) ) {
+    if ( pkt_size >= sizeof( icmp6 ) ) {
         memcpy( &icmp6, packet, sizeof( icmp6 ) );
 
         if ( icmp6.icmp6_type == ICMP6_ECHO_REPLY && ntohs( icmp6.icmp6_id ) == ident ) {
@@ -436,7 +436,7 @@ static void process_ping6( const char * packet, ssize_t pkt_size, uint16_t ident
 
             struct timespec pkt_time;
 
-            if ( pkt_size >= (ssize_t)( sizeof( icmp6 ) + sizeof( pkt_time ) ) ) {
+            if ( pkt_size >= sizeof( icmp6 ) + sizeof( pkt_time ) ) {
                 memcpy( &pkt_time, &packet[sizeof( icmp6 )], sizeof( pkt_time ) );
 
                 if ( pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0 ) {
@@ -490,23 +490,21 @@ static bool recvmmsg_ping( bool ipv4_mode, int sock, uint16_t ident, struct pkt_
 
         return false;
     }
-    else if ( res > 0 ) {
-        if ( ipv4_mode ) {
-            for ( int i = 0; i < res; i++ ) {
+
+    if ( res > 0 ) {
+        for ( int i = 0; i < res; i++ ) {
+            if ( ipv4_mode ) {
                 process_ping4( packets[i], msg[i].msg_len, ident, received, rtt );
             }
-        }
-        else {
-            for ( int i = 0; i < res; i++ ) {
+            else {
                 process_ping6( packets[i], msg[i].msg_len, ident, received, rtt );
             }
         }
 
         return true;
     }
-    else {
-        return false;
-    }
+
+    return false;
 }
 
 #else /* ENABLE_MMSG && HAVE_RECVMMSG */
@@ -522,7 +520,8 @@ static bool recv_ping( bool ipv4_mode, int sock, uint16_t ident, struct pkt_coun
 
         return false;
     }
-    else if ( res > 0 ) {
+
+    if ( res > 0 ) {
         if ( ipv4_mode ) {
             process_ping4( packet, res, ident, received, rtt );
         }
@@ -532,9 +531,8 @@ static bool recv_ping( bool ipv4_mode, int sock, uint16_t ident, struct pkt_coun
 
         return true;
     }
-    else {
-        return false;
-    }
+
+    return false;
 }
 
 #endif /* ENABLE_MMSG && HAVE_RECVMMSG */
@@ -559,9 +557,8 @@ static bool resolve_name( bool ipv4_mode, const char * name, struct addrinfo ** 
 
         return false;
     }
-    else {
-        return true;
-    }
+
+    return true;
 }
 
 int main( int argc, char * argv[] )
@@ -994,9 +991,8 @@ int main( int argc, char * argv[] )
 
                     break;
                 }
-                else {
-                    select_timeout = current_interval - time_diff;
-                }
+
+                select_timeout = current_interval - time_diff;
             }
 
             get_time( &end );
