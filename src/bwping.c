@@ -100,7 +100,7 @@ static const uint64_t PKT_BURST_SCALE   = 1000;
 
 static const char * prog_name;
 
-static void get_time( struct timespec * ts )
+static void get_time( struct timespec * const ts )
 {
 #if defined( CLOCK_HIGHRES )
     const clockid_t id = CLOCK_HIGHRES; /* Solaris */
@@ -120,7 +120,7 @@ static void get_time( struct timespec * ts )
     }
 }
 
-static int64_t int64_sub( int64_t i1, int64_t i2 )
+static int64_t int64_sub( const int64_t i1, const int64_t i2 )
 {
     if ( i2 < 0 ) {
         if ( i1 > INT64_MAX + i2 ) {
@@ -136,7 +136,7 @@ static int64_t int64_sub( int64_t i1, int64_t i2 )
     return i1 - i2;
 }
 
-static int64_t ts_sub( const struct timespec * ts1, const struct timespec * ts2 )
+static int64_t ts_sub( const struct timespec * const ts1, const struct timespec * const ts2 )
 {
     int64_t sec_diff = int64_sub( ts1->tv_sec, ts2->tv_sec );
 
@@ -159,7 +159,7 @@ static int64_t ts_sub( const struct timespec * ts1, const struct timespec * ts2 
     return sec_diff * 1000000 + nsec_diff / 1000;
 }
 
-static uint16_t cksum( const char * data, size_t size )
+static uint16_t cksum( const char * const data, const size_t size )
 {
     uint32_t sum = 0;
 
@@ -203,7 +203,7 @@ static uint64_t calibrate_timer( void )
 
             get_time( &after );
 
-            int64_t time_diff = ts_sub( &after, &before );
+            const int64_t time_diff = ts_sub( &after, &before );
 
             if ( time_diff >= 0 ) {
                 time_diffs[successful_cycles++] = time_diff;
@@ -237,7 +237,7 @@ static uint64_t calibrate_timer( void )
     return 0;
 }
 
-static void clear_socket_buffer( int sock )
+static void clear_socket_buffer( const int sock )
 {
     ssize_t res = 0;
 
@@ -252,7 +252,7 @@ static void clear_socket_buffer( int sock )
     } while ( res > 0 );
 }
 
-static void prepare_ping4( char * packet, size_t pkt_size, uint16_t ident, bool insert_timestamp, struct pkt_counters * transmitted )
+static void prepare_ping4( char * const packet, const size_t pkt_size, const uint16_t ident, const bool insert_timestamp, struct pkt_counters * const transmitted )
 {
     struct icmp icmp4 = { .icmp_type = ICMP_ECHO, .icmp_code = 0, .icmp_cksum = 0, .icmp_id = htons( ident ), .icmp_seq = htons( transmitted->count ) };
 
@@ -281,9 +281,9 @@ static void prepare_ping4( char * packet, size_t pkt_size, uint16_t ident, bool 
     transmitted->volume += pkt_size;
 }
 
-static void prepare_ping6( char * packet, size_t pkt_size, uint16_t ident, bool insert_timestamp, struct pkt_counters * transmitted )
+static void prepare_ping6( char * const packet, const size_t pkt_size, const uint16_t ident, const bool insert_timestamp, struct pkt_counters * const transmitted )
 {
-    struct icmp6_hdr icmp6
+    const struct icmp6_hdr icmp6
         = { .icmp6_type = ICMP6_ECHO_REQUEST, .icmp6_code = 0, .icmp6_cksum = 0, .icmp6_id = htons( ident ), .icmp6_seq = htons( transmitted->count ) };
 
     memcpy( packet, &icmp6, sizeof( icmp6 ) );
@@ -305,7 +305,12 @@ static void prepare_ping6( char * packet, size_t pkt_size, uint16_t ident, bool 
 
 #if defined( ENABLE_MMSG ) && defined( HAVE_SENDMMSG )
 
-static void sendmmsg_ping( bool ipv4_mode, int sock, size_t pkt_size, uint16_t ident, uint64_t pkt_count, struct pkt_counters * transmitted )
+static void sendmmsg_ping( const bool                  ipv4_mode,
+                           const int                   sock,
+                           const size_t                pkt_size,
+                           const uint16_t              ident,
+                           const uint64_t              pkt_count,
+                           struct pkt_counters * const transmitted )
 {
     for ( uint64_t i = 0; i < pkt_count; i = i + BWPING_MAX_MMSG_VLEN ) {
         static char packets[BWPING_MAX_MMSG_VLEN][IP_MAXPACKET] = { { 0 } };
@@ -313,7 +318,7 @@ static void sendmmsg_ping( bool ipv4_mode, int sock, size_t pkt_size, uint16_t i
         struct iovec   iov[BWPING_MAX_MMSG_VLEN];
         struct mmsghdr msg[BWPING_MAX_MMSG_VLEN];
 
-        unsigned int vlen = pkt_count - i > BWPING_MAX_MMSG_VLEN ? BWPING_MAX_MMSG_VLEN : pkt_count - i;
+        const unsigned int vlen = pkt_count - i > BWPING_MAX_MMSG_VLEN ? BWPING_MAX_MMSG_VLEN : pkt_count - i;
 
         for ( unsigned int j = 0; j < vlen; j++ ) {
             if ( ipv4_mode ) {
@@ -334,7 +339,7 @@ static void sendmmsg_ping( bool ipv4_mode, int sock, size_t pkt_size, uint16_t i
             msg[j].msg_hdr.msg_iovlen = 1;
         }
 
-        int res = sendmmsg( sock, msg, vlen, 0 );
+        const int res = sendmmsg( sock, msg, vlen, 0 );
 
         if ( res < 0 ) {
             fprintf( stderr, "%s: sendmmsg() failed: %s\n", prog_name, strerror( errno ) );
@@ -347,7 +352,12 @@ static void sendmmsg_ping( bool ipv4_mode, int sock, size_t pkt_size, uint16_t i
 
 #else /* ENABLE_MMSG && HAVE_SENDMMSG */
 
-static void send_ping( bool ipv4_mode, int sock, size_t pkt_size, uint16_t ident, bool insert_timestamp, struct pkt_counters * transmitted )
+static void send_ping( const bool                  ipv4_mode,
+                       const int                   sock,
+                       const size_t                pkt_size,
+                       const uint16_t              ident,
+                       const bool                  insert_timestamp,
+                       struct pkt_counters * const transmitted )
 {
     static char packet[IP_MAXPACKET] = { 0 };
 
@@ -358,7 +368,7 @@ static void send_ping( bool ipv4_mode, int sock, size_t pkt_size, uint16_t ident
         prepare_ping6( packet, pkt_size, ident, insert_timestamp, transmitted );
     }
 
-    ssize_t res = send( sock, packet, pkt_size, 0 );
+    const ssize_t res = send( sock, packet, pkt_size, 0 );
 
     if ( res < 0 ) {
         fprintf( stderr, "%s: send() failed: %s\n", prog_name, strerror( errno ) );
@@ -370,105 +380,127 @@ static void send_ping( bool ipv4_mode, int sock, size_t pkt_size, uint16_t ident
 
 #endif /* ENABLE_MMSG && HAVE_SENDMMSG */
 
-static void process_ping4( const char * packet, size_t pkt_size, uint16_t ident, struct pkt_counters * received, struct rtt_counters * rtt )
+static void process_ping4( const char * const packet, const size_t pkt_size, const uint16_t ident, struct pkt_counters * const received, struct rtt_counters * const rtt )
 {
     struct ip ip4;
 
-    if ( pkt_size >= sizeof( ip4 ) ) {
-        memcpy( &ip4, packet, sizeof( ip4 ) );
+    if ( pkt_size < sizeof( ip4 ) ) {
+        return;
+    }
 
-        if ( ip4.ip_p == IPPROTO_ICMP && ( ntohs( ip4.ip_off ) & 0x1FFF ) == 0 ) {
-            size_t hdr_len = ip4.ip_hl << 2;
+    memcpy( &ip4, packet, sizeof( ip4 ) );
 
-            struct icmp icmp4;
+    if ( ip4.ip_p != IPPROTO_ICMP || ( ntohs( ip4.ip_off ) & 0x1FFF ) != 0 ) {
+        return;
+    }
 
-            if ( pkt_size >= hdr_len + sizeof( icmp4 ) ) {
-                memcpy( &icmp4, &packet[hdr_len], sizeof( icmp4 ) );
+    const size_t hdr_len = ip4.ip_hl << 2;
 
-                if ( icmp4.icmp_type == ICMP_ECHOREPLY && ntohs( icmp4.icmp_id ) == ident ) {
-                    received->count += 1;
-                    received->volume += pkt_size - hdr_len;
+    struct icmp icmp4;
 
-                    struct timespec pkt_time;
+    if ( pkt_size < hdr_len + sizeof( icmp4 ) ) {
+        return;
+    }
 
-                    if ( pkt_size >= hdr_len + sizeof( icmp4 ) + sizeof( pkt_time ) ) {
-                        memcpy( &pkt_time, &packet[hdr_len + sizeof( icmp4 )], sizeof( pkt_time ) );
+    memcpy( &icmp4, &packet[hdr_len], sizeof( icmp4 ) );
 
-                        if ( pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0 ) {
-                            struct timespec now;
+    if ( icmp4.icmp_type != ICMP_ECHOREPLY || ntohs( icmp4.icmp_id ) != ident ) {
+        return;
+    }
 
-                            get_time( &now );
+    received->count += 1;
+    received->volume += pkt_size - hdr_len;
 
-                            int64_t pkt_rtt = ts_sub( &now, &pkt_time ) / 1000;
+    struct timespec pkt_time;
 
-                            if ( pkt_rtt >= 0 ) {
-                                rtt->count += 1;
-                                rtt->sum += pkt_rtt;
+    if ( pkt_size < hdr_len + sizeof( icmp4 ) + sizeof( pkt_time ) ) {
+        return;
+    }
 
-                                if ( rtt->min > (uint64_t)pkt_rtt ) {
-                                    rtt->min = pkt_rtt;
-                                }
-                                if ( rtt->max < (uint64_t)pkt_rtt ) {
-                                    rtt->max = pkt_rtt;
-                                }
-                            }
-                            else {
-                                fprintf( stderr, "%s: packet has an invalid timestamp\n", prog_name );
-                            }
-                        }
-                    }
-                }
-            }
-        }
+    memcpy( &pkt_time, &packet[hdr_len + sizeof( icmp4 )], sizeof( pkt_time ) );
+
+    if ( pkt_time.tv_sec == 0 && pkt_time.tv_nsec == 0 ) {
+        return;
+    }
+
+    struct timespec now;
+
+    get_time( &now );
+
+    const int64_t pkt_rtt = ts_sub( &now, &pkt_time ) / 1000;
+
+    if ( pkt_rtt < 0 ) {
+        fprintf( stderr, "%s: packet has an invalid timestamp\n", prog_name );
+
+        return;
+    }
+
+    rtt->count += 1;
+    rtt->sum += pkt_rtt;
+
+    if ( rtt->min > (uint64_t)pkt_rtt ) {
+        rtt->min = pkt_rtt;
+    }
+    if ( rtt->max < (uint64_t)pkt_rtt ) {
+        rtt->max = pkt_rtt;
     }
 }
 
-static void process_ping6( const char * packet, size_t pkt_size, uint16_t ident, struct pkt_counters * received, struct rtt_counters * rtt )
+static void process_ping6( const char * const packet, const size_t pkt_size, const uint16_t ident, struct pkt_counters * const received, struct rtt_counters * const rtt )
 {
     struct icmp6_hdr icmp6;
 
-    if ( pkt_size >= sizeof( icmp6 ) ) {
-        memcpy( &icmp6, packet, sizeof( icmp6 ) );
+    if ( pkt_size < sizeof( icmp6 ) ) {
+        return;
+    }
 
-        if ( icmp6.icmp6_type == ICMP6_ECHO_REPLY && ntohs( icmp6.icmp6_id ) == ident ) {
-            received->count += 1;
-            received->volume += pkt_size;
+    memcpy( &icmp6, packet, sizeof( icmp6 ) );
 
-            struct timespec pkt_time;
+    if ( icmp6.icmp6_type != ICMP6_ECHO_REPLY || ntohs( icmp6.icmp6_id ) != ident ) {
+        return;
+    }
 
-            if ( pkt_size >= sizeof( icmp6 ) + sizeof( pkt_time ) ) {
-                memcpy( &pkt_time, &packet[sizeof( icmp6 )], sizeof( pkt_time ) );
+    received->count += 1;
+    received->volume += pkt_size;
 
-                if ( pkt_time.tv_sec != 0 || pkt_time.tv_nsec != 0 ) {
-                    struct timespec now;
+    struct timespec pkt_time;
 
-                    get_time( &now );
+    if ( pkt_size < sizeof( icmp6 ) + sizeof( pkt_time ) ) {
+        return;
+    }
 
-                    int64_t pkt_rtt = ts_sub( &now, &pkt_time ) / 1000;
+    memcpy( &pkt_time, &packet[sizeof( icmp6 )], sizeof( pkt_time ) );
 
-                    if ( pkt_rtt >= 0 ) {
-                        rtt->count += 1;
-                        rtt->sum += pkt_rtt;
+    if ( pkt_time.tv_sec == 0 && pkt_time.tv_nsec == 0 ) {
+        return;
+    }
 
-                        if ( rtt->min > (uint64_t)pkt_rtt ) {
-                            rtt->min = pkt_rtt;
-                        }
-                        if ( rtt->max < (uint64_t)pkt_rtt ) {
-                            rtt->max = pkt_rtt;
-                        }
-                    }
-                    else {
-                        fprintf( stderr, "%s: packet has an invalid timestamp\n", prog_name );
-                    }
-                }
-            }
-        }
+    struct timespec now;
+
+    get_time( &now );
+
+    const int64_t pkt_rtt = ts_sub( &now, &pkt_time ) / 1000;
+
+    if ( pkt_rtt < 0 ) {
+        fprintf( stderr, "%s: packet has an invalid timestamp\n", prog_name );
+
+        return;
+    }
+
+    rtt->count += 1;
+    rtt->sum += pkt_rtt;
+
+    if ( rtt->min > (uint64_t)pkt_rtt ) {
+        rtt->min = pkt_rtt;
+    }
+    if ( rtt->max < (uint64_t)pkt_rtt ) {
+        rtt->max = pkt_rtt;
     }
 }
 
 #if defined( ENABLE_MMSG ) && defined( HAVE_RECVMMSG )
 
-static bool recvmmsg_ping( bool ipv4_mode, int sock, uint16_t ident, struct pkt_counters * received, struct rtt_counters * rtt )
+static bool recvmmsg_ping( const bool ipv4_mode, const int sock, const uint16_t ident, struct pkt_counters * const received, struct rtt_counters * const rtt )
 {
     static char packets[BWPING_MAX_MMSG_VLEN][IP_MAXPACKET];
 
@@ -483,7 +515,7 @@ static bool recvmmsg_ping( bool ipv4_mode, int sock, uint16_t ident, struct pkt_
         msg[i].msg_hdr.msg_iovlen = 1;
     }
 
-    int res = recvmmsg( sock, msg, BWPING_MAX_MMSG_VLEN, 0, NULL );
+    const int res = recvmmsg( sock, msg, BWPING_MAX_MMSG_VLEN, 0, NULL );
 
     if ( res < 0 && errno != EAGAIN && errno != EWOULDBLOCK ) {
         fprintf( stderr, "%s: recvmmsg() failed: %s\n", prog_name, strerror( errno ) );
@@ -509,11 +541,11 @@ static bool recvmmsg_ping( bool ipv4_mode, int sock, uint16_t ident, struct pkt_
 
 #else /* ENABLE_MMSG && HAVE_RECVMMSG */
 
-static bool recv_ping( bool ipv4_mode, int sock, uint16_t ident, struct pkt_counters * received, struct rtt_counters * rtt )
+static bool recv_ping( const bool ipv4_mode, const int sock, const uint16_t ident, struct pkt_counters * const received, struct rtt_counters * const rtt )
 {
     static char packet[IP_MAXPACKET];
 
-    ssize_t res = recv( sock, packet, sizeof( packet ), 0 );
+    const ssize_t res = recv( sock, packet, sizeof( packet ), 0 );
 
     if ( res < 0 && errno != EAGAIN && errno != EWOULDBLOCK ) {
         fprintf( stderr, "%s: recv() failed: %s\n", prog_name, strerror( errno ) );
@@ -537,7 +569,7 @@ static bool recv_ping( bool ipv4_mode, int sock, uint16_t ident, struct pkt_coun
 
 #endif /* ENABLE_MMSG && HAVE_RECVMMSG */
 
-static bool resolve_name( bool ipv4_mode, const char * name, struct addrinfo ** ai )
+static bool resolve_name( const bool ipv4_mode, const char * const name, struct addrinfo ** const ai )
 {
     struct addrinfo hints = { .ai_flags = AI_CANONNAME, .ai_socktype = SOCK_RAW };
 
@@ -550,7 +582,7 @@ static bool resolve_name( bool ipv4_mode, const char * name, struct addrinfo ** 
         hints.ai_protocol = IPPROTO_ICMPV6;
     }
 
-    int res = getaddrinfo( name, NULL, &hints, ai );
+    const int res = getaddrinfo( name, NULL, &hints, ai );
 
     if ( res != 0 ) {
         fprintf( stderr, "%s: cannot resolve %s: %s\n", prog_name, name, gai_strerror( res ) );
@@ -772,7 +804,7 @@ int main( int argc, char * argv[] )
             else {
                 char addr_buf[BWPING_MAX_ADDR_LEN];
 
-                int res = getnameinfo( target_ai->ai_addr, target_ai->ai_addrlen, addr_buf, sizeof( addr_buf ), NULL, 0, NI_NUMERICHOST );
+                const int res = getnameinfo( target_ai->ai_addr, target_ai->ai_addrlen, addr_buf, sizeof( addr_buf ), NULL, 0, NI_NUMERICHOST );
 
                 if ( res != 0 ) {
                     fprintf( stderr, "%s: getnameinfo() failed: %s\n", prog_name, gai_strerror( res ) );
@@ -855,7 +887,7 @@ int main( int argc, char * argv[] )
                 /* (10) */ { 0x06, 0, 0, 0x00000000 }      /* ret  #0x0                        - Discard packet */
             };
 
-            struct sock_fprog bpf = { .len = sizeof( filter ) / sizeof( filter[0] ), .filter = filter };
+            const struct sock_fprog bpf = { .len = sizeof( filter ) / sizeof( filter[0] ), .filter = filter };
 
             if ( setsockopt( sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof( bpf ) ) < 0 ) {
                 fprintf( stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror( errno ) );
@@ -871,7 +903,7 @@ int main( int argc, char * argv[] )
                 /* (05) */ { 0x06, 0, 0, 0x00000000 }        /* ret #0x0                        - Discard packet */
             };
 
-            struct sock_fprog bpf = { .len = sizeof( filter ) / sizeof( filter[0] ), .filter = filter };
+            const struct sock_fprog bpf = { .len = sizeof( filter ) / sizeof( filter[0] ), .filter = filter };
 
             if ( setsockopt( sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof( bpf ) ) < 0 ) {
                 fprintf( stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror( errno ) );
@@ -881,8 +913,8 @@ int main( int argc, char * argv[] )
 
         clear_socket_buffer( sock );
 
-        uint64_t interval     = pkt_size * 8000 / kbps;
-        uint64_t min_interval = calibrate_timer() * 2; /* Leave space for interval_error adjustments */
+        const uint64_t min_interval = calibrate_timer() * 2; /* Leave space for interval_error adjustments */
+        uint64_t       interval     = pkt_size * 8000 / kbps;
 
         uint64_t pkt_burst;
 
@@ -898,8 +930,9 @@ int main( int argc, char * argv[] )
             interval  = min_interval;
         }
 
+        const uint64_t total_count = volume % pkt_size == 0 ? volume / pkt_size : volume / pkt_size + 1;
+
         bool                finish           = false;
-        uint64_t            total_count      = volume % pkt_size == 0 ? volume / pkt_size : volume / pkt_size + 1;
         uint64_t            pkt_burst_error  = 0;
         uint64_t            current_interval = interval;
         uint64_t            interval_error   = 0;
@@ -920,9 +953,9 @@ int main( int argc, char * argv[] )
 
             get_time( &interval_start );
 
-            uint64_t pkt_count = total_count - transmitted.count > pkt_burst / PKT_BURST_SCALE + pkt_burst_error / PKT_BURST_SCALE
-                                     ? pkt_burst / PKT_BURST_SCALE + pkt_burst_error / PKT_BURST_SCALE
-                                     : total_count - transmitted.count;
+            const uint64_t pkt_count = total_count - transmitted.count > pkt_burst / PKT_BURST_SCALE + pkt_burst_error / PKT_BURST_SCALE
+                                           ? pkt_burst / PKT_BURST_SCALE + pkt_burst_error / PKT_BURST_SCALE
+                                           : total_count - transmitted.count;
 
 #if defined( ENABLE_MMSG ) && defined( HAVE_SENDMMSG )
             sendmmsg_ping( ipv4_mode, sock, pkt_size, ident, pkt_count, &transmitted );
@@ -945,7 +978,7 @@ int main( int argc, char * argv[] )
 
                 struct timeval timeout = { .tv_sec = select_timeout / 1000000, .tv_usec = select_timeout % 1000000 };
 
-                int n = select( sock + 1, &fds, NULL, NULL, &timeout );
+                const int n = select( sock + 1, &fds, NULL, NULL, &timeout );
 
                 if ( n < 0 ) {
                     fprintf( stderr, "%s: select() failed: %s\n", prog_name, strerror( errno ) );
@@ -966,7 +999,7 @@ int main( int argc, char * argv[] )
 
                 get_time( &now );
 
-                int64_t time_diff = ts_sub( &now, &interval_start );
+                const int64_t time_diff = ts_sub( &now, &interval_start );
 
                 if ( time_diff < 0 || (uint64_t)time_diff >= current_interval ) {
                     if ( transmitted.volume >= volume ) {
@@ -997,8 +1030,8 @@ int main( int argc, char * argv[] )
 
             get_time( &end );
 
-            int64_t report_sec_diff = ts_sub( &end, &report ) / 1000000;
-            int64_t start_sec_diff  = ts_sub( &end, &start ) / 1000000;
+            const int64_t report_sec_diff = ts_sub( &end, &report ) / 1000000;
+            const int64_t start_sec_diff  = ts_sub( &end, &start ) / 1000000;
 
             if ( reporting_period > 0 && report_sec_diff >= reporting_period ) {
                 printf( "Periodic: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes,"
@@ -1017,7 +1050,7 @@ int main( int argc, char * argv[] )
             }
         }
 
-        int64_t sec_diff = ts_sub( &end, &start ) / 1000000;
+        const int64_t sec_diff = ts_sub( &end, &start ) / 1000000;
 
         printf( "Total: pkts sent/rcvd: %" PRIu64 "/%" PRIu64 ", volume sent/rcvd: %" PRIu64 "/%" PRIu64 " bytes,"
                 " time: %" PRId64 " sec, speed: %" PRIu64 " kbps, rtt min/max/average: %" PRIu64 "/%" PRIu64 "/%" PRIu64 " ms\n",
