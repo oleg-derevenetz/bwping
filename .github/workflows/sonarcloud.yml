@@ -41,9 +41,6 @@ jobs:
     - uses: SonarSource/sonarqube-scan-action@v5
       with:
         args: >-
-          -Dsonar.projectKey=oleg-derevenetz_bwping
-          -Dsonar.projectName=BWPing
-          -Dsonar.organization=oleg-derevenetz-github
           -Dsonar.cfamily.compile-commands=.bw-output/compile_commands.json
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
