@@ -252,9 +252,19 @@ static void clear_socket_buffer( const int sock )
     } while ( res > 0 );
 }
 
-static void prepare_ping4( char * const packet, const size_t pkt_size, const uint16_t ident, const bool insert_timestamp, struct pkt_counters * const transmitted )
+static void prepare_ping4( char * const packet, const uint16_t ident, const bool insert_timestamp )
 {
-    struct icmp icmp4 = { .icmp_type = ICMP_ECHO, .icmp_code = 0, .icmp_cksum = 0, .icmp_id = htons( ident ), .icmp_seq = htons( transmitted->count ) };
+    uint8_t icmp_type;
+
+    memcpy( &icmp_type, &packet[offsetof( struct icmp, icmp_type )], sizeof( icmp_type ) );
+
+    /* Optimization: it is assumed that packets that do not contain timestamps are prepared once and for all and have a static lifetime */
+    _Static_assert( ICMP_ECHO != 0, "ICMP_ECHO must not be zero" );
+    if ( icmp_type == ICMP_ECHO && !insert_timestamp ) {
+        return;
+    }
+
+    struct icmp icmp4 = { .icmp_type = ICMP_ECHO, .icmp_code = 0, .icmp_cksum = 0, .icmp_id = htons( ident ), .icmp_seq = 0 };
 
     memcpy( packet, &icmp4, sizeof( icmp4 ) );
 
@@ -269,22 +279,26 @@ static void prepare_ping4( char * const packet, const size_t pkt_size, const uin
         icmp4.icmp_cksum = cksum( packet, sizeof( icmp4 ) + sizeof( pkt_time ) );
     }
     else {
-        memset( &packet[sizeof( icmp4 )], 0, sizeof( struct timespec ) );
-
         /* Optimization: it is assumed that the rest of the packet is already zeroed */
         icmp4.icmp_cksum = cksum( packet, sizeof( icmp4 ) );
     }
 
     memcpy( &packet[offsetof( struct icmp, icmp_cksum )], &icmp4.icmp_cksum, sizeof( icmp4.icmp_cksum ) );
-
-    transmitted->count += 1;
-    transmitted->volume += pkt_size;
 }
 
-static void prepare_ping6( char * const packet, const size_t pkt_size, const uint16_t ident, const bool insert_timestamp, struct pkt_counters * const transmitted )
+static void prepare_ping6( char * const packet, const uint16_t ident, const bool insert_timestamp )
 {
-    const struct icmp6_hdr icmp6
-        = { .icmp6_type = ICMP6_ECHO_REQUEST, .icmp6_code = 0, .icmp6_cksum = 0, .icmp6_id = htons( ident ), .icmp6_seq = htons( transmitted->count ) };
+    uint8_t icmp6_type;
+
+    memcpy( &icmp6_type, &packet[offsetof( struct icmp6_hdr, icmp6_type )], sizeof( icmp6_type ) );
+
+    /* Optimization: it is assumed that packets that do not contain timestamps are prepared once and for all and have a static lifetime */
+    _Static_assert( ICMP6_ECHO_REQUEST != 0, "ICMP6_ECHO_REQUEST must not be zero" );
+    if ( icmp6_type == ICMP6_ECHO_REQUEST && !insert_timestamp ) {
+        return;
+    }
+
+    const struct icmp6_hdr icmp6 = { .icmp6_type = ICMP6_ECHO_REQUEST, .icmp6_code = 0, .icmp6_cksum = 0, .icmp6_id = htons( ident ), .icmp6_seq = 0 };
 
     memcpy( packet, &icmp6, sizeof( icmp6 ) );
 
@@ -295,12 +309,6 @@ static void prepare_ping6( char * const packet, const size_t pkt_size, const uin
 
         memcpy( &packet[sizeof( icmp6 )], &pkt_time, sizeof( pkt_time ) );
     }
-    else {
-        memset( &packet[sizeof( icmp6 )], 0, sizeof( struct timespec ) );
-    }
-
-    transmitted->count += 1;
-    transmitted->volume += pkt_size;
 }
 
 #if defined( ENABLE_MMSG ) && defined( HAVE_SENDMMSG )
@@ -312,30 +320,27 @@ static void sendmmsg_ping( const bool                  ipv4_mode,
                            const uint64_t              pkt_count,
                            struct pkt_counters * const transmitted )
 {
-    for ( uint64_t i = 0; i < pkt_count; i = i + BWPING_MAX_MMSG_VLEN ) {
-        static char packets[BWPING_MAX_MMSG_VLEN][IP_MAXPACKET] = { { 0 } };
+    static char tmstamp_packet[IP_MAXPACKET] = { 0 };
+    static char regular_packet[IP_MAXPACKET] = { 0 };
 
-        struct iovec   iov[BWPING_MAX_MMSG_VLEN];
-        struct mmsghdr msg[BWPING_MAX_MMSG_VLEN];
+    if ( ipv4_mode ) {
+        prepare_ping4( tmstamp_packet, ident, true );
+        prepare_ping4( regular_packet, ident, false );
+    }
+    else {
+        prepare_ping6( tmstamp_packet, ident, true );
+        prepare_ping6( regular_packet, ident, false );
+    }
+
+    struct iovec iov[] = { { .iov_base = tmstamp_packet, .iov_len = pkt_size }, { .iov_base = regular_packet, .iov_len = pkt_size } };
+
+    for ( uint64_t i = 0; i < pkt_count; i = i + BWPING_MAX_MMSG_VLEN ) {
+        struct mmsghdr msg[BWPING_MAX_MMSG_VLEN] = { { .msg_len = 0 } };
 
         const unsigned int vlen = pkt_count - i > BWPING_MAX_MMSG_VLEN ? BWPING_MAX_MMSG_VLEN : pkt_count - i;
 
         for ( unsigned int j = 0; j < vlen; j++ ) {
-            if ( ipv4_mode ) {
-                prepare_ping4( packets[j], pkt_size, ident, i == 0 && j == 0, transmitted );
-            }
-            else {
-                prepare_ping6( packets[j], pkt_size, ident, i == 0 && j == 0, transmitted );
-            }
-
-            memset( &iov[j], 0, sizeof( iov[j] ) );
-
-            iov[j].iov_base = packets[j];
-            iov[j].iov_len  = pkt_size;
-
-            memset( &msg[j], 0, sizeof( msg[j] ) );
-
-            msg[j].msg_hdr.msg_iov    = &iov[j];
+            msg[j].msg_hdr.msg_iov    = i == 0 && j == 0 ? &iov[0] : &iov[1];
             msg[j].msg_hdr.msg_iovlen = 1;
         }
 
@@ -348,6 +353,9 @@ static void sendmmsg_ping( const bool                  ipv4_mode,
             fprintf( stderr, "%s: sendmmsg() packets to send: %u, sent: %d\n", prog_name, vlen, res );
         }
     }
+
+    transmitted->count += pkt_count;
+    transmitted->volume += pkt_size * pkt_count;
 }
 
 #else /* ENABLE_MMSG && HAVE_SENDMMSG */
@@ -359,16 +367,17 @@ static void send_ping( const bool                  ipv4_mode,
                        const bool                  insert_timestamp,
                        struct pkt_counters * const transmitted )
 {
-    static char packet[IP_MAXPACKET] = { 0 };
+    static char tmstamp_packet[IP_MAXPACKET] = { 0 };
+    static char regular_packet[IP_MAXPACKET] = { 0 };
 
     if ( ipv4_mode ) {
-        prepare_ping4( packet, pkt_size, ident, insert_timestamp, transmitted );
+        prepare_ping4( insert_timestamp ? tmstamp_packet : regular_packet, ident, insert_timestamp );
     }
     else {
-        prepare_ping6( packet, pkt_size, ident, insert_timestamp, transmitted );
+        prepare_ping6( insert_timestamp ? tmstamp_packet : regular_packet, ident, insert_timestamp );
     }
 
-    const ssize_t res = send( sock, packet, pkt_size, 0 );
+    const ssize_t res = send( sock, insert_timestamp ? tmstamp_packet : regular_packet, pkt_size, 0 );
 
     if ( res < 0 ) {
         fprintf( stderr, "%s: send() failed: %s\n", prog_name, strerror( errno ) );
@@ -376,6 +385,9 @@ static void send_ping( const bool                  ipv4_mode,
     else if ( (size_t)res != pkt_size ) {
         fprintf( stderr, "%s: send() packet size: %zu, sent: %zd\n", prog_name, pkt_size, res );
     }
+
+    transmitted->count += 1;
+    transmitted->volume += pkt_size;
 }
 
 #endif /* ENABLE_MMSG && HAVE_SENDMMSG */
