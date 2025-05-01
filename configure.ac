@@ -40,6 +40,16 @@ AC_CHECK_HEADERS([netinet/icmp6.h], [], [], [
 AC_CHECK_HEADERS([linux/filter.h])
 
 bwping_save_cflags=${CFLAGS}
+AC_MSG_CHECKING([whether the C compiler accepts -pedantic...])
+CFLAGS="${CFLAGS} -pedantic"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
+                  [bwping_cv_c_pedantic=yes],
+                  [bwping_cv_c_pedantic=no])
+CFLAGS=${bwping_save_cflags}
+AC_MSG_RESULT([${bwping_cv_c_pedantic}])
+AS_IF([test "${bwping_cv_c_pedantic}" = "yes"], [
+    AM_CFLAGS="${AM_CFLAGS} -pedantic"
+])
 AC_MSG_CHECKING([whether the C compiler accepts -Wall...])
 CFLAGS="${CFLAGS} -Wall"
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
@@ -59,16 +69,6 @@ CFLAGS=${bwping_save_cflags}
 AC_MSG_RESULT([${bwping_cv_c_wextra}])
 AS_IF([test "${bwping_cv_c_wextra}" = "yes"], [
     AM_CFLAGS="${AM_CFLAGS} -Wextra"
-])
-AC_MSG_CHECKING([whether the C compiler accepts -Wpedantic...])
-CFLAGS="${CFLAGS} -Wpedantic"
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
-                  [bwping_cv_c_wpedantic=yes],
-                  [bwping_cv_c_wpedantic=no])
-CFLAGS=${bwping_save_cflags}
-AC_MSG_RESULT([${bwping_cv_c_wpedantic}])
-AS_IF([test "${bwping_cv_c_wpedantic}" = "yes"], [
-    AM_CFLAGS="${AM_CFLAGS} -Wpedantic"
 ])
 AC_MSG_CHECKING([whether the C compiler accepts -Wno-missing-field-initializers...])
 CFLAGS="${CFLAGS} -Wno-missing-field-initializers"
