@@ -258,7 +258,7 @@ static void prepare_ping4( char * const packet, const uint16_t ident, const bool
 
     memcpy( &icmp_type, &packet[offsetof( struct icmp, icmp_type )], sizeof( icmp_type ) );
 
-    /* Optimization: it is assumed that packets that do not contain timestamps are prepared once and for all and have a static lifetime */
+    /* Optimization: it is assumed that regular packets (those that do not contain timestamps) are prepared once and for all and have a static lifetime */
     _Static_assert( ICMP_ECHO != 0, "ICMP_ECHO must not be zero" );
     if ( icmp_type == ICMP_ECHO && !insert_timestamp ) {
         return;
@@ -292,7 +292,7 @@ static void prepare_ping6( char * const packet, const uint16_t ident, const bool
 
     memcpy( &icmp6_type, &packet[offsetof( struct icmp6_hdr, icmp6_type )], sizeof( icmp6_type ) );
 
-    /* Optimization: it is assumed that packets that do not contain timestamps are prepared once and for all and have a static lifetime */
+    /* Optimization: it is assumed that regular packets (those that do not contain timestamps) are prepared once and for all and have a static lifetime */
     _Static_assert( ICMP6_ECHO_REQUEST != 0, "ICMP6_ECHO_REQUEST must not be zero" );
     if ( icmp6_type == ICMP6_ECHO_REQUEST && !insert_timestamp ) {
         return;
