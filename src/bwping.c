@@ -254,61 +254,73 @@ static void clear_socket_buffer( const int sock )
 
 static void prepare_ping4( char * const packet, const uint16_t ident, const bool insert_timestamp )
 {
-    uint8_t icmp_type;
+    uint8_t icmp4_type_f;
 
-    memcpy( &icmp_type, &packet[offsetof( struct icmp, icmp_type )], sizeof( icmp_type ) );
+    memcpy( &icmp4_type_f, &packet[offsetof( struct icmp, icmp_type )], sizeof( icmp4_type_f ) );
 
-    /* Optimization: it is assumed that regular packets (those that do not contain timestamps) are prepared once and for all and have a static lifetime */
     _Static_assert( ICMP_ECHO != 0, "ICMP_ECHO must not be zero" );
-    if ( icmp_type == ICMP_ECHO && !insert_timestamp ) {
+
+    /* Optimization: it is assumed that both regular packets and timestamped packets have a static lifetime, and their ICMP headers are prepared once and for all - except
+     * for the checksum of timestamped packets */
+    if ( icmp4_type_f != ICMP_ECHO ) {
+        struct icmp icmp4 = { .icmp_type = ICMP_ECHO, .icmp_code = 0, .icmp_cksum = 0, .icmp_id = htons( ident ), .icmp_seq = 0 };
+
+        memcpy( packet, &icmp4, sizeof( icmp4 ) );
+
+        if ( !insert_timestamp ) {
+            /* Optimization: it is assumed that the rest of the packet is already zeroed */
+            const uint16_t icmp4_cksum_f = cksum( packet, sizeof( struct icmp ) );
+
+            memcpy( &packet[offsetof( struct icmp, icmp_cksum )], &icmp4_cksum_f, sizeof( icmp4_cksum_f ) );
+
+            return;
+        }
+    }
+
+    if ( !insert_timestamp ) {
         return;
     }
 
-    struct icmp icmp4 = { .icmp_type = ICMP_ECHO, .icmp_code = 0, .icmp_cksum = 0, .icmp_id = htons( ident ), .icmp_seq = 0 };
+    struct timespec pkt_time;
 
-    memcpy( packet, &icmp4, sizeof( icmp4 ) );
+    get_time( &pkt_time );
 
-    if ( insert_timestamp ) {
-        struct timespec pkt_time;
+    memcpy( &packet[sizeof( struct icmp )], &pkt_time, sizeof( pkt_time ) );
 
-        get_time( &pkt_time );
+    uint16_t icmp4_cksum_f = 0;
 
-        memcpy( &packet[sizeof( icmp4 )], &pkt_time, sizeof( pkt_time ) );
+    memcpy( &packet[offsetof( struct icmp, icmp_cksum )], &icmp4_cksum_f, sizeof( icmp4_cksum_f ) );
 
-        /* Optimization: it is assumed that the rest of the packet is already zeroed */
-        icmp4.icmp_cksum = cksum( packet, sizeof( icmp4 ) + sizeof( pkt_time ) );
-    }
-    else {
-        /* Optimization: it is assumed that the rest of the packet is already zeroed */
-        icmp4.icmp_cksum = cksum( packet, sizeof( icmp4 ) );
-    }
+    /* Optimization: it is assumed that the rest of the packet is already zeroed */
+    icmp4_cksum_f = cksum( packet, sizeof( struct icmp ) + sizeof( pkt_time ) );
 
-    memcpy( &packet[offsetof( struct icmp, icmp_cksum )], &icmp4.icmp_cksum, sizeof( icmp4.icmp_cksum ) );
+    memcpy( &packet[offsetof( struct icmp, icmp_cksum )], &icmp4_cksum_f, sizeof( icmp4_cksum_f ) );
 }
 
 static void prepare_ping6( char * const packet, const uint16_t ident, const bool insert_timestamp )
 {
-    uint8_t icmp6_type;
+    uint8_t icmp6_type_f;
 
-    memcpy( &icmp6_type, &packet[offsetof( struct icmp6_hdr, icmp6_type )], sizeof( icmp6_type ) );
+    memcpy( &icmp6_type_f, &packet[offsetof( struct icmp6_hdr, icmp6_type )], sizeof( icmp6_type_f ) );
 
-    /* Optimization: it is assumed that regular packets (those that do not contain timestamps) are prepared once and for all and have a static lifetime */
     _Static_assert( ICMP6_ECHO_REQUEST != 0, "ICMP6_ECHO_REQUEST must not be zero" );
-    if ( icmp6_type == ICMP6_ECHO_REQUEST && !insert_timestamp ) {
+
+    /* Optimization: it is assumed that both regular packets and timestamped packets have a static lifetime, and their ICMP headers are prepared once and for all */
+    if ( icmp6_type_f != ICMP6_ECHO_REQUEST ) {
+        const struct icmp6_hdr icmp6 = { .icmp6_type = ICMP6_ECHO_REQUEST, .icmp6_code = 0, .icmp6_cksum = 0, .icmp6_id = htons( ident ), .icmp6_seq = 0 };
+
+        memcpy( packet, &icmp6, sizeof( icmp6 ) );
+    }
+
+    if ( !insert_timestamp ) {
         return;
     }
 
-    const struct icmp6_hdr icmp6 = { .icmp6_type = ICMP6_ECHO_REQUEST, .icmp6_code = 0, .icmp6_cksum = 0, .icmp6_id = htons( ident ), .icmp6_seq = 0 };
+    struct timespec pkt_time;
 
-    memcpy( packet, &icmp6, sizeof( icmp6 ) );
+    get_time( &pkt_time );
 
-    if ( insert_timestamp ) {
-        struct timespec pkt_time;
-
-        get_time( &pkt_time );
-
-        memcpy( &packet[sizeof( icmp6 )], &pkt_time, sizeof( pkt_time ) );
-    }
+    memcpy( &packet[sizeof( struct icmp6_hdr )], &pkt_time, sizeof( pkt_time ) );
 }
 
 #if defined( ENABLE_MMSG ) && defined( HAVE_SENDMMSG )
@@ -408,15 +420,17 @@ static void process_ping4( const char * const packet, const size_t pkt_size, con
 
     const size_t hdr_len = ip4.ip_hl << 2;
 
-    struct icmp icmp4;
-
-    if ( pkt_size < hdr_len + sizeof( icmp4 ) ) {
+    if ( pkt_size < hdr_len + sizeof( struct icmp ) ) {
         return;
     }
 
-    memcpy( &icmp4, &packet[hdr_len], sizeof( icmp4 ) );
+    uint8_t  icmp4_type_f;
+    uint16_t icmp4_id_f;
 
-    if ( icmp4.icmp_type != ICMP_ECHOREPLY || ntohs( icmp4.icmp_id ) != ident ) {
+    memcpy( &icmp4_type_f, &packet[hdr_len + offsetof( struct icmp, icmp_type )], sizeof( icmp4_type_f ) );
+    memcpy( &icmp4_id_f, &packet[hdr_len + offsetof( struct icmp, icmp_id )], sizeof( icmp4_id_f ) );
+
+    if ( icmp4_type_f != ICMP_ECHOREPLY || ntohs( icmp4_id_f ) != ident ) {
         return;
     }
 
@@ -425,11 +439,11 @@ static void process_ping4( const char * const packet, const size_t pkt_size, con
 
     struct timespec pkt_time;
 
-    if ( pkt_size < hdr_len + sizeof( icmp4 ) + sizeof( pkt_time ) ) {
+    if ( pkt_size < hdr_len + sizeof( struct icmp ) + sizeof( pkt_time ) ) {
         return;
     }
 
-    memcpy( &pkt_time, &packet[hdr_len + sizeof( icmp4 )], sizeof( pkt_time ) );
+    memcpy( &pkt_time, &packet[hdr_len + sizeof( struct icmp )], sizeof( pkt_time ) );
 
     if ( pkt_time.tv_sec == 0 && pkt_time.tv_nsec == 0 ) {
         return;
@@ -460,15 +474,17 @@ static void process_ping4( const char * const packet, const size_t pkt_size, con
 
 static void process_ping6( const char * const packet, const size_t pkt_size, const uint16_t ident, struct pkt_counters * const received, struct rtt_counters * const rtt )
 {
-    struct icmp6_hdr icmp6;
-
-    if ( pkt_size < sizeof( icmp6 ) ) {
+    if ( pkt_size < sizeof( struct icmp6_hdr ) ) {
         return;
     }
 
-    memcpy( &icmp6, packet, sizeof( icmp6 ) );
+    uint8_t  icmp6_type_f;
+    uint16_t icmp6_id_f;
 
-    if ( icmp6.icmp6_type != ICMP6_ECHO_REPLY || ntohs( icmp6.icmp6_id ) != ident ) {
+    memcpy( &icmp6_type_f, &packet[offsetof( struct icmp6_hdr, icmp6_type )], sizeof( icmp6_type_f ) );
+    memcpy( &icmp6_id_f, &packet[offsetof( struct icmp6_hdr, icmp6_id )], sizeof( icmp6_id_f ) );
+
+    if ( icmp6_type_f != ICMP6_ECHO_REPLY || ntohs( icmp6_id_f ) != ident ) {
         return;
     }
 
@@ -477,11 +493,11 @@ static void process_ping6( const char * const packet, const size_t pkt_size, con
 
     struct timespec pkt_time;
 
-    if ( pkt_size < sizeof( icmp6 ) + sizeof( pkt_time ) ) {
+    if ( pkt_size < sizeof( struct icmp6_hdr ) + sizeof( pkt_time ) ) {
         return;
     }
 
-    memcpy( &pkt_time, &packet[sizeof( icmp6 )], sizeof( pkt_time ) );
+    memcpy( &pkt_time, &packet[sizeof( struct icmp6_hdr )], sizeof( pkt_time ) );
 
     if ( pkt_time.tv_sec == 0 && pkt_time.tv_nsec == 0 ) {
         return;
