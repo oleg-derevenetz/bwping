@@ -532,15 +532,17 @@ static bool recvmmsg_ping( const bool ipv4_mode, const int sock, const uint16_t 
 {
     static char packets[BWPING_MAX_MMSG_VLEN][IP_MAXPACKET];
 
-    struct iovec   iov[BWPING_MAX_MMSG_VLEN] = { { .iov_len = 0 } };
-    struct mmsghdr msg[BWPING_MAX_MMSG_VLEN] = { { .msg_len = 0 } };
+    static struct iovec   iov[BWPING_MAX_MMSG_VLEN] = { { .iov_len = 0 } };
+    static struct mmsghdr msg[BWPING_MAX_MMSG_VLEN] = { { .msg_len = 0 } };
 
-    for ( unsigned int i = 0; i < BWPING_MAX_MMSG_VLEN; i++ ) {
-        iov[i].iov_base = packets[i];
-        iov[i].iov_len  = sizeof( packets[i] );
+    if ( iov[0].iov_base == NULL ) {
+        for ( unsigned int i = 0; i < BWPING_MAX_MMSG_VLEN; i++ ) {
+            iov[i].iov_base = packets[i];
+            iov[i].iov_len  = sizeof( packets[i] );
 
-        msg[i].msg_hdr.msg_iov    = &iov[i];
-        msg[i].msg_hdr.msg_iovlen = 1;
+            msg[i].msg_hdr.msg_iov    = &iov[i];
+            msg[i].msg_hdr.msg_iovlen = 1;
+        }
     }
 
     const int res = recvmmsg( sock, msg, BWPING_MAX_MMSG_VLEN, 0, NULL );
