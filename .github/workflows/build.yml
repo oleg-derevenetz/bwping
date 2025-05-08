@@ -110,9 +110,12 @@ jobs:
         autoreconf -f -i -Wall,error
         ./configure
         make "CFLAGS=-Werror -fsanitize=address,undefined"
+    - name: Configure ICMP rate limit
+      run: |
+        sudo sysctl net.inet6.icmp6.errppslimit=1000
     - name: Run checks
       run: |
-        sudo make check TESTS="$(find tests -type f -perm -u=x | grep -v "^tests/sanity$" | tr "\n" " ")"
+        sudo make check
     - uses: actions/upload-artifact@v4
       if: ${{ failure() }}
       with:
