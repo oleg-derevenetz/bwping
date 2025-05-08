@@ -45,6 +45,49 @@ jobs:
       with:
         name: check-results-linux-${{ matrix.cc }}-${{ matrix.mmsg }}-${{ matrix.bpf }}
         path: tests/*.log
+  build-freebsd:
+    strategy:
+      matrix:
+        arch:
+        - x86-64
+        - arm64
+        mmsg:
+        - enable-mmsg
+        - disable-mmsg
+    name: Build FreeBSD ${{ matrix.arch }} (--${{ matrix.mmsg }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - uses: actions/checkout@v4
+    - uses: cross-platform-actions/action@v0.27.0
+      with:
+        operating_system: freebsd
+        architecture: ${{ matrix.arch }}
+        version: '14.2'
+        shell: bash
+        run: |
+          #
+          # Install dependencies
+          #
+          sudo pkg install -y autoconf automake
+          #
+          # Run build
+          #
+          autoreconf -f -i -Wall,error
+          ./configure --${{ matrix.mmsg }}
+          make "CFLAGS=-Werror -fsanitize=address,undefined"
+          #
+          # Run checks
+          #
+          sudo make check TESTS="$(find tests -type f -perm -u=x | grep -v "^tests/sanity$" | tr "\n" " ")"
+    - uses: actions/upload-artifact@v4
+      if: ${{ failure() }}
+      with:
+        name: check-results-freebsd-${{ matrix.arch }}-${{ matrix.mmsg }}
+        path: tests/*.log
   build-macos:
     name: Build MacOS
     runs-on: macos-latest
