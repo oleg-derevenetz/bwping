@@ -80,9 +80,13 @@ jobs:
           ./configure --${{ matrix.mmsg }}
           make "CFLAGS=-Werror -fsanitize=address,undefined"
           #
+          # Configure ICMP rate limit
+          #
+          sudo sysctl net.inet.icmp.icmplim=1000 net.inet6.icmp6.errppslimit=1000
+          #
           # Run checks
           #
-          sudo make check TESTS="$(find tests -type f -perm -u=x | grep -v "^tests/sanity$" | tr "\n" " ")"
+          sudo make check
     - uses: actions/upload-artifact@v4
       if: ${{ failure() }}
       with:
