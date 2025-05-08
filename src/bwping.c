@@ -254,24 +254,24 @@ static void clear_socket_buffer( const int sock )
 
 static void prepare_ping4( char * const packet, const uint16_t ident, const bool insert_timestamp )
 {
-    uint8_t icmp4_type_f;
+    uint8_t icmp4_type_v;
 
-    memcpy( &icmp4_type_f, &packet[offsetof( struct icmp, icmp_type )], sizeof( icmp4_type_f ) );
+    memcpy( &icmp4_type_v, &packet[offsetof( struct icmp, icmp_type )], sizeof( icmp4_type_v ) );
 
     _Static_assert( ICMP_ECHO != 0, "ICMP_ECHO must not be zero" );
 
     /* Optimization: it is assumed that both regular packets and timestamped packets have a static lifetime, and their ICMP headers are prepared once and for all - except
      * for the checksum of timestamped packets */
-    if ( icmp4_type_f != ICMP_ECHO ) {
+    if ( icmp4_type_v != ICMP_ECHO ) {
         struct icmp icmp4 = { .icmp_type = ICMP_ECHO, .icmp_code = 0, .icmp_cksum = 0, .icmp_id = htons( ident ), .icmp_seq = 0 };
 
         memcpy( packet, &icmp4, sizeof( icmp4 ) );
 
         if ( !insert_timestamp ) {
             /* Optimization: it is assumed that the rest of the packet is already zeroed */
-            const uint16_t icmp4_cksum_f = cksum( packet, sizeof( struct icmp ) );
+            const uint16_t icmp4_cksum_v = cksum( packet, sizeof( struct icmp ) );
 
-            memcpy( &packet[offsetof( struct icmp, icmp_cksum )], &icmp4_cksum_f, sizeof( icmp4_cksum_f ) );
+            memcpy( &packet[offsetof( struct icmp, icmp_cksum )], &icmp4_cksum_v, sizeof( icmp4_cksum_v ) );
 
             return;
         }
@@ -287,26 +287,26 @@ static void prepare_ping4( char * const packet, const uint16_t ident, const bool
 
     memcpy( &packet[sizeof( struct icmp )], &pkt_time, sizeof( pkt_time ) );
 
-    uint16_t icmp4_cksum_f = 0;
+    uint16_t icmp4_cksum_v = 0;
 
-    memcpy( &packet[offsetof( struct icmp, icmp_cksum )], &icmp4_cksum_f, sizeof( icmp4_cksum_f ) );
+    memcpy( &packet[offsetof( struct icmp, icmp_cksum )], &icmp4_cksum_v, sizeof( icmp4_cksum_v ) );
 
     /* Optimization: it is assumed that the rest of the packet is already zeroed */
-    icmp4_cksum_f = cksum( packet, sizeof( struct icmp ) + sizeof( pkt_time ) );
+    icmp4_cksum_v = cksum( packet, sizeof( struct icmp ) + sizeof( pkt_time ) );
 
-    memcpy( &packet[offsetof( struct icmp, icmp_cksum )], &icmp4_cksum_f, sizeof( icmp4_cksum_f ) );
+    memcpy( &packet[offsetof( struct icmp, icmp_cksum )], &icmp4_cksum_v, sizeof( icmp4_cksum_v ) );
 }
 
 static void prepare_ping6( char * const packet, const uint16_t ident, const bool insert_timestamp )
 {
-    uint8_t icmp6_type_f;
+    uint8_t icmp6_type_v;
 
-    memcpy( &icmp6_type_f, &packet[offsetof( struct icmp6_hdr, icmp6_type )], sizeof( icmp6_type_f ) );
+    memcpy( &icmp6_type_v, &packet[offsetof( struct icmp6_hdr, icmp6_type )], sizeof( icmp6_type_v ) );
 
     _Static_assert( ICMP6_ECHO_REQUEST != 0, "ICMP6_ECHO_REQUEST must not be zero" );
 
     /* Optimization: it is assumed that both regular packets and timestamped packets have a static lifetime, and their ICMP headers are prepared once and for all */
-    if ( icmp6_type_f != ICMP6_ECHO_REQUEST ) {
+    if ( icmp6_type_v != ICMP6_ECHO_REQUEST ) {
         const struct icmp6_hdr icmp6 = { .icmp6_type = ICMP6_ECHO_REQUEST, .icmp6_code = 0, .icmp6_cksum = 0, .icmp6_id = htons( ident ), .icmp6_seq = 0 };
 
         memcpy( packet, &icmp6, sizeof( icmp6 ) );
@@ -424,13 +424,13 @@ static void process_ping4( const char * const packet, const size_t pkt_size, con
         return;
     }
 
-    uint8_t  icmp4_type_f;
-    uint16_t icmp4_id_f;
+    uint8_t  icmp4_type_v;
+    uint16_t icmp4_id_v;
 
-    memcpy( &icmp4_type_f, &packet[hdr_len + offsetof( struct icmp, icmp_type )], sizeof( icmp4_type_f ) );
-    memcpy( &icmp4_id_f, &packet[hdr_len + offsetof( struct icmp, icmp_id )], sizeof( icmp4_id_f ) );
+    memcpy( &icmp4_type_v, &packet[hdr_len + offsetof( struct icmp, icmp_type )], sizeof( icmp4_type_v ) );
+    memcpy( &icmp4_id_v, &packet[hdr_len + offsetof( struct icmp, icmp_id )], sizeof( icmp4_id_v ) );
 
-    if ( icmp4_type_f != ICMP_ECHOREPLY || ntohs( icmp4_id_f ) != ident ) {
+    if ( icmp4_type_v != ICMP_ECHOREPLY || ntohs( icmp4_id_v ) != ident ) {
         return;
     }
 
@@ -478,13 +478,13 @@ static void process_ping6( const char * const packet, const size_t pkt_size, con
         return;
     }
 
-    uint8_t  icmp6_type_f;
-    uint16_t icmp6_id_f;
+    uint8_t  icmp6_type_v;
+    uint16_t icmp6_id_v;
 
-    memcpy( &icmp6_type_f, &packet[offsetof( struct icmp6_hdr, icmp6_type )], sizeof( icmp6_type_f ) );
-    memcpy( &icmp6_id_f, &packet[offsetof( struct icmp6_hdr, icmp6_id )], sizeof( icmp6_id_f ) );
+    memcpy( &icmp6_type_v, &packet[offsetof( struct icmp6_hdr, icmp6_type )], sizeof( icmp6_type_v ) );
+    memcpy( &icmp6_id_v, &packet[offsetof( struct icmp6_hdr, icmp6_id )], sizeof( icmp6_id_v ) );
 
-    if ( icmp6_type_f != ICMP6_ECHO_REPLY || ntohs( icmp6_id_f ) != ident ) {
+    if ( icmp6_type_v != ICMP6_ECHO_REPLY || ntohs( icmp6_id_v ) != ident ) {
         return;
     }
 
