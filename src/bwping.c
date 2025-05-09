@@ -52,6 +52,30 @@
 
 #include <netdb.h>
 
+#if defined( ENABLE_MMSG ) && defined( HAVE_SENDMMSG )
+#define BWPING_USE_SENDMMSG 1
+#else
+#undef BWPING_USE_SENDMMSG
+#endif
+
+#if defined( ENABLE_MMSG ) && defined( HAVE_RECVMMSG )
+#define BWPING_USE_RECVMMSG 1
+#else
+#undef BWPING_USE_RECVMMSG
+#endif
+
+#if defined( HAVE_NETINET_ICMP6_H ) && defined( ICMP6_FILTER )
+#define BWPING_USE_ICMP6_FILTER 1
+#else
+#undef BWPING_USE_ICMP6_FILTER
+#endif
+
+#if defined( ENABLE_BPF ) && defined( HAVE_LINUX_FILTER_H ) && defined( SO_ATTACH_FILTER )
+#define BWPING_USE_BPF 1
+#else
+#undef BWPING_USE_BPF
+#endif
+
 #ifdef BWPING_CALIBRATION_CYCLES
 #if BWPING_CALIBRATION_CYCLES < 1
 #error "BWPING_CALIBRATION_CYCLES must be greater than zero"
@@ -60,7 +84,7 @@
 #define BWPING_CALIBRATION_CYCLES 32
 #endif
 
-#if defined( ENABLE_MMSG ) && ( defined( HAVE_SENDMMSG ) || defined( HAVE_RECVMMSG ) )
+#if defined( BWPING_USE_SENDMMSG ) || defined( BWPING_USE_RECVMMSG )
 #ifdef BWPING_MAX_MMSG_VLEN
 #if BWPING_MAX_MMSG_VLEN < 1
 #error "BWPING_MAX_MMSG_VLEN must be greater than zero"
@@ -323,7 +347,7 @@ static void prepare_ping6( char * const packet, const uint16_t ident, const bool
     memcpy( &packet[sizeof( struct icmp6_hdr )], &pkt_time, sizeof( pkt_time ) );
 }
 
-#if defined( ENABLE_MMSG ) && defined( HAVE_SENDMMSG )
+#if defined( BWPING_USE_SENDMMSG )
 
 static void sendmmsg_ping( const bool                  ipv4_mode,
                            const int                   sock,
@@ -370,7 +394,7 @@ static void sendmmsg_ping( const bool                  ipv4_mode,
     transmitted->volume += pkt_size * pkt_count;
 }
 
-#else /* ENABLE_MMSG && HAVE_SENDMMSG */
+#else /* BWPING_USE_SENDMMSG */
 
 static void send_ping( const bool                  ipv4_mode,
                        const int                   sock,
@@ -402,7 +426,7 @@ static void send_ping( const bool                  ipv4_mode,
     transmitted->volume += pkt_size;
 }
 
-#endif /* ENABLE_MMSG && HAVE_SENDMMSG */
+#endif /* BWPING_USE_SENDMMSG */
 
 static void process_ping4( const char * const packet, const size_t pkt_size, const uint16_t ident, struct pkt_counters * const received, struct rtt_counters * const rtt )
 {
@@ -526,7 +550,7 @@ static void process_ping6( const char * const packet, const size_t pkt_size, con
     }
 }
 
-#if defined( ENABLE_MMSG ) && defined( HAVE_RECVMMSG )
+#if defined( BWPING_USE_RECVMMSG )
 
 static bool recvmmsg_ping( const bool ipv4_mode, const int sock, const uint16_t ident, struct pkt_counters * const received, struct rtt_counters * const rtt )
 {
@@ -569,7 +593,7 @@ static bool recvmmsg_ping( const bool ipv4_mode, const int sock, const uint16_t 
     return false;
 }
 
-#else /* ENABLE_MMSG && HAVE_RECVMMSG */
+#else /* BWPING_USE_RECVMMSG */
 
 static bool recv_ping( const bool ipv4_mode, const int sock, const uint16_t ident, struct pkt_counters * const received, struct rtt_counters * const rtt )
 {
@@ -597,7 +621,7 @@ static bool recv_ping( const bool ipv4_mode, const int sock, const uint16_t iden
     return false;
 }
 
-#endif /* ENABLE_MMSG && HAVE_RECVMMSG */
+#endif /* BWPING_USE_RECVMMSG */
 
 static bool resolve_name( const bool ipv4_mode, const char * const name, struct addrinfo ** const ai )
 {
@@ -622,6 +646,67 @@ static bool resolve_name( const bool ipv4_mode, const char * const name, struct 
 
     return true;
 }
+
+#if defined( BWPING_USE_ICMP6_FILTER )
+
+static void apply_icmp6_filter( const int sock )
+{
+    struct icmp6_filter filter6;
+
+    ICMP6_FILTER_SETBLOCKALL( &filter6 );
+    ICMP6_FILTER_SETPASS( ICMP6_ECHO_REPLY, &filter6 );
+
+    if ( setsockopt( sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filter6, sizeof( filter6 ) ) < 0 ) {
+        fprintf( stderr, "%s: setsockopt(ICMP6_FILTER) failed: %s\n", prog_name, strerror( errno ) );
+    }
+}
+
+#endif /* BWPING_USE_ICMP6_FILTER */
+
+#if defined( BWPING_USE_BPF )
+
+static void apply_bpf( const bool ipv4_mode, const int sock, const uint16_t ident )
+{
+    if ( ipv4_mode ) {
+        struct sock_filter filter[] = {
+            /* (00) */ { 0x30, 0, 0, 0x00000009 },     /* ldb  [9]                         - IP Protocol */
+            /* (01) */ { 0x15, 0, 8, IPPROTO_ICMP },   /* jeq  $IPPROTO_ICMP   jt 2  jf 10 - IP Protocol is ICMP */
+            /* (02) */ { 0x28, 0, 0, 0x00000006 },     /* ldh  [6]                         - IP Fragment Offset */
+            /* (03) */ { 0x45, 6, 0, 0x00001FFF },     /* jset #0x1FFF         jt 10 jf 4  - IP Fragment Offset is zero */
+            /* (04) */ { 0xB1, 0, 0, 0x00000000 },     /* ldxb 4*([0]&0xF)                 - Load IHL*4 to X */
+            /* (05) */ { 0x50, 0, 0, 0x00000000 },     /* ldb  [x]                         - ICMP Type */
+            /* (06) */ { 0x15, 0, 3, ICMP_ECHOREPLY }, /* jeq  $ICMP_ECHOREPLY jt 7  jf 10 - ICMP Type is Echo Reply */
+            /* (07) */ { 0x48, 0, 0, 0x00000004 },     /* ldh  [x + 4]                     - ICMP Id */
+            /* (08) */ { 0x15, 0, 1, ident },          /* jeq  $ident          jt 9  jf 10 - ICMP Id is ident */
+            /* (09) */ { 0x06, 0, 0, 0x00040000 },     /* ret  #0x40000                    - Accept packet */
+            /* (10) */ { 0x06, 0, 0, 0x00000000 }      /* ret  #0x0                        - Discard packet */
+        };
+
+        const struct sock_fprog bpf = { .len = sizeof( filter ) / sizeof( filter[0] ), .filter = filter };
+
+        if ( setsockopt( sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof( bpf ) ) < 0 ) {
+            fprintf( stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror( errno ) );
+        }
+    }
+    else {
+        struct sock_filter filter[] = {
+            /* (00) */ { 0x30, 0, 0, 0x00000000 },       /* ldb [0]                         - ICMPv6 Type */
+            /* (01) */ { 0x15, 0, 3, ICMP6_ECHO_REPLY }, /* jeq $ICMP6_ECHO_REPLY jt 2 jf 5 - ICMPv6 Type is Echo Reply */
+            /* (02) */ { 0x28, 0, 0, 0x00000004 },       /* ldh [4]                         - ICMPv6 Id */
+            /* (03) */ { 0x15, 0, 1, ident },            /* jeq $ident            jt 4 jf 5 - ICMPv6 Id is ident */
+            /* (04) */ { 0x06, 0, 0, 0x00040000 },       /* ret #0x40000                    - Accept packet */
+            /* (05) */ { 0x06, 0, 0, 0x00000000 }        /* ret #0x0                        - Discard packet */
+        };
+
+        const struct sock_fprog bpf = { .len = sizeof( filter ) / sizeof( filter[0] ), .filter = filter };
+
+        if ( setsockopt( sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof( bpf ) ) < 0 ) {
+            fprintf( stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror( errno ) );
+        }
+    }
+}
+
+#endif /* BWPING_USE_BPF */
 
 int main( int argc, char * argv[] )
 {
@@ -884,62 +969,19 @@ int main( int argc, char * argv[] )
             }
         }
 
-#if defined( HAVE_NETINET_ICMP6_H ) && defined( ICMP6_FILTER ) && defined( ICMP6_FILTER_SETBLOCKALL ) && defined( ICMP6_FILTER_SETPASS )
+#if defined( BWPING_USE_ICMP6_FILTER )
         if ( !ipv4_mode ) {
-            struct icmp6_filter filter6;
-
-            ICMP6_FILTER_SETBLOCKALL( &filter6 );
-            ICMP6_FILTER_SETPASS( ICMP6_ECHO_REPLY, &filter6 );
-
-            if ( setsockopt( sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filter6, sizeof( filter6 ) ) < 0 ) {
-                fprintf( stderr, "%s: setsockopt(ICMP6_FILTER) failed: %s\n", prog_name, strerror( errno ) );
-            }
+            apply_icmp6_filter( sock );
         }
-#endif /* HAVE_NETINET_ICMP6_H && ICMP6_FILTER && ICMP6_FILTER_SETBLOCKALL && ICMP6_FILTER_SETPASS */
+#endif
 
         if ( ident == 0 ) {
             ident = getpid() & 0xFFFF;
         }
 
-#if defined( ENABLE_BPF ) && defined( HAVE_LINUX_FILTER_H ) && defined( SO_ATTACH_FILTER )
-        if ( ipv4_mode ) {
-            struct sock_filter filter[] = {
-                /* (00) */ { 0x30, 0, 0, 0x00000009 },     /* ldb  [9]                         - IP Protocol */
-                /* (01) */ { 0x15, 0, 8, IPPROTO_ICMP },   /* jeq  $IPPROTO_ICMP   jt 2  jf 10 - IP Protocol is ICMP */
-                /* (02) */ { 0x28, 0, 0, 0x00000006 },     /* ldh  [6]                         - IP Fragment Offset */
-                /* (03) */ { 0x45, 6, 0, 0x00001FFF },     /* jset #0x1FFF         jt 10 jf 4  - IP Fragment Offset is zero */
-                /* (04) */ { 0xB1, 0, 0, 0x00000000 },     /* ldxb 4*([0]&0xF)                 - Load IHL*4 to X */
-                /* (05) */ { 0x50, 0, 0, 0x00000000 },     /* ldb  [x]                         - ICMP Type */
-                /* (06) */ { 0x15, 0, 3, ICMP_ECHOREPLY }, /* jeq  $ICMP_ECHOREPLY jt 7  jf 10 - ICMP Type is Echo Reply */
-                /* (07) */ { 0x48, 0, 0, 0x00000004 },     /* ldh  [x + 4]                     - ICMP Id */
-                /* (08) */ { 0x15, 0, 1, ident },          /* jeq  $ident          jt 9  jf 10 - ICMP Id is ident */
-                /* (09) */ { 0x06, 0, 0, 0x00040000 },     /* ret  #0x40000                    - Accept packet */
-                /* (10) */ { 0x06, 0, 0, 0x00000000 }      /* ret  #0x0                        - Discard packet */
-            };
-
-            const struct sock_fprog bpf = { .len = sizeof( filter ) / sizeof( filter[0] ), .filter = filter };
-
-            if ( setsockopt( sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof( bpf ) ) < 0 ) {
-                fprintf( stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror( errno ) );
-            }
-        }
-        else {
-            struct sock_filter filter[] = {
-                /* (00) */ { 0x30, 0, 0, 0x00000000 },       /* ldb [0]                         - ICMPv6 Type */
-                /* (01) */ { 0x15, 0, 3, ICMP6_ECHO_REPLY }, /* jeq $ICMP6_ECHO_REPLY jt 2 jf 5 - ICMPv6 Type is Echo Reply */
-                /* (02) */ { 0x28, 0, 0, 0x00000004 },       /* ldh [4]                         - ICMPv6 Id */
-                /* (03) */ { 0x15, 0, 1, ident },            /* jeq $ident            jt 4 jf 5 - ICMPv6 Id is ident */
-                /* (04) */ { 0x06, 0, 0, 0x00040000 },       /* ret #0x40000                    - Accept packet */
-                /* (05) */ { 0x06, 0, 0, 0x00000000 }        /* ret #0x0                        - Discard packet */
-            };
-
-            const struct sock_fprog bpf = { .len = sizeof( filter ) / sizeof( filter[0] ), .filter = filter };
-
-            if ( setsockopt( sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof( bpf ) ) < 0 ) {
-                fprintf( stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror( errno ) );
-            }
-        }
-#endif /* ENABLE_BPF && HAVE_LINUX_FILTER_H && SO_ATTACH_FILTER */
+#if defined( BWPING_USE_BPF )
+        apply_bpf( ipv4_mode, sock, ident );
+#endif
 
         clear_socket_buffer( sock );
 
@@ -987,7 +1029,7 @@ int main( int argc, char * argv[] )
                                            ? pkt_burst / PKT_BURST_SCALE + pkt_burst_error / PKT_BURST_SCALE
                                            : total_count - transmitted.count;
 
-#if defined( ENABLE_MMSG ) && defined( HAVE_SENDMMSG )
+#if defined( BWPING_USE_SENDMMSG )
             sendmmsg_ping( ipv4_mode, sock, pkt_size, ident, pkt_count, &transmitted );
 #else
             for ( uint64_t i = 0; i < pkt_count; i++ ) {
@@ -1014,7 +1056,7 @@ int main( int argc, char * argv[] )
                     fprintf( stderr, "%s: select() failed: %s\n", prog_name, strerror( errno ) );
                 }
                 else if ( n > 0 ) {
-#if defined( ENABLE_MMSG ) && defined( HAVE_RECVMMSG )
+#if defined( BWPING_USE_RECVMMSG )
                     while ( recvmmsg_ping( ipv4_mode, sock, ident, &received, &rtt ) ) {
 #else
                     while ( recv_ping( ipv4_mode, sock, ident, &received, &rtt ) ) {
