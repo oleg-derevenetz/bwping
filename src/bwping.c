@@ -278,24 +278,24 @@ static void clear_socket_buffer( const int sock )
 
 static void prepare_ping4( char * const packet, const uint16_t ident, const bool insert_timestamp )
 {
-    uint8_t icmp4_type_v;
+    uint8_t icmp_type_v;
 
-    memcpy( &icmp4_type_v, &packet[offsetof( struct icmp, icmp_type )], sizeof( icmp4_type_v ) );
+    memcpy( &icmp_type_v, &packet[offsetof( struct icmp, icmp_type )], sizeof( icmp_type_v ) );
 
     _Static_assert( ICMP_ECHO != 0, "ICMP_ECHO must not be zero" );
 
     /* Optimization: it is assumed that both regular packets and timestamped packets have a static lifetime, and their ICMP headers are prepared once and for all - except
      * for the checksum of timestamped packets */
-    if ( icmp4_type_v != ICMP_ECHO ) {
-        struct icmp icmp4 = { .icmp_type = ICMP_ECHO, .icmp_code = 0, .icmp_cksum = 0, .icmp_id = htons( ident ), .icmp_seq = 0 };
+    if ( icmp_type_v != ICMP_ECHO ) {
+        struct icmp icmp_v = { .icmp_type = ICMP_ECHO, .icmp_code = 0, .icmp_cksum = 0, .icmp_id = htons( ident ), .icmp_seq = 0 };
 
-        memcpy( packet, &icmp4, sizeof( icmp4 ) );
+        memcpy( packet, &icmp_v, sizeof( icmp_v ) );
 
         if ( !insert_timestamp ) {
             /* Optimization: it is assumed that the rest of the packet is already zeroed */
-            const uint16_t icmp4_cksum_v = cksum( packet, sizeof( struct icmp ) );
+            const uint16_t icmp_cksum_v = cksum( packet, sizeof( struct icmp ) );
 
-            memcpy( &packet[offsetof( struct icmp, icmp_cksum )], &icmp4_cksum_v, sizeof( icmp4_cksum_v ) );
+            memcpy( &packet[offsetof( struct icmp, icmp_cksum )], &icmp_cksum_v, sizeof( icmp_cksum_v ) );
 
             return;
         }
@@ -311,14 +311,14 @@ static void prepare_ping4( char * const packet, const uint16_t ident, const bool
 
     memcpy( &packet[sizeof( struct icmp )], &pkt_time, sizeof( pkt_time ) );
 
-    uint16_t icmp4_cksum_v = 0;
+    uint16_t icmp_cksum_v = 0;
 
-    memcpy( &packet[offsetof( struct icmp, icmp_cksum )], &icmp4_cksum_v, sizeof( icmp4_cksum_v ) );
+    memcpy( &packet[offsetof( struct icmp, icmp_cksum )], &icmp_cksum_v, sizeof( icmp_cksum_v ) );
 
     /* Optimization: it is assumed that the rest of the packet is already zeroed */
-    icmp4_cksum_v = cksum( packet, sizeof( struct icmp ) + sizeof( pkt_time ) );
+    icmp_cksum_v = cksum( packet, sizeof( struct icmp ) + sizeof( pkt_time ) );
 
-    memcpy( &packet[offsetof( struct icmp, icmp_cksum )], &icmp4_cksum_v, sizeof( icmp4_cksum_v ) );
+    memcpy( &packet[offsetof( struct icmp, icmp_cksum )], &icmp_cksum_v, sizeof( icmp_cksum_v ) );
 }
 
 static void prepare_ping6( char * const packet, const uint16_t ident, const bool insert_timestamp )
@@ -331,9 +331,9 @@ static void prepare_ping6( char * const packet, const uint16_t ident, const bool
 
     /* Optimization: it is assumed that both regular packets and timestamped packets have a static lifetime, and their ICMP headers are prepared once and for all */
     if ( icmp6_type_v != ICMP6_ECHO_REQUEST ) {
-        const struct icmp6_hdr icmp6 = { .icmp6_type = ICMP6_ECHO_REQUEST, .icmp6_code = 0, .icmp6_cksum = 0, .icmp6_id = htons( ident ), .icmp6_seq = 0 };
+        const struct icmp6_hdr icmp6_hdr_v = { .icmp6_type = ICMP6_ECHO_REQUEST, .icmp6_code = 0, .icmp6_cksum = 0, .icmp6_id = htons( ident ), .icmp6_seq = 0 };
 
-        memcpy( packet, &icmp6, sizeof( icmp6 ) );
+        memcpy( packet, &icmp6_hdr_v, sizeof( icmp6_hdr_v ) );
     }
 
     if ( !insert_timestamp ) {
@@ -430,31 +430,31 @@ static void send_ping( const bool                  ipv4_mode,
 
 static void process_ping4( const char * const packet, const size_t pkt_size, const uint16_t ident, struct pkt_counters * const received, struct rtt_counters * const rtt )
 {
-    struct ip ip4;
+    struct ip ip_v;
 
-    if ( pkt_size < sizeof( ip4 ) ) {
+    if ( pkt_size < sizeof( ip_v ) ) {
         return;
     }
 
-    memcpy( &ip4, packet, sizeof( ip4 ) );
+    memcpy( &ip_v, packet, sizeof( ip_v ) );
 
-    if ( ip4.ip_p != IPPROTO_ICMP || ( ntohs( ip4.ip_off ) & 0x1FFF ) != 0 ) {
+    if ( ip_v.ip_p != IPPROTO_ICMP || ( ntohs( ip_v.ip_off ) & 0x1FFF ) != 0 ) {
         return;
     }
 
-    const size_t hdr_len = ip4.ip_hl << 2;
+    const size_t hdr_len = ip_v.ip_hl << 2;
 
     if ( pkt_size < hdr_len + sizeof( struct icmp ) ) {
         return;
     }
 
-    uint8_t  icmp4_type_v;
-    uint16_t icmp4_id_v;
+    uint8_t  icmp_type_v;
+    uint16_t icmp_id_v;
 
-    memcpy( &icmp4_type_v, &packet[hdr_len + offsetof( struct icmp, icmp_type )], sizeof( icmp4_type_v ) );
-    memcpy( &icmp4_id_v, &packet[hdr_len + offsetof( struct icmp, icmp_id )], sizeof( icmp4_id_v ) );
+    memcpy( &icmp_type_v, &packet[hdr_len + offsetof( struct icmp, icmp_type )], sizeof( icmp_type_v ) );
+    memcpy( &icmp_id_v, &packet[hdr_len + offsetof( struct icmp, icmp_id )], sizeof( icmp_id_v ) );
 
-    if ( icmp4_type_v != ICMP_ECHOREPLY || ntohs( icmp4_id_v ) != ident ) {
+    if ( icmp_type_v != ICMP_ECHOREPLY || ntohs( icmp_id_v ) != ident ) {
         return;
     }
 
@@ -651,12 +651,12 @@ static bool resolve_name( const bool ipv4_mode, const char * const name, struct 
 
 static void apply_icmp6_filter( const int sock )
 {
-    struct icmp6_filter filter6;
+    struct icmp6_filter filter;
 
-    ICMP6_FILTER_SETBLOCKALL( &filter6 );
-    ICMP6_FILTER_SETPASS( ICMP6_ECHO_REPLY, &filter6 );
+    ICMP6_FILTER_SETBLOCKALL( &filter );
+    ICMP6_FILTER_SETPASS( ICMP6_ECHO_REPLY, &filter );
 
-    if ( setsockopt( sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filter6, sizeof( filter6 ) ) < 0 ) {
+    if ( setsockopt( sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filter, sizeof( filter ) ) < 0 ) {
         fprintf( stderr, "%s: setsockopt(ICMP6_FILTER) failed: %s\n", prog_name, strerror( errno ) );
     }
 }
