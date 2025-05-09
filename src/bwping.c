@@ -287,7 +287,7 @@ static void prepare_ping4( char * const packet, const uint16_t ident, const bool
     /* Optimization: it is assumed that both regular packets and timestamped packets have a static lifetime, and their ICMP headers are prepared once and for all - except
      * for the checksum of timestamped packets */
     if ( icmp_type_v != ICMP_ECHO ) {
-        struct icmp icmp_v = { .icmp_type = ICMP_ECHO, .icmp_code = 0, .icmp_cksum = 0, .icmp_id = htons( ident ), .icmp_seq = 0 };
+        const struct icmp icmp_v = { .icmp_type = ICMP_ECHO, .icmp_code = 0, .icmp_cksum = 0, .icmp_id = htons( ident ), .icmp_seq = 0 };
 
         memcpy( packet, &icmp_v, sizeof( icmp_v ) );
 
