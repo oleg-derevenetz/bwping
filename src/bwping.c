@@ -647,6 +647,34 @@ static bool resolve_name( const bool ipv4_mode, const char * const name, struct 
     return true;
 }
 
+static void set_buf_size( const int sock, const unsigned int buf_size )
+{
+    if ( buf_size == 0 ) {
+        return;
+    }
+
+    if ( setsockopt( sock, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof( buf_size ) ) < 0 ) {
+        fprintf( stderr, "%s: setsockopt(SOL_SOCKET, SO_RCVBUF, %u) failed: %s\n", prog_name, buf_size, strerror( errno ) );
+    }
+    if ( setsockopt( sock, SOL_SOCKET, SO_SNDBUF, &buf_size, sizeof( buf_size ) ) < 0 ) {
+        fprintf( stderr, "%s: setsockopt(SOL_SOCKET, SO_SNDBUF, %u) failed: %s\n", prog_name, buf_size, strerror( errno ) );
+    }
+}
+
+static void set_tos_or_traf_class( const bool ipv4_mode, const int sock, const unsigned int tos_or_traf_class )
+{
+    if ( ipv4_mode ) {
+        if ( setsockopt( sock, IPPROTO_IP, IP_TOS, &tos_or_traf_class, sizeof( tos_or_traf_class ) ) < 0 ) {
+            fprintf( stderr, "%s: setsockopt(IPPROTO_IP, IP_TOS, %u) failed: %s\n", prog_name, tos_or_traf_class, strerror( errno ) );
+        }
+    }
+    else {
+        if ( setsockopt( sock, IPPROTO_IPV6, IPV6_TCLASS, &tos_or_traf_class, sizeof( tos_or_traf_class ) ) < 0 ) {
+            fprintf( stderr, "%s: setsockopt(IPPROTO_IPV6, IPV6_TCLASS, %u) failed: %s\n", prog_name, tos_or_traf_class, strerror( errno ) );
+        }
+    }
+}
+
 #if defined( BWPING_USE_ICMP6_FILTER )
 
 static void apply_icmp6_filter( const int sock )
@@ -657,7 +685,7 @@ static void apply_icmp6_filter( const int sock )
     ICMP6_FILTER_SETPASS( ICMP6_ECHO_REPLY, &filter );
 
     if ( setsockopt( sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filter, sizeof( filter ) ) < 0 ) {
-        fprintf( stderr, "%s: setsockopt(ICMP6_FILTER) failed: %s\n", prog_name, strerror( errno ) );
+        fprintf( stderr, "%s: setsockopt(IPPROTO_ICMPV6, ICMP6_FILTER) failed: %s\n", prog_name, strerror( errno ) );
     }
 }
 
@@ -685,7 +713,7 @@ static void apply_bpf( const bool ipv4_mode, const int sock, const uint16_t iden
         const struct sock_fprog bpf = { .len = sizeof( filter ) / sizeof( filter[0] ), .filter = filter };
 
         if ( setsockopt( sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof( bpf ) ) < 0 ) {
-            fprintf( stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror( errno ) );
+            fprintf( stderr, "%s: setsockopt(SOL_SOCKET, SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror( errno ) );
         }
     }
     else {
@@ -701,7 +729,7 @@ static void apply_bpf( const bool ipv4_mode, const int sock, const uint16_t iden
         const struct sock_fprog bpf = { .len = sizeof( filter ) / sizeof( filter[0] ), .filter = filter };
 
         if ( setsockopt( sock, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof( bpf ) ) < 0 ) {
-            fprintf( stderr, "%s: setsockopt(SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror( errno ) );
+            fprintf( stderr, "%s: setsockopt(SOL_SOCKET, SO_ATTACH_FILTER) failed: %s\n", prog_name, strerror( errno ) );
         }
     }
 }
@@ -949,25 +977,9 @@ int main( int argc, char * argv[] )
     }
 
     if ( exit_val == EX_OK ) {
-        if ( buf_size > 0 ) {
-            if ( setsockopt( sock, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof( buf_size ) ) < 0 ) {
-                fprintf( stderr, "%s: setsockopt(SO_RCVBUF, %u) failed: %s\n", prog_name, buf_size, strerror( errno ) );
-            }
-            if ( setsockopt( sock, SOL_SOCKET, SO_SNDBUF, &buf_size, sizeof( buf_size ) ) < 0 ) {
-                fprintf( stderr, "%s: setsockopt(SO_SNDBUF, %u) failed: %s\n", prog_name, buf_size, strerror( errno ) );
-            }
-        }
+        set_buf_size( sock, buf_size );
 
-        if ( ipv4_mode ) {
-            if ( setsockopt( sock, IPPROTO_IP, IP_TOS, &tos_or_traf_class, sizeof( tos_or_traf_class ) ) < 0 ) {
-                fprintf( stderr, "%s: setsockopt(IP_TOS, %u) failed: %s\n", prog_name, tos_or_traf_class, strerror( errno ) );
-            }
-        }
-        else {
-            if ( setsockopt( sock, IPPROTO_IPV6, IPV6_TCLASS, &tos_or_traf_class, sizeof( tos_or_traf_class ) ) < 0 ) {
-                fprintf( stderr, "%s: setsockopt(IPV6_TCLASS, %u) failed: %s\n", prog_name, tos_or_traf_class, strerror( errno ) );
-            }
-        }
+        set_tos_or_traf_class( ipv4_mode, sock, tos_or_traf_class );
 
 #if defined( BWPING_USE_ICMP6_FILTER )
         if ( !ipv4_mode ) {
