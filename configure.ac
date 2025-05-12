@@ -70,6 +70,16 @@ AC_MSG_RESULT([${bwping_cv_c_wextra}])
 AS_IF([test "${bwping_cv_c_wextra}" = "yes"], [
     AM_CFLAGS="${AM_CFLAGS} -Wextra"
 ])
+AC_MSG_CHECKING([whether the C compiler accepts -Wundef...])
+CFLAGS="${CFLAGS} -Wundef"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
+                  [bwping_cv_c_wundef=yes],
+                  [bwping_cv_c_wundef=no])
+CFLAGS=${bwping_save_cflags}
+AC_MSG_RESULT([${bwping_cv_c_wundef}])
+AS_IF([test "${bwping_cv_c_wundef}" = "yes"], [
+    AM_CFLAGS="${AM_CFLAGS} -Wundef"
+])
 AC_MSG_CHECKING([whether the C compiler accepts -Wno-missing-field-initializers...])
 CFLAGS="${CFLAGS} -Wno-missing-field-initializers"
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
