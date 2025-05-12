@@ -53,25 +53,25 @@
 #include <netdb.h>
 
 #if defined( ENABLE_MMSG ) && defined( HAVE_SENDMMSG )
-#define BWPING_USE_SENDMMSG 1
+#define BWPING_USE_SENDMMSG
 #else
 #undef BWPING_USE_SENDMMSG
 #endif
 
 #if defined( ENABLE_MMSG ) && defined( HAVE_RECVMMSG )
-#define BWPING_USE_RECVMMSG 1
+#define BWPING_USE_RECVMMSG
 #else
 #undef BWPING_USE_RECVMMSG
 #endif
 
 #if defined( HAVE_NETINET_ICMP6_H ) && defined( ICMP6_FILTER )
-#define BWPING_USE_ICMP6_FILTER 1
+#define BWPING_USE_ICMP6_FILTER
 #else
 #undef BWPING_USE_ICMP6_FILTER
 #endif
 
 #if defined( ENABLE_BPF ) && defined( HAVE_LINUX_FILTER_H ) && defined( SO_ATTACH_FILTER )
-#define BWPING_USE_BPF 1
+#define BWPING_USE_BPF
 #else
 #undef BWPING_USE_BPF
 #endif
