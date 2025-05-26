@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2007-2025, Oleg Derevenetz <oleg.derevenetz@gmail.com>.
  *
- * Use of this source code is governed by a BSD-style license that can be found in the COPYING file.
+ * Use of this source code is governed by the BSD 2-Clause license that can be found in the COPYING file.
  */
 
 #ifndef CYGWIN_H
