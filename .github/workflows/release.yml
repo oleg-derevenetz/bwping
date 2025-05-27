@@ -111,7 +111,7 @@ jobs:
     - name: Create package
       shell: bash
       run: |
-        OUTPUT="$(zip.exe -j "bwping-${{ needs.version.outputs.version }}-win64.zip" .licenses\\COPYING .licenses\\COPYING.LIB .licenses/CYGWIN_BUILD \
+        OUTPUT="$(zip.exe -j "bwping-${{ needs.version.outputs.version }}-win64.zip" .licenses\\COPYING .licenses\\COPYING.LIB .licenses\\CYGWIN_BUILD \
                                                                                      .licenses\\LICENSE AUTHORS bwping.exe C:\\tools\\cygwin\\bin\\cygwin1.dll \
                                                                                      C:\\tools\\cygwin\\usr\\share\\doc\\Cygwin\\CYGWIN_LICENSE \
                                                                                      README 2>&1)"
