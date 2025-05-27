@@ -99,8 +99,8 @@ jobs:
       run: |
         mkdir .licenses && ^
         copy /Y /B COPYING .licenses\LICENSE && ^
-        C:\msys64\usr\bin\wget.exe -O .licenses/COPYING https://ftp.wayne.edu/gnu/Licenses/gpl-3.0.txt && ^
-        C:\msys64\usr\bin\wget.exe -O .licenses/COPYING.LIB https://ftp.wayne.edu/gnu/Licenses/lgpl-3.0.txt
+        C:\msys64\usr\bin\wget.exe -O .licenses/COPYING https://cygwin.org/COPYING && ^
+        C:\msys64\usr\bin\wget.exe -O .licenses/COPYING.LIB https://cygwin.org/COPYING.LIB
     - name: Create package
       shell: bash
       run: |
