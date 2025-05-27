@@ -27,13 +27,13 @@ jobs:
       run: |
         sudo apt-get -y update
         sudo apt-get -y install autoconf automake clang-tools
-    - name: Perform Clang analysis
+    - name: Analyze
       run: |
         autoreconf -f -i -Wall,error
         scan-build ./configure --${{ matrix.mmsg }} --${{ matrix.bpf }}
-        scan-build --status-bugs -v -o scan-build-results make "CFLAGS=-std=c11 -Werror"
+        scan-build --status-bugs -v -o scan-build-result make "CFLAGS=-std=c11 -Werror"
     - uses: actions/upload-artifact@v4
       if: ${{ failure() }}
       with:
-        name: clang-analysis-results-${{ matrix.mmsg }}-${{ matrix.bpf }}
-        path: scan-build-results/
+        name: clang-analyzer-result-${{ matrix.mmsg }}-${{ matrix.bpf }}
+        path: scan-build-result/
