@@ -43,7 +43,7 @@ jobs:
     - uses: actions/upload-artifact@v4
       if: ${{ failure() }}
       with:
-        name: check-results-linux-${{ matrix.cc }}-${{ matrix.mmsg }}-${{ matrix.bpf }}
+        name: check-result-linux-${{ matrix.cc }}-${{ matrix.mmsg }}-${{ matrix.bpf }}
         path: tests/*.log
   build-freebsd:
     strategy:
@@ -90,7 +90,7 @@ jobs:
     - uses: actions/upload-artifact@v4
       if: ${{ failure() }}
       with:
-        name: check-results-freebsd-${{ matrix.arch }}-${{ matrix.mmsg }}
+        name: check-result-freebsd-${{ matrix.arch }}-${{ matrix.mmsg }}
         path: tests/*.log
   build-macos:
     name: Build MacOS
@@ -119,7 +119,7 @@ jobs:
     - uses: actions/upload-artifact@v4
       if: ${{ failure() }}
       with:
-        name: check-results-macos
+        name: check-result-macos
         path: tests/*.log
   build-cygwin:
     name: Build Cygwin
@@ -161,5 +161,5 @@ jobs:
     - uses: actions/upload-artifact@v4
       if: ${{ failure() }}
       with:
-        name: check-results-cygwin
+        name: check-result-cygwin
         path: tests/*.log

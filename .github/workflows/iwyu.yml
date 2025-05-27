@@ -1,0 +1,34 @@
+name: IWYU
+
+on:
+  workflow_call:
+
+permissions: {}
+
+jobs:
+  iwyu:
+    name: IWYU
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        sudo apt-get -y update
+        sudo apt-get -y install autoconf automake bear iwyu
+    - name: Prepare compile_commands.json
+      run: |
+        autoreconf -f -i -Wall,error
+        ./configure --enable-mmsg --enable-bpf
+        bear -- make "CFLAGS=-Werror"
+    - name: Analyze
+      run: |
+        iwyu_tool -p . -j "$(nproc)" -- -Xiwyu --no_fwd_decls -Xiwyu --error | (grep -E -v "^$|has correct #includes/fwd-decls" || true) | tee iwyu-result.txt
+    - uses: actions/upload-artifact@v4
+      if: ${{ failure() }}
+      with:
+        name: iwyu-result
+        path: iwyu-result.txt

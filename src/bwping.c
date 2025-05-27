@@ -15,6 +15,7 @@
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/uio.h>
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -34,9 +35,7 @@
 #include <arpa/inet.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/ip6.h>
 #include <netinet/ip_icmp.h>
 #ifdef HAVE_NETINET_ICMP6_H
 #include <netinet/icmp6.h>
