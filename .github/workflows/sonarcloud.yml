@@ -36,8 +36,8 @@ jobs:
     - name: Run build via SonarCloud wrapper
       run: |
         autoreconf -f -i -Wall,error
-        ./configure
-        build-wrapper-linux-x86-64 --out-dir .bw-output make
+        ./configure --enable-mmsg --enable-bpf
+        build-wrapper-linux-x86-64 --out-dir .bw-output make "CFLAGS=-std=c11 -Werror"
     - uses: SonarSource/sonarqube-scan-action@v5
       with:
         args: >-
