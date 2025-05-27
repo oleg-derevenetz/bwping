@@ -99,15 +99,21 @@ jobs:
       run: |
         mkdir .licenses && ^
         copy /Y /B COPYING .licenses\LICENSE && ^
-        C:\msys64\usr\bin\wget.exe -O .licenses/COPYING https://ftp.wayne.edu/gnu/Licenses/gpl-3.0.txt && ^
-        C:\msys64\usr\bin\wget.exe -O .licenses/COPYING.LIB https://ftp.wayne.edu/gnu/Licenses/lgpl-3.0.txt
+        C:\msys64\usr\bin\wget.exe -O .licenses/COPYING https://cygwin.org/COPYING && ^
+        C:\msys64\usr\bin\wget.exe -O .licenses/COPYING.LIB https://cygwin.org/COPYING.LIB
+    - name: Prepare Cygwin build instructions
+      shell: bash
+      run: |
+        cat >> .licenses/CYGWIN_BUILD << EOF
+        If you want to build Cygwin yourself from source, please follow the instructions at
+        https://cygwin.com/faq.html#faq.programming.building-cygwin
+        EOF
     - name: Create package
       shell: bash
       run: |
-        OUTPUT="$(zip.exe -j "bwping-${{ needs.version.outputs.version }}-win64.zip" .licenses\\COPYING .licenses\\COPYING.LIB .licenses\\LICENSE \
-                                                                                     AUTHORS bwping.exe C:\\tools\\cygwin\\bin\\cygwin1.dll \
-                                                                                     C:\\tools\\cygwin\\usr\\share\\doc\\Cygwin\\CYGWIN_LICENSE \
-                                                                                     README 2>&1)"
+        OUTPUT="$(zip.exe -j "bwping-${{ needs.version.outputs.version }}-win64.zip" .licenses\\COPYING .licenses\\COPYING.LIB .licenses\\CYGWIN_BUILD \
+                                                                                     .licenses\\LICENSE AUTHORS bwping.exe C:\\tools\\cygwin\\bin\\cygwin1.dll \
+                                                                                     C:\\tools\\cygwin\\usr\\share\\doc\\Cygwin\\CYGWIN_LICENSE README 2>&1)"
         [[ "$(echo "$OUTPUT" | grep -E -v "^\s*adding: ")" == "" ]] || ( echo "$OUTPUT" && false )
     - name: Verify package
       shell: bash
