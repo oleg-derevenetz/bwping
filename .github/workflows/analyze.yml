@@ -14,9 +14,9 @@ permissions:
   security-events: write
 
 jobs:
-  clang:
-    name: Clang Analyzer
-    uses: ./.github/workflows/clang_analyzer.yml
+  codechecker:
+    name: CodeChecker
+    uses: ./.github/workflows/codechecker.yml
   codeql:
     name: CodeQL Analyzer
     uses: ./.github/workflows/codeql.yml
