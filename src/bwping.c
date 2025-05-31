@@ -35,6 +35,7 @@
 #include <arpa/inet.h>
 
 #include <netinet/in.h>
+#include <netinet/in_systm.h> /* IWYU pragma: keep */
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #ifdef HAVE_NETINET_ICMP6_H
