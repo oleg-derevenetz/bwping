@@ -116,7 +116,8 @@ jobs:
           #
           # Install dependencies
           #
-          sudo pkgutil -y -i autoconf automake
+          sudo /opt/csw/bin/pkgutil -U
+          sudo /opt/csw/bin/pkgutil -y -i autoconf automake
         run: |
           #
           # Run build
