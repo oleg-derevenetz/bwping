@@ -97,7 +97,6 @@ jobs:
       matrix:
         arch:
         - x86_64
-        - arm64
         mmsg:
         - enable-mmsg
         - disable-mmsg
