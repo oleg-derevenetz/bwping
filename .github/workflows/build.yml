@@ -95,10 +95,13 @@ jobs:
   build-solaris:
     strategy:
       matrix:
+        arch:
+        - x86_64
+        - arm64
         mmsg:
         - enable-mmsg
         - disable-mmsg
-    name: Build Solaris (--${{ matrix.mmsg }})
+    name: Build Solaris ${{ matrix.arch }} (--${{ matrix.mmsg }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
@@ -108,7 +111,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: vmactions/solaris-vm@v1
       with:
-        arch: x86_64
+        arch: ${{ matrix.arch }}
         release: 11.4-gcc
         sync: nfs
         usesh: true
