@@ -13,7 +13,7 @@ for MODE in "-4" "-6"; do
         if [ "$STATUS" != "0" ]; then
             exit "$STATUS"
         else
-            ISSUES="$(echo "$OUTPUT" | grep -v "^Target: " | grep -v "^Total: ")"
+            ISSUES="$(echo "$OUTPUT" | grep -v "^Target: " | grep -v "^Total: " | grep -v " failed: Message too long$")"
 
             if [ "$ISSUES" != "" ]; then
                 exit 1

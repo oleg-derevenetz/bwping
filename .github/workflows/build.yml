@@ -92,6 +92,50 @@ jobs:
       with:
         name: check-result-freebsd-${{ matrix.arch }}-${{ matrix.mmsg }}
         path: tests/*.log
+  build-solaris:
+    strategy:
+      matrix:
+        arch:
+        - x86_64
+        mmsg:
+        - enable-mmsg
+        - disable-mmsg
+    name: Build Solaris ${{ matrix.arch }} (--${{ matrix.mmsg }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - uses: actions/checkout@v4
+    - uses: vmactions/solaris-vm@v1
+      with:
+        arch: ${{ matrix.arch }}
+        release: 11.4-gcc
+        sync: nfs
+        usesh: true
+        prepare: |
+          #
+          # Install dependencies
+          #
+          sudo /opt/csw/bin/pkgutil -U
+          sudo /opt/csw/bin/pkgutil -y -i autoconf automake
+        run: |
+          #
+          # Run build
+          #
+          autoreconf -f -i -Wall,error
+          ./configure --${{ matrix.mmsg }}
+          make "CFLAGS=-Werror -fsanitize=address,undefined"
+          #
+          # Run checks
+          #
+          sudo make check
+    - uses: actions/upload-artifact@v4
+      if: ${{ failure() }}
+      with:
+        name: check-result-solaris-${{ matrix.arch }}-${{ matrix.mmsg }}
+        path: tests/*.log
   build-macos:
     name: Build MacOS
     runs-on: macos-latest
