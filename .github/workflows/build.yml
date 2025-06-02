@@ -137,7 +137,7 @@ jobs:
         name: check-result-solaris-${{ matrix.arch }}-${{ matrix.mmsg }}
         path: tests/*.log
   build-macos:
-    name: Build MacOS
+    name: Build macOS
     runs-on: macos-latest
     timeout-minutes: 10
     defaults:
