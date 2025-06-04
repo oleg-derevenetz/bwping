@@ -30,6 +30,7 @@ jobs:
         sudo apt-get -y install autoconf automake
     - uses: github/codeql-action/init@v3
       with:
+        build-mode: manual
         languages: cpp
     - name: Run build
       run: |
