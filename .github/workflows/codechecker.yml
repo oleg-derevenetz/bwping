@@ -7,7 +7,15 @@ permissions: {}
 
 jobs:
   codechecker:
-    name: CodeChecker
+    strategy:
+      matrix:
+        mmsg:
+        - enable-mmsg
+        - disable-mmsg
+        bpf:
+        - enable-bpf
+        - disable-bpf
+    name: CodeChecker (--${{ matrix.mmsg }} --${{ matrix.bpf }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
@@ -24,7 +32,7 @@ jobs:
     - name: Prepare compile_commands.json
       run: |
         autoreconf -f -i -Wall,error
-        ./configure --enable-mmsg --enable-bpf
+        ./configure --${{ matrix.mmsg }} --${{ matrix.bpf }}
         bear -- make "CFLAGS=-std=c11 -Werror"
     - name: Analyze
       run: |
