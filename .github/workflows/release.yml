@@ -40,7 +40,7 @@ jobs:
       run:
         shell: bash
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Install dependencies
       run: |
         sudo apt-get -y update
@@ -67,7 +67,7 @@ jobs:
         shell: cmd
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Install dependencies
       run: |
         choco.exe install cygwin cyg-get zip unzip -y && ^
