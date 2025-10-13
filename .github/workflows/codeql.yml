@@ -28,7 +28,7 @@ jobs:
       run: |
         sudo apt-get -y update
         sudo apt-get -y install autoconf automake
-    - uses: github/codeql-action/init@v3
+    - uses: github/codeql-action/init@v4
       with:
         build-mode: manual
         languages: cpp
@@ -37,4 +37,4 @@ jobs:
         autoreconf -f -i -Wall,error
         ./configure --${{ matrix.mmsg }} --${{ matrix.bpf }}
         make "CFLAGS=-Werror"
-    - uses: github/codeql-action/analyze@v3
+    - uses: github/codeql-action/analyze@v4
