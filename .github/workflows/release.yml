@@ -50,7 +50,7 @@ jobs:
         autoreconf -f -i -Wall,error
         ./configure
         sudo make distcheck "CFLAGS=-Werror"
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v5
       with:
         name: package-src
         path: bwping-${{ needs.version.outputs.version }}.tar.gz
@@ -121,7 +121,7 @@ jobs:
         unzip.exe "bwping-${{ needs.version.outputs.version }}-win64.zip" -d .package
         OUTPUT="$(cmd.exe //c "set PATH= & .package\\bwping.exe" 2>&1 || true)"
         [[ "$(echo "$OUTPUT" | grep -v "^bwping is part of the " | grep -v "^Usage: ")" == "" ]] || ( echo "$OUTPUT" && false )
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v5
       with:
         name: package-cygwin
         path: bwping-${{ needs.version.outputs.version }}-win64.zip
