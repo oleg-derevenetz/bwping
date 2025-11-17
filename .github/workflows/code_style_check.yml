@@ -44,4 +44,4 @@ jobs:
       run: |
         shellcheck tests/*
     - name: Check format of markdown files
-      uses: DavidAnson/markdownlint-cli2-action@v20
+      uses: DavidAnson/markdownlint-cli2-action@v21
