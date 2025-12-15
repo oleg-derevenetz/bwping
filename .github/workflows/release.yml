@@ -140,11 +140,11 @@ jobs:
         shell: bash
     steps:
     - name: Download source package artifact
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         name: package-src
     - name: Download Cygwin package artifact
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         name: package-cygwin
     - name: Upload packages to GitHub
