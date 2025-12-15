@@ -30,7 +30,7 @@ jobs:
       run: |
         sudo apt-get -y update
         sudo apt-get -y install autoconf automake
-    - uses: SonarSource/sonarqube-scan-action/install-build-wrapper@v6
+    - uses: SonarSource/sonarqube-scan-action/install-build-wrapper@v7
       env:
         SONAR_HOST_URL: https://sonarcloud.io
     - name: Run build via SonarCloud wrapper
@@ -38,7 +38,7 @@ jobs:
         autoreconf -f -i -Wall,error
         ./configure --enable-mmsg --enable-bpf
         build-wrapper-linux-x86-64 --out-dir .bw-output make "CFLAGS=-std=c11 -Werror"
-    - uses: SonarSource/sonarqube-scan-action@v6
+    - uses: SonarSource/sonarqube-scan-action@v7
       with:
         args: >-
           -Dsonar.cfamily.compile-commands=.bw-output/compile_commands.json
