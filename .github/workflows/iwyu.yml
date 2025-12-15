@@ -27,7 +27,7 @@ jobs:
     - name: Analyze
       run: |
         iwyu_tool -p . -j "$(nproc)" -- -Xiwyu --no_fwd_decls -Xiwyu --error | (grep -E -v "^$|has correct #includes/fwd-decls" || true) | tee iwyu-result.txt
-    - uses: actions/upload-artifact@v5
+    - uses: actions/upload-artifact@v6
       if: ${{ failure() }}
       with:
         name: iwyu-result
