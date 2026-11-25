@@ -21,10 +21,6 @@ jobs:
       run: |
         sudo apt-get -y update
         sudo apt-get -y install shellcheck
-    - name: Setup clang-format
-      run: |
-        sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-17 100
-        sudo update-alternatives --install /usr/bin/clang-format-diff clang-format-diff /usr/bin/clang-format-diff-17 100
     - name: Check code format
       run: |
         FILES_TO_CHECK=$(git diff --name-only HEAD^ | (grep -E ".*\.(c|h)$" || true))
